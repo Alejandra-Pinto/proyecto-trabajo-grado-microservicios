@@ -1,0 +1,13 @@
+server:
+  port: 8086  #PUERTO PARA EL FRONTEND
+
+spring:
+  application:
+    name: frontend-app
+  main:
+    web-application-type: none  #IMPORTANTE: No es app web
+
+logging:
+  level:
+    com.unicauca.front: DEBUG
+    org.springframework.web.client: DEBUG
