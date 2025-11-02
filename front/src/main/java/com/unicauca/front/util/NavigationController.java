@@ -1,19 +1,26 @@
 package com.unicauca.front.util;
 
+import java.io.IOException;
+
+import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Component;
+
+import com.unicauca.front.controller.CoordinatorReviewFormatAController;
+import com.unicauca.front.controller.HomeAdminController;
 import com.unicauca.front.controller.HomeController;
 import com.unicauca.front.controller.ManagementStudentFormatAController;
 import com.unicauca.front.controller.ManagementTeacherFormatAController;
+import com.unicauca.front.controller.PersonalInformationController;
+import com.unicauca.front.controller.PublishedTeacherFormatAController;
 import com.unicauca.front.controller.StudentReviewFormatAController;
 import com.unicauca.front.controller.TeacherReviewFormatAController;
 import com.unicauca.front.model.DegreeWork;
 import com.unicauca.front.model.User;
-import java.io.IOException;
+
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
 
 @Component
 public class NavigationController {
@@ -40,6 +47,24 @@ public class NavigationController {
       this.loadFXML("/fxml/HomeAdmin.fxml", "Panel de Administración");
    }
 
+   public void showHomeAdmin(User usuario) {
+    try {
+        FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/HomeAdmin.fxml"));
+        loader.setControllerFactory(applicationContext::getBean);
+        Parent root = loader.load();
+        
+        HomeAdminController controller = loader.getController();
+        controller.configurarConUsuario(usuario);
+        
+        Scene scene = new Scene(root);
+        this.primaryStage.setScene(scene);
+        this.primaryStage.setTitle("Panel de Administración");
+        this.primaryStage.show();
+    } catch (IOException e) {
+        throw new RuntimeException("Error cargando HomeAdmin", e);
+    }
+}
+
    public void showHome() {
       this.loadFXML("/fxml/Home.fxml", "Inicio");
    }
@@ -52,7 +77,7 @@ public class NavigationController {
       this.loadFXML("/fxml/ManagementStudentFormatA.fxml", "Gestión Estudiantes Formato A");
    }
 
-   // ✅ NUEVO: Método para mostrar ManagementStudentFormatA con usuario
+   //Método para mostrar ManagementStudentFormatA con usuario
    public void showManagementStudentFormatA(User usuario) {
       try {
          FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/ManagementStudentFormatA.fxml"));
@@ -102,7 +127,7 @@ public class NavigationController {
       this.loadFXML("/fxml/ReviewStudentFormatA.fxml", "Revisión Estudiantes Formato A");
    }
 
-   // ✅ NUEVO: Método para mostrar ReviewStudentFormatA con usuario y formato
+   //Método para mostrar ReviewStudentFormatA con usuario y formato
    public void showStudentReviewFormatA(User usuario, DegreeWork formato) {
       try {
          FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/StudentReviewFormatA.fxml"));
@@ -138,23 +163,67 @@ public class NavigationController {
       }
    }
 
-   public void showReviewCoordinatorFormatA() {
-      this.loadFXML("/fxml/ReviewCoordinatorFormatA.fxml", "Revisión Coordinadores Formato A");
+   public void showCoordinatorReviewFormatA(User usuario, DegreeWork formato) {
+      try {
+         FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/CoordinatorReviewFormatA.fxml"));
+         loader.setControllerFactory(applicationContext::getBean);
+         Parent root = loader.load();
+         
+         CoordinatorReviewFormatAController controller = loader.getController();
+         controller.setFormato(formato);     
+         controller.configurarConUsuario(usuario); 
+         
+         Scene scene = new Scene(root);
+         this.primaryStage.setScene(scene);
+         this.primaryStage.setTitle("Revisión de Formato - Coordinador");
+         this.primaryStage.show();
+      } catch (IOException e) {
+         throw new RuntimeException("Error cargando CoordinatorReviewFormatA", e);
+      }
    }
 
    public void showPublishedTeacherFormatA() {
       this.loadFXML("/fxml/PublishedTeacherFormatA.fxml", "Formatos A Publicados");
    }
 
+   public void showPublishedTeacherFormatA(User usuario) {
+      try {
+         FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/PublishedTeacherFormatA.fxml"));
+         loader.setControllerFactory(applicationContext::getBean);
+         Parent root = loader.load();
+         
+         PublishedTeacherFormatAController controller = loader.getController();
+         controller.configurarConUsuario(usuario);
+         
+         Scene scene = new Scene(root);
+         this.primaryStage.setScene(scene);
+         this.primaryStage.setTitle("Formatos Publicados - Docente");
+         this.primaryStage.show();
+      } catch (IOException e) {
+         throw new RuntimeException("Error cargando PublishedTeacherFormatA", e);
+      }
+   }
+
    public void showPersonalInformation() {
       this.loadFXML("/fxml/PersonalInformation.fxml", "Información Personal");
    }
 
-   // ✅ NUEVO: Método para mostrar perfil de usuario
-   public void showUserProfile(User usuario) {
-      this.loadFXML("/fxml/PersonalInformation.fxml", "Información Personal");
-      // Si necesitas pasar el usuario al controlador de información personal, 
-      // puedes implementarlo similar a showHomeWithUser
+   public void showPersonalInformation(User usuario) {
+      try {
+         FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/PersonalInformation.fxml"));
+         loader.setControllerFactory(applicationContext::getBean);
+         Parent root = loader.load();
+         
+         PersonalInformationController controller = loader.getController();
+         controller.configurarConUsuario(usuario);
+         
+         Scene scene = new Scene(root);
+         this.primaryStage.setScene(scene);
+         this.primaryStage.setTitle("Información Personal");
+         this.primaryStage.show();
+      } catch (IOException e) {
+         throw new RuntimeException("Error cargando PersonalInformation", e);
+      }
    }
 
    public void showHomeWithUser(User usuario) {
@@ -172,6 +241,10 @@ public class NavigationController {
       } catch (IOException var7) {
          throw new RuntimeException("Error cargando Home", var7);
       }
+   }
+
+   public void showStatistics() {
+    loadFXML("/fxml/Statistics.fxml", "Estadísticas de Formatos");
    }
 
    private void loadFXML(String fxmlPath, String title) {

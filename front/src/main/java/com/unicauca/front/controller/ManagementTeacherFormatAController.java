@@ -25,11 +25,11 @@ import java.util.List;
 @Controller
 public class ManagementTeacherFormatAController {
 
-    // Botones principales
+    //Botones principales
     @FXML private Button btnAdjuntarDocumento;
     @FXML private ToggleButton btnUsuario;
 
-    // Campos de formulario
+    //Campos de formulario
     @FXML private ComboBox<String> cbEstudiante;
     @FXML private ComboBox<String> cbDirector;
     @FXML private ComboBox<String> cbCodirector;
@@ -69,11 +69,11 @@ public class ManagementTeacherFormatAController {
     }
 
     private void configurarCombos() {
-        // ✅ Configurar modalidades
+        //Configurar modalidades
         cbModalidad.getItems().setAll("INVESTIGACION", "PRACTICA_PROFESIONAL");
 
         try {
-            // ✅ Cargar estudiantes desde microservicio
+            //Cargar estudiantes desde microservicio
             ResponseEntity<User[]> responseEstudiantes = apiService.get(
                 "api/usuarios", 
                 "/rol/STUDENT", 
@@ -87,7 +87,7 @@ public class ManagementTeacherFormatAController {
                 cbEstudiante.getItems().setAll(emailsEstudiantes);
             }
 
-            // ✅ Cargar profesores desde microservicio
+            //Cargar profesores desde microservicio
             ResponseEntity<User[]> responseProfesores = apiService.get(
                 "api/usuarios", 
                 "/rol/TEACHER", 
@@ -214,12 +214,12 @@ public class ManagementTeacherFormatAController {
         try {
             DegreeWork formato = new DegreeWork();
             
-            // ✅ Usar Student (que hereda de User)
+            //Usar Student (que hereda de User)
             Student estudiante = new Student();
             estudiante.setEmail(cbEstudiante.getValue());
             formato.setEstudiante(estudiante);
             
-            // ✅ Usar Teacher (que hereda de User)  
+            //Usar Teacher (que hereda de User)  
             Teacher director = new Teacher();
             director.setEmail(cbDirector.getValue());
             formato.setDirectorProyecto(director);
@@ -230,10 +230,10 @@ public class ManagementTeacherFormatAController {
                 formato.setCodirectorProyecto(codirector);
             }
             
-            // ✅ Resto de campos
+            //Resto de campos
             formato.setTituloProyecto(txtTituloTrabajo.getText());
             
-            // Convertir String a Enum
+            //Convertir String a Enum
             try {
                 formato.setModalidad(Modalidad.valueOf(cbModalidad.getValue()));
             } catch (IllegalArgumentException e) {
@@ -250,10 +250,10 @@ public class ManagementTeacherFormatAController {
                 formato.setCartaAceptacionEmpresa(txtCartaAceptacion.getText());
             }
 
-            // ✅ Enviar al microservicio
+            //Enviar al microservicio
             ResponseEntity<DegreeWork> response;
             if (formatoActual != null && formatoActual.getId() > 0) {
-                // Actualizar formato existente
+                //Actualizar formato existente
                 formato.setId(formatoActual.getId());
                 response = apiService.put(
                     "api/degreeworks", 
@@ -262,7 +262,7 @@ public class ManagementTeacherFormatAController {
                     DegreeWork.class
                 );
             } else {
-                // Crear nuevo formato
+                //Crear nuevo formato
                 response = apiService.post(
                     "api/degreeworks", 
                     "/registrar", 

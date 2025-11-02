@@ -93,7 +93,7 @@ public class HomeController {
             mostrarAlerta("Acceso denegado", "Solo los docentes pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
             return;
         }
-        navigation.showManagementTeacherFormatA();
+        navigation.showPublishedTeacherFormatA();
     }
 
     @FXML
@@ -120,7 +120,7 @@ public class HomeController {
             mostrarAlerta("Acceso denegado", "Solo los coordinadores pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
             return;
         }
-        navigation.showReviewCoordinatorFormatA();
+        navigation.showManagementCoordinatorFormatA();
     }
 
     //Métodos Auxiliares

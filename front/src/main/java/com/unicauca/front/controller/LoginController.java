@@ -65,9 +65,11 @@ public class LoginController {
                         return;
                     }
                 }
-
-                //Navegar al Home y pasar el usuario
-                navigation.showHomeWithUser(usuarioLogueado);
+                if("ADMIN".equalsIgnoreCase(usuarioLogueado.getRole())) {
+                    navigation.showHomeAdmin(usuarioLogueado);
+                } else {
+                    navigation.showHomeWithUser(usuarioLogueado);
+}
                 
             } else {
                 mostrarAlerta("Error de login", "Usuario o contraseña incorrectos.", Alert.AlertType.ERROR);

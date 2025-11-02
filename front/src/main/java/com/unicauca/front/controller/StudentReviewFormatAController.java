@@ -82,7 +82,7 @@ public class StudentReviewFormatAController {
     @FXML
     private void onBtnUsuarioClicked() {
         if (usuarioActual != null) {
-            navigation.showUserProfile(usuarioActual);
+            navigation.showPersonalInformation(usuarioActual);
         }
     }
 

@@ -53,7 +53,7 @@ public class ManagementStudentFormatAController {
         }
 
         try {
-            //SOLUCIÓN TEMPORAL: Obtener todos los proyectos y filtrar por estudiante
+            //Obtener todos los proyectos y filtrar por estudiante
             ResponseEntity<DegreeWork[]> response = apiService.get("api/degreeworks", "", DegreeWork[].class);
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
