@@ -18,6 +18,7 @@ import com.example.users.entity.Teacher;
 import com.example.users.entity.User;
 import com.example.users.infra.dto.UserRequest;
 import com.example.users.repository.UserRepository;
+import com.example.users.infra.dto.*;
 
 @Service
 public class UserService implements IUserService {
@@ -78,11 +79,23 @@ public class UserService implements IUserService {
         // Guardar en la base de datos
         User savedUser = userRepository.save(user);
 
-        // Enviar a la cola RabbitMQ
-        rabbitTemplate.convertAndSend(exchange, routingKey, savedUser);
+        // Crear evento DTO para enviar por RabbitMQ
+        UserCreatedEvent event = new UserCreatedEvent(
+            savedUser.getId(),
+            savedUser.getFirstName(),
+            savedUser.getLastName(),
+            savedUser.getEmail(),
+            savedUser.getRole(),
+            savedUser.getProgram(),
+            savedUser.getStatus()
+        );
+
+        // Enviar el evento al exchange
+        rabbitTemplate.convertAndSend(exchange, routingKey, event);
 
         return savedUser;
     }
+
 
 
     @Override

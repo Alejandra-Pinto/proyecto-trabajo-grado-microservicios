@@ -1,10 +1,13 @@
 package com.example.users.controller;
 
 import com.example.users.entity.Admin;
+import com.example.users.entity.User;
 import com.example.users.service.AdminService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.example.users.infra.dto.EvaluatorAssignmentDTO;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -41,4 +44,17 @@ public class AdminController {
     public ResponseEntity<String> rejectUser(@PathVariable String email) {
         return ResponseEntity.ok(adminService.rejectUser(email));
     }
+
+    // listar posibles evaluadores
+    @GetMapping("/evaluators")
+    public ResponseEntity<List<User>> listPotentialEvaluators() {
+        return ResponseEntity.ok(adminService.listPotentialEvaluators());
+    }
+
+    //asignar evaluador
+    @PostMapping("/assign-evaluator")
+    public ResponseEntity<String> assignEvaluator(@RequestBody EvaluatorAssignmentDTO dto) {
+        return ResponseEntity.ok(adminService.assignEvaluator(dto));
+    }
 }
+

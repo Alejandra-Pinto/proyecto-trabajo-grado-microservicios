@@ -45,6 +45,7 @@ public abstract class User {
 
     private String role;  // "STUDENT", "PROFESSOR", "COORDINATOR", etc.
     private String status; // "ACEPTADO", "INACTIVO", etc.
+    private boolean isEvaluator = false;
 
     private Instant createdAt;
     private Instant updatedAt;
@@ -131,7 +132,7 @@ public abstract class User {
         } else if (normalized.contains("civil")) {
             this.department = EnumDepartment.CIVIL;
         } else {
-            this.department = null; // O podrías definir un EnumDepartment.GENERAL si quisieras
+            this.department = null; 
         }
     }
 
@@ -186,6 +187,14 @@ public abstract class User {
             throw new IllegalArgumentException("El estado no puede estar vacío.");
         }
         this.status = status;
+    }
+
+    public boolean isEvaluator() {
+        return isEvaluator;
+    }
+
+    public void setEvaluator(boolean evaluator) {
+        this.isEvaluator = evaluator;
     }
 
     public Instant getCreatedAt() {
