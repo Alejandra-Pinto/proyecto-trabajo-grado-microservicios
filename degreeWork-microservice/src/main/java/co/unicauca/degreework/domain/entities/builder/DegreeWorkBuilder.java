@@ -14,6 +14,9 @@ public abstract class DegreeWorkBuilder {
         this.degreeWork.setEstudiantes(new ArrayList<>());
         this.degreeWork.setCodirectoresProyecto(new ArrayList<>());
         this.degreeWork.setObjetivosEspecificos(new ArrayList<>());
+        this.degreeWork.setFormatosA(new ArrayList<>());
+        this.degreeWork.setCartasAceptacion(new ArrayList<>());
+        this.degreeWork.setAnteproyectos(new ArrayList<>());
     }
 
     public abstract void buildModalidad();
@@ -52,6 +55,24 @@ public abstract class DegreeWorkBuilder {
 
     public DegreeWorkBuilder estadoInicial(EnumEstadoDegreeWork estado) {
         degreeWork.setEstado(estado);
+        return this;
+    }
+
+    /**
+     * Carga los documentos enviados en el DTO.
+     */
+    public DegreeWorkBuilder documentos(List<Document> documentos) {
+        if (documentos != null && !documentos.isEmpty()) {
+            for (Document doc : documentos) {
+                if (doc.getTipo() == EnumTipoDocumento.FORMATO_A) {
+                    degreeWork.getFormatosA().add(doc);
+                } else if (doc.getTipo() == EnumTipoDocumento.CARTA_ACEPTACION) {
+                    degreeWork.getCartasAceptacion().add(doc);
+                } else if (doc.getTipo() == EnumTipoDocumento.ANTEPROYECTO) {
+                    degreeWork.getAnteproyectos().add(doc);
+                }
+            }
+        }
         return this;
     }
 

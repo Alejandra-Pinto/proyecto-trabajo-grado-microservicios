@@ -18,12 +18,10 @@ public class Document {
     @Enumerated(EnumType.STRING)
     private EnumTipoDocumento tipo;
 
-    private String ruta;
+    private String rutaArchivo;
 
     private java.time.LocalDate fechaActual;
 
     @Enumerated(EnumType.STRING)
     private EnumEstadoDocument estado;
-
-    private String correcciones;
 }
