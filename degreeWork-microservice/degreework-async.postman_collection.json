@@ -1,0 +1,150 @@
+{
+  "info": {
+    "_postman_id": "f3b5a23e-9ac7-48d7-a93e-4c88b4d3e9b2",
+    "name": "degreework-microservice",
+    "description": "Colección de endpoints del microservicio DegreeWork",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Registrar DegreeWork (Investigación)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"Sistema IoT para monitoreo ambiental\",\n  \"modalidad\": \"INVESTIGACION\",\n  \"fechaActual\": \"2025-10-29\",\n  \"directorId\": 1,\n  \"estudiantesIds\": [1, 2],\n  \"codirectoresIds\": [3],\n  \"objetivoGeneral\": \"Desarrollar un sistema de monitoreo ambiental basado en IoT\",\n  \"objetivosEspecificos\": [\n    \"Recolectar datos de temperatura y humedad\",\n    \"Diseñar una arquitectura modular de sensores\",\n    \"Implementar una interfaz web de monitoreo\"\n  ],\n  \"estado\": \"FORMATO_A\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8081/api/degreeworks/registrar",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8081",
+          "path": ["api", "degreeworks", "registrar"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Registrar DegreeWork (Práctica Profesional)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"Implementación de un sistema de gestión documental\",\n  \"modalidad\": \"PRACTICA_PROFESIONAL\",\n  \"fechaActual\": \"2025-10-29\",\n  \"directorId\": 2,\n  \"estudiantesIds\": [5],\n  \"objetivoGeneral\": \"Desarrollar un sistema web para la gestión de documentos empresariales\",\n  \"objetivosEspecificos\": [\n    \"Analizar los procesos documentales actuales\",\n    \"Diseñar la base de datos\",\n    \"Implementar el módulo de carga y consulta\"\n  ],\n  \"estado\": \"FORMATO_A\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8081/api/degreeworks/registrar",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8081",
+          "path": ["api", "degreeworks", "registrar"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Listar Todos los DegreeWorks",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8081/api/degreeworks",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8081",
+          "path": ["api", "degreeworks"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Obtener DegreeWork por ID",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8081/api/degreeworks/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8081",
+          "path": ["api", "degreeworks", "1"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Listar DegreeWorks por Docente",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8081/api/degreeworks/docente/profesor@unicauca.edu.co",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8081",
+          "path": ["api", "degreeworks", "docente", "profesor@unicauca.edu.co"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Actualizar DegreeWork",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"Sistema IoT de monitoreo ambiental (actualizado)\",\n  \"objetivoGeneral\": \"Optimizar el sistema IoT existente para mejorar su eficiencia energética\",\n  \"objetivosEspecificos\": [\n    \"Mejorar el consumo de energía de los sensores\",\n    \"Optimizar la transmisión de datos\",\n    \"Actualizar el dashboard con métricas energéticas\"\n  ],\n  \"correcciones\": \"Actualizar los diagramas UML\",\n  \"estado\": \"ANTEPROYECTO\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8081/api/degreeworks/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8081",
+          "path": ["api", "degreeworks", "1"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Guardar Correcciones",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "\"Corregir el título y los objetivos específicos según la retroalimentación del jurado.\""
+        },
+        "url": {
+          "raw": "http://localhost:8081/api/degreeworks/1/correcciones",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8081",
+          "path": ["api", "degreeworks", "1", "correcciones"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Eliminar DegreeWork",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "http://localhost:8081/api/degreeworks/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8081",
+          "path": ["api", "degreeworks", "1"]
+        }
+      },
+      "response": []
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="265.0" prefWidth="300.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.unicauca.front.controller.StatisticsController">
+    <children>
+        <Label layoutX="20" layoutY="20" text="Estadísticas">
+         <font>
+            <Font name="System Bold" size="12.0" />
+         </font></Label>
+        <Label fx:id="lblAceptados" layoutX="20" layoutY="60" text="ACEPTADOS: 0" />
+        <Label fx:id="lblNoAceptados" layoutX="20" layoutY="90" text="NO ACEPTADOS: 0" />
+        <Label fx:id="lblRechazados" layoutX="20" layoutY="120" text="RECHAZADOS: 0" />
+        <Label fx:id="lblPrimera" layoutX="20" layoutY="150" text="PRIMERA EVALUACION: 0" />
+        <Label fx:id="lblSegunda" layoutX="20" layoutY="180" text="SEGUNDA EVALUACION: 0" />
+        <Label fx:id="lblTercera" layoutX="20" layoutY="210" text="TERCERA EVALUACION: 0" />
+    </children>
+</AnchorPane>
