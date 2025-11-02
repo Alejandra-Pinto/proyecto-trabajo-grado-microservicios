@@ -7,7 +7,7 @@ import org.springframework.web.client.RestTemplate;
 @Service
 public class ApiGatewayService {
     private final RestTemplate restTemplate;
-    private final String API_GATEWAY_URL = "http://localhost:8080/api";
+    private final String API_GATEWAY_URL = "http://localhost:8080";
 
     public ApiGatewayService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -16,7 +16,13 @@ public class ApiGatewayService {
     //Método genérico para POST (login, crear, etc.)
     public <T> ResponseEntity<T> post(String microservicio, String endpoint, Object request, Class<T> responseType) {
         String url = API_GATEWAY_URL + "/" + microservicio + endpoint;
-        
+        // AGREGAR ESTO TEMPORALMENTE PARA DEBUG
+        System.out.println("=== DEBUG API GATEWAY ===");
+        System.out.println("API_GATEWAY_URL: " + API_GATEWAY_URL);
+        System.out.println("microservicio: " + microservicio);
+        System.out.println("endpoint: " + endpoint);
+        System.out.println("URL FINAL: " + url);
+        System.out.println("=== FIN DEBUG ===");
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         

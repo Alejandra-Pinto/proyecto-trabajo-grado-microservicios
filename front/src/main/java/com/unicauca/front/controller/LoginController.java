@@ -46,7 +46,7 @@ public class LoginController {
             loginRequest.setEmail(usuario);
             loginRequest.setPassword(contrasenia);
 
-            ResponseEntity<User> response = apiService.post("usuarios", "/auth/login", loginRequest, User.class);
+            ResponseEntity<User> response = apiService.post("api/usuarios", "/login", loginRequest, User.class);
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 User usuarioLogueado = response.getBody();

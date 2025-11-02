@@ -16,7 +16,7 @@ import com.example.users.infra.dto.UserRequest;
 import com.example.users.service.IUserService;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/usuarios")
 public class UserController {
 
     private final IUserService service;

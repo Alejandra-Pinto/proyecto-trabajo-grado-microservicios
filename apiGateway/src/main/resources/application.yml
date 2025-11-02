@@ -13,7 +13,6 @@ spring:
           predicates:
             - Path=/api/proyectos/**
           filters:
-            - StripPrefix=1
             - name: CircuitBreaker
               args:
                 name: proyectoServiceCircuitBreaker
@@ -24,7 +23,6 @@ spring:
           predicates:
             - Path=/api/usuarios/**
           filters:
-            - StripPrefix=1
             - name: CircuitBreaker
               args:
                 name: usuarioServiceCircuitBreaker
@@ -35,7 +33,6 @@ spring:
           predicates:
             - Path=/api/evaluaciones/**
           filters:
-            - StripPrefix=1
             - name: CircuitBreaker
               args:
                 name: evaluacionServiceCircuitBreaker
@@ -46,7 +43,6 @@ spring:
           predicates:
             - Path=/api/reportes/**
           filters:
-            - StripPrefix=1
             - name: CircuitBreaker
               args:
                 name: reporteServiceCircuitBreaker
@@ -57,7 +53,6 @@ spring:
           predicates:
             - Path=/api/notificaciones/**
           filters:
-            - StripPrefix=1
             - name: CircuitBreaker
               args:
                 name: notificacionServiceCircuitBreaker
