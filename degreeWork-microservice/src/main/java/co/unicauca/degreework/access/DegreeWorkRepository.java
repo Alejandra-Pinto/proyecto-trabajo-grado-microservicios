@@ -9,11 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface DegreeWorkRepository extends JpaRepository<DegreeWork, Long> {
     @Query("""
-           SELECT d FROM DegreeWork d
+           SELECT d FROM DegreeWork  d
            WHERE d.directorProyecto.email = :teacherEmail
-              OR :teacherEmail IN (
-                  SELECT c.email FROM d.codirectoresProyecto c
-              )
            """)
     List<DegreeWork> listByTeacher(String teacherEmail);
 }

@@ -7,13 +7,22 @@ import lombok.Data;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * DTO usado para crear o actualizar trabajos de grado.
+ * Incluye la información básica del trabajo, participantes
+ * y los documentos asociados (Formatos A, Anteproyectos y Cartas de Aceptación).
+ */
 @Data
 public class DegreeWorkDTO {
-    private int id;
+
+    private Long id;
+
+    // Participantes
     private List<Integer> estudiantesIds;
-    private int directorId;
+    private Long directorId;
     private List<Integer> codirectoresIds;
 
+    // Información general del trabajo
     private String titulo;
     private EnumModalidad modalidad;
     private LocalDate fechaActual;
@@ -22,4 +31,9 @@ public class DegreeWorkDTO {
 
     private EnumEstadoDegreeWork estado;
     private String correcciones;
+
+    // Documentos asociados
+    private List<DocumentDTO> formatosA;
+    private List<DocumentDTO> anteproyectos;
+    private List<DocumentDTO> cartasAceptacion;
 }
