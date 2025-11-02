@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane id="AnchorPane" prefHeight="804.0" prefWidth="1552.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.unicauca.front.controller.ManagementAdminController">
+
+   <children>
+      <Pane prefHeight="804.0" prefWidth="1552.0" style="-fx-background-color: #0F3EA4;">
+         <children>
+            <SplitPane dividerPositions="0.2709030100334448" layoutY="115.0" prefHeight="680.0" prefWidth="1552.0">
+              <items>
+                <!-- Panel izquierdo -->
+                <AnchorPane prefHeight="732.0" prefWidth="467.0" style="-fx-background-color: fafafa;">
+                     <children>
+                        <ImageView fitHeight="176.0" fitWidth="480.0" layoutX="-1.0" layoutY="524.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@images/bandera.png" />
+                           </image>
+                        </ImageView>
+                        <ToggleButton fx:id="btnUsuario" mnemonicParsing="false" onAction="#onBtnUsuarioClicked" prefHeight="101.0" prefWidth="468.0" text="Administrador" textFill="#111f63">
+                           <graphic>
+                              <ImageView fitHeight="51.0" fitWidth="51.0" preserveRatio="true">
+                                 <image>
+                                    <Image url="@images/gente2.png" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                           <font>
+                              <Font name="System Bold" size="16.0" />
+                           </font>
+                        </ToggleButton>
+                        <ToggleButton fx:id="btnFormatoPropuesta" layoutY="101.0" mnemonicParsing="false" prefHeight="101.0" prefWidth="468.0" text="Gestión de Coordinadores">
+                           <graphic>
+                              <ImageView fitHeight="51.0" fitWidth="51.0" preserveRatio="true">
+                                 <image>
+                                    <Image url="@images/coordinadores.png" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                           <font>
+                              <Font size="16.0" />
+                           </font>
+                        </ToggleButton>
+                     </children>
+                  </AnchorPane>
+      
+                <!-- Panel derecho -->
+                <AnchorPane prefHeight="690.0" prefWidth="1077.0">
+                     <children>
+                        <Label layoutX="37.0" layoutY="14.0" text="GESTIÓN DE COORDINADORES">
+                           <font>
+                              <Font name="System Bold" size="44.0" />
+                           </font>
+                        </Label>
+      
+                        <ImageView fitHeight="695.0" fitWidth="291.0" layoutX="692.0" layoutY="13.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@images/antorcha.png" />
+                           </image>
+                        </ImageView>
+                        <HBox layoutX="21.0" layoutY="306.0" spacing="5" />
+                        <Button fx:id="btnGuardar" layoutX="821.0" layoutY="611.0" mnemonicParsing="false" onAction="#onGuardarCambios" style="-fx-background-color: #111F63;" text="GUARDAR CAMBIOS" textFill="WHITE">
+                           <font>
+                              <Font name="System Bold" size="16.0" />
+                           </font>
+                        </Button>
+                        <TableView fx:id="tblCoordinadores" layoutX="78.0" layoutY="96.0" prefHeight="470.0" prefWidth="920.0">
+                          <columns>
+                            <TableColumn fx:id="colCorreo" prefWidth="147.9999294281006" text="CORREO" />
+                            <TableColumn fx:id="colNombre" prefWidth="151.20001220703125" text="NOMBRE" />
+                            <TableColumn fx:id="colEstado" prefWidth="136.0" text="ESTADO" />
+                          </columns>
+                        </TableView>
+                     </children>
+                  </AnchorPane>
+              </items>
+            </SplitPane>
+
+            <ImageView fitHeight="85.0" fitWidth="160.0" layoutX="60.0" layoutY="20.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@images/logo.png" />
+               </image>
+            </ImageView>
+            <Button layoutX="1370.0" layoutY="40.0" onAction="#handleLogout" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14; -fx-border-color: white; -fx-border-width: 1; -fx-border-radius: 5;" text="Cerrar Sesión" />
+         </children>
+      </Pane>
+   </children>
+</AnchorPane>

@@ -1,0 +1,59 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: apiGateway
+
+  cloud:
+    gateway:
+      routes:
+        - id: proyecto-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/proyectos/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: proyectoServiceCircuitBreaker
+                fallbackUri: forward:/fallback/proyectos
+
+        - id: usuario-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/usuarios/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: usuarioServiceCircuitBreaker
+                fallbackUri: forward:/fallback/usuarios
+
+        - id: evaluacion-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/evaluaciones/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: evaluacionServiceCircuitBreaker
+                fallbackUri: forward:/fallback/evaluaciones
+
+        - id: reporte-service
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/reportes/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: reporteServiceCircuitBreaker
+                fallbackUri: forward:/fallback/reportes
+
+        - id: notificacion-service
+          uri: http://localhost:8085
+          predicates:
+            - Path=/api/notificaciones/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: notificacionServiceCircuitBreaker
+                fallbackUri: forward:/fallback/notificaciones

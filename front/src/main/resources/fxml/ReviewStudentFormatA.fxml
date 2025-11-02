@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane id="AnchorPane" prefHeight="804.0" prefWidth="1552.0" style="-fx-background-color: #0f3ea4;" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.unicauca.front.controller.ReviewStudentFormatAController">
+   <children>
+      <SplitPane fx:id="splitMain" dividerPositions="0.3047895500725689" layoutY="115.0" prefHeight="710.0" prefWidth="1552.0">
+        <items>
+          <!-- Panel izquierdo -->
+          <AnchorPane fx:id="panelIzquierdo" minHeight="0.0" minWidth="0.0" prefHeight="682.0" prefWidth="427.0">
+               <children>
+                  <ImageView fx:id="imgBandera" fitHeight="181.0" fitWidth="471.0" layoutX="-7.0" layoutY="530.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@images/bandera.png" />
+                     </image>
+                  </ImageView>
+
+                  <ToggleButton fx:id="btnUsuario" mnemonicParsing="false" onAction="#onBtnUsuarioClicked" prefHeight="101.0" prefWidth="468.0" text="Estudiante" textFill="#111f63">
+                     <graphic>
+                        <ImageView fitHeight="51.0" fitWidth="51.0" preserveRatio="true">
+                           <image>
+                              <Image url="@images/gente2.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                     <font>
+                        <Font name="System Bold" size="16.0" />
+                     </font>
+                  </ToggleButton>
+
+                  <ToggleButton fx:id="btnFormatoPropuesta" layoutY="101.0" mnemonicParsing="false" onAction="#onBtnFormatoEstudianteClicked" prefHeight="101.0" prefWidth="468.0" text="Formato de Propuesta">
+                     <graphic>
+                        <ImageView fitHeight="51.0" fitWidth="51.0" preserveRatio="true">
+                           <image>
+                              <Image url="@images/carpeta2.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                     <font>
+                        <Font size="16.0" />
+                     </font>
+                  </ToggleButton>
+
+                  <ToggleButton fx:id="btnAnteproyecto" layoutY="202.0" mnemonicParsing="false" prefHeight="101.0" prefWidth="468.0" text="Anteproyecto">
+                     <graphic>
+                        <ImageView fitHeight="51.0" fitWidth="51.0" preserveRatio="true">
+                           <image>
+                              <Image url="@images/birrete2.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                     <font>
+                        <Font size="16.0" />
+                     </font>
+                  </ToggleButton>
+               </children>
+            </AnchorPane>
+
+          <!-- Panel derecho -->
+          <AnchorPane fx:id="panelDerecho" minHeight="0.0" minWidth="0.0" prefHeight="682.0" prefWidth="427.0">
+               <children>
+                  <ImageView fitHeight="695.0" fitWidth="291.0" layoutX="692.0" layoutY="13.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@images/antorcha.png" />
+                     </image>
+                  </ImageView>
+                  <Label fx:id="lblTitulo" layoutX="57.0" layoutY="41.0" text="CORRECIONES DE LA PROPUESTA">
+                     <font>
+                        <Font name="System Bold" size="44.0" />
+                     </font>
+                  </Label>
+
+                  <Label fx:id="lblEstadoTitulo" layoutX="62.0" layoutY="134.0" text="ESTADO:">
+                     <font>
+                        <Font name="System Bold" size="22.0" />
+                     </font>
+                  </Label>
+
+                  <Label fx:id="lblEstadoValor" layoutX="203.0" layoutY="134.0" text="RECHAZADO" textFill="#a01f18">
+                     <font>
+                        <Font name="System Bold" size="22.0" />
+                     </font>
+                  </Label>
+
+                  <TextArea fx:id="txtCorrecciones" layoutX="63.0" layoutY="226.0" prefHeight="300.0" prefWidth="940.0" />
+
+                  <Label fx:id="lblComite" layoutX="845.0" layoutY="556.0" text="Comité Evaluador">
+                     <font>
+                        <Font size="16.0" />
+                     </font></Label>
+               </children>
+            </AnchorPane>
+        </items>
+      </SplitPane>
+
+      <ImageView fx:id="imgLogo" fitHeight="85.0" fitWidth="160.0" layoutX="60.0" layoutY="20.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@images/logo.png" />
+         </image>
+      </ImageView>
+      <Button layoutX="1370.0" layoutY="40.0" onAction="#handleLogout" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14; -fx-border-color: white; -fx-border-width: 1; -fx-border-radius: 5;" text="Cerrar Sesión" />
+   </children>
+</AnchorPane>

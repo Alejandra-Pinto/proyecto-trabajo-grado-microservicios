@@ -1,0 +1,191 @@
+package com.unicauca.front.util;
+
+import com.unicauca.front.controller.HomeController;
+import com.unicauca.front.controller.ManagementStudentFormatAController;
+import com.unicauca.front.controller.ManagementTeacherFormatAController;
+import com.unicauca.front.controller.StudentReviewFormatAController;
+import com.unicauca.front.controller.TeacherReviewFormatAController;
+import com.unicauca.front.model.DegreeWork;
+import com.unicauca.front.model.User;
+import java.io.IOException;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Component;
+
+@Component
+public class NavigationController {
+   private final ApplicationContext applicationContext;
+   private Stage primaryStage;
+
+   public NavigationController(ApplicationContext applicationContext) {
+      this.applicationContext = applicationContext;
+   }
+
+   public void setPrimaryStage(Stage primaryStage) {
+      this.primaryStage = primaryStage;
+   }
+
+   public void showLogin() {
+      this.loadFXML("/fxml/Login.fxml", "Iniciar Sesión");
+   }
+
+   public void showRegister() {
+      this.loadFXML("/fxml/Register.fxml", "Registrar Usuario");
+   }
+
+   public void showHomeAdmin() {
+      this.loadFXML("/fxml/HomeAdmin.fxml", "Panel de Administración");
+   }
+
+   public void showHome() {
+      this.loadFXML("/fxml/Home.fxml", "Inicio");
+   }
+
+   public void showManagementAdmin() {
+      this.loadFXML("/fxml/ManagementAdmin.fxml", "Gestión Administradores");
+   }
+
+   public void showManagementStudentFormatA() {
+      this.loadFXML("/fxml/ManagementStudentFormatA.fxml", "Gestión Estudiantes Formato A");
+   }
+
+   // ✅ NUEVO: Método para mostrar ManagementStudentFormatA con usuario
+   public void showManagementStudentFormatA(User usuario) {
+      try {
+         FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/ManagementStudentFormatA.fxml"));
+         ApplicationContext var10001 = this.applicationContext;
+         loader.setControllerFactory(var10001::getBean);
+         Parent root = (Parent)loader.load();
+         ManagementStudentFormatAController controller = (ManagementStudentFormatAController)loader.getController();
+         controller.configurarConUsuario(usuario);
+         Scene scene = new Scene(root);
+         this.primaryStage.setScene(scene);
+         this.primaryStage.setTitle("Gestión Estudiantes Formato A");
+         this.primaryStage.show();
+      } catch (IOException var7) {
+         throw new RuntimeException("Error cargando ManagementStudentFormatA", var7);
+      }
+   }
+
+   public void showManagementTeacherFormatA() {
+      this.loadFXML("/fxml/ManagementTeacherFormatA.fxml", "Gestión Profesores Formato A");
+   }
+
+   public void showManagementTeacherFormatAWithFormato(User usuario, DegreeWork formato) {
+    try {
+        FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/ManagementTeacherFormatA.fxml"));
+        loader.setControllerFactory(applicationContext::getBean);
+        Parent root = loader.load();
+        
+        ManagementTeacherFormatAController controller = loader.getController();
+        controller.configurarConUsuario(usuario);
+        controller.configurarConFormato(formato);
+        controller.deshabilitarCamposFijos(); // Para re-subir
+        
+        Scene scene = new Scene(root);
+        this.primaryStage.setScene(scene);
+        this.primaryStage.setTitle("Re-subir Formato A - Docente");
+        this.primaryStage.show();
+    } catch (IOException e) {
+        throw new RuntimeException("Error cargando ManagementTeacherFormatA con formato", e);
+    }
+}
+
+   public void showManagementCoordinatorFormatA() {
+      this.loadFXML("/fxml/ManagementCoordinatorFormatA.fxml", "Gestión Coordinadores Formato A");
+   }
+
+   public void showReviewStudentFormatA() {
+      this.loadFXML("/fxml/ReviewStudentFormatA.fxml", "Revisión Estudiantes Formato A");
+   }
+
+   // ✅ NUEVO: Método para mostrar ReviewStudentFormatA con usuario y formato
+   public void showStudentReviewFormatA(User usuario, DegreeWork formato) {
+      try {
+         FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/StudentReviewFormatA.fxml"));
+         ApplicationContext var10001 = this.applicationContext;
+         loader.setControllerFactory(var10001::getBean);
+         Parent root = (Parent)loader.load();
+         StudentReviewFormatAController controller = (StudentReviewFormatAController)loader.getController();
+         controller.setUsuarioYFormato(usuario, formato);
+         Scene scene = new Scene(root);
+         this.primaryStage.setScene(scene);
+         this.primaryStage.setTitle("Revisión de Correcciones - Formato A");
+         this.primaryStage.show();
+      } catch (IOException var7) {
+         throw new RuntimeException("Error cargando StudentReviewFormatA", var7);
+      }
+   }
+
+   public void showTeacherReviewFormatA(User usuario, DegreeWork formato) {
+      try {
+         FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/TeacherReviewFormatA.fxml"));
+         loader.setControllerFactory(applicationContext::getBean);
+         Parent root = loader.load();
+         
+         TeacherReviewFormatAController controller = loader.getController();
+         controller.setUsuarioYFormato(usuario, formato);
+         
+         Scene scene = new Scene(root);
+         this.primaryStage.setScene(scene);
+         this.primaryStage.setTitle("Revisión de Correcciones - Docente");
+         this.primaryStage.show();
+      } catch (IOException e) {
+         throw new RuntimeException("Error cargando TeacherReviewFormatA", e);
+      }
+   }
+
+   public void showReviewCoordinatorFormatA() {
+      this.loadFXML("/fxml/ReviewCoordinatorFormatA.fxml", "Revisión Coordinadores Formato A");
+   }
+
+   public void showPublishedTeacherFormatA() {
+      this.loadFXML("/fxml/PublishedTeacherFormatA.fxml", "Formatos A Publicados");
+   }
+
+   public void showPersonalInformation() {
+      this.loadFXML("/fxml/PersonalInformation.fxml", "Información Personal");
+   }
+
+   // ✅ NUEVO: Método para mostrar perfil de usuario
+   public void showUserProfile(User usuario) {
+      this.loadFXML("/fxml/PersonalInformation.fxml", "Información Personal");
+      // Si necesitas pasar el usuario al controlador de información personal, 
+      // puedes implementarlo similar a showHomeWithUser
+   }
+
+   public void showHomeWithUser(User usuario) {
+      try {
+         FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/Home.fxml"));
+         ApplicationContext var10001 = this.applicationContext;
+         loader.setControllerFactory(var10001::getBean);
+         Parent root = (Parent)loader.load();
+         HomeController homeController = (HomeController)loader.getController();
+         homeController.configurarConUsuario(usuario);
+         Scene scene = new Scene(root);
+         this.primaryStage.setScene(scene);
+         this.primaryStage.setTitle("Inicio - Workflow");
+         this.primaryStage.show();
+      } catch (IOException var7) {
+         throw new RuntimeException("Error cargando Home", var7);
+      }
+   }
+
+   private void loadFXML(String fxmlPath, String title) {
+      try {
+         FXMLLoader loader = new FXMLLoader(this.getClass().getResource(fxmlPath));
+         ApplicationContext var10001 = this.applicationContext;
+         loader.setControllerFactory(var10001::getBean);
+         Parent root = (Parent)loader.load();
+         Scene scene = new Scene(root);
+         this.primaryStage.setScene(scene);
+         this.primaryStage.setTitle(title);
+         this.primaryStage.show();
+      } catch (IOException var7) {
+         throw new RuntimeException("Error cargando: " + fxmlPath, var7);
+      }
+   }
+}
