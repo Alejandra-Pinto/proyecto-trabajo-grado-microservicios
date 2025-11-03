@@ -1,6 +1,6 @@
-package com.unicauca.front.model;
+package com.example.evaluation.entity.enums;
 
-public enum EstadoFormatoA {
+public enum EnumEstadoDocument {
     PRIMERA_EVALUACION,
     SEGUNDA_EVALUACION,
     TERCERA_EVALUACION,

@@ -1,11 +1,12 @@
 package com.unicauca.front.model;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 public class DegreeWork {
 
-    private int id;
+    private Long id;
     private Student estudiante;
     private Teacher directorProyecto;
     private Teacher codirectorProyecto;
@@ -14,9 +15,13 @@ public class DegreeWork {
     private LocalDate fechaActual;
     private String objetivoGeneral;
     private List<String> objetivosEspecificos;
-    private String archivoPdf;
-    private String cartaAceptacionEmpresa; 
-    private EstadoFormatoA estado;
+    
+    //listas de documentos
+    private List<Document> formatosA = new ArrayList<>();
+    private List<Document> anteproyectos = new ArrayList<>();
+    private List<Document> cartasAceptacion = new ArrayList<>();
+
+    private EnumEstadoDegreeWork estado;
     private String correcciones;
     private int noAprobadoCount;
 
@@ -32,8 +37,8 @@ public class DegreeWork {
     }
 
     //Getters y Setters
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
     public Student getEstudiante() { return estudiante; }
     public void setEstudiante(Student estudiante) { this.estudiante = estudiante; }
@@ -59,14 +64,10 @@ public class DegreeWork {
     public List<String> getObjetivosEspecificos() { return objetivosEspecificos; }
     public void setObjetivosEspecificos(List<String> objetivosEspecificos) { this.objetivosEspecificos = objetivosEspecificos; }
 
-    public String getArchivoPdf() { return archivoPdf; }
-    public void setArchivoPdf(String archivoPdf) { this.archivoPdf = archivoPdf; }
+    
 
-    public String getCartaAceptacionEmpresa() { return cartaAceptacionEmpresa; }
-    public void setCartaAceptacionEmpresa(String cartaAceptacionEmpresa) { this.cartaAceptacionEmpresa = cartaAceptacionEmpresa; }
-
-    public EstadoFormatoA getEstado() { return estado; }
-    public void setEstado(EstadoFormatoA estado) { this.estado = estado; }
+    public EnumEstadoDegreeWork getEstado() { return estado; }
+    public void setEstado(EnumEstadoDegreeWork estado) { this.estado = estado; }
 
     public String getCorrecciones() { return correcciones; }
     public void setCorrecciones(String correcciones) { this.correcciones = correcciones; }
@@ -74,6 +75,18 @@ public class DegreeWork {
     public int getNoAprobadoCount() { return noAprobadoCount; }
     public void setNoAprobadoCount(int noAprobadoCount) { this.noAprobadoCount = noAprobadoCount; }
 
+
+     // Getters y Setters para documentos
+    public List<Document> getFormatosA() { return formatosA; }
+    public void setFormatosA(List<Document> formatosA) { this.formatosA = formatosA; }
+
+    public List<Document> getAnteproyectos() { return anteproyectos; }
+    public void setAnteproyectos(List<Document> anteproyectos) { this.anteproyectos = anteproyectos; }
+
+    public List<Document> getCartasAceptacion() { return cartasAceptacion; }
+    public void setCartasAceptacion(List<Document> cartasAceptacion) { this.cartasAceptacion = cartasAceptacion; }
+
+    
     @Override
     public String toString() {
         return "DegreeWork{" +

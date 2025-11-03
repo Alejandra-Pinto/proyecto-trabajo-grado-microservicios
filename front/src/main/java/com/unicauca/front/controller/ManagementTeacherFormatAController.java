@@ -2,7 +2,8 @@ package com.unicauca.front.controller;
 
 import com.unicauca.front.dto.DegreeWorkDTO;
 import com.unicauca.front.model.DegreeWork;
-import com.unicauca.front.model.EstadoFormatoA;
+import com.unicauca.front.model.Document;
+import com.unicauca.front.model.EnumEstadoDegreeWork;
 import com.unicauca.front.model.Modalidad;
 import com.unicauca.front.model.Student;
 import com.unicauca.front.model.Teacher;
@@ -159,12 +160,19 @@ public class ManagementTeacherFormatAController {
                 txtObjetivosEspecificos.setText(String.join(";", formato.getObjetivosEspecificos()));
             }
             
-            txtArchivoAdjunto.setText(formato.getArchivoPdf() != null ? formato.getArchivoPdf() : "");
+            // Usar método helper para archivo PDF
+            txtArchivoAdjunto.setText(obtenerArchivoPdf(formato));
             
-            if ("PRACTICA_PROFESIONAL".equals(cbModalidad.getValue()) && formato.getCartaAceptacionEmpresa() != null) {
-                txtCartaAceptacion.setText(formato.getCartaAceptacionEmpresa());
+            // Usar método helper para carta de aceptación
+            if ("PRACTICA_PROFESIONAL".equals(cbModalidad.getValue())) {
+                String carta = obtenerCartaAceptacion(formato);
+                txtCartaAceptacion.setText(carta);
                 lblCartaAceptacion.setVisible(true);
                 hbCartaAceptacion.setVisible(true);
+            } else {
+                lblCartaAceptacion.setVisible(false);
+                hbCartaAceptacion.setVisible(false);
+                txtCartaAceptacion.setText("");
             }
 
         } catch (Exception e) {
@@ -173,6 +181,23 @@ public class ManagementTeacherFormatAController {
         }
     }
 
+    // Método helper para obtener archivo PDF desde Formato A
+    private String obtenerArchivoPdf(DegreeWork formato) {
+        if (formato.getFormatosA() != null && !formato.getFormatosA().isEmpty()) {
+            Document formatoA = formato.getFormatosA().get(0);
+            return formatoA.getRutaArchivo() != null ? formatoA.getRutaArchivo() : "";
+        }
+        return "";
+    }
+
+    // Método helper para obtener carta de aceptación
+    private String obtenerCartaAceptacion(DegreeWork formato) {
+        if (formato.getCartasAceptacion() != null && !formato.getCartasAceptacion().isEmpty()) {
+            Document carta = formato.getCartasAceptacion().get(0);
+            return carta.getRutaArchivo() != null ? carta.getRutaArchivo() : "";
+        }
+        return "";
+    }
     @FXML
     private void onAdjuntarDocumento() {
         FileChooser fileChooser = new FileChooser();
@@ -255,7 +280,7 @@ public class ManagementTeacherFormatAController {
             }
             
             // Estado inicial
-            dto.setEstado(EstadoFormatoA.PRIMERA_EVALUACION.toString());
+            dto.setEstado("FORMATO_A");
 
             // Enviar al microservicio - USAR DTO
             ResponseEntity<DegreeWork> response;
