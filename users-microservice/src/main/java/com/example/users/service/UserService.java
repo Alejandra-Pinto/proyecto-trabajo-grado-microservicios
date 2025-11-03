@@ -16,7 +16,6 @@ import com.example.users.entity.DepartmentHead;
 import com.example.users.entity.Student;
 import com.example.users.entity.Teacher;
 import com.example.users.entity.User;
-import com.example.users.infra.dto.UserRequest;
 import com.example.users.repository.UserRepository;
 import com.example.users.infra.dto.*;
 
@@ -116,7 +115,13 @@ public class UserService implements IUserService {
         return user;
     }
 
-
+    public String logout(String email) {
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            throw new IllegalArgumentException("Usuario no encontrado.");
+        }
+        return "Sesión cerrada correctamente para " + email;
+    }
 
 
     @Override

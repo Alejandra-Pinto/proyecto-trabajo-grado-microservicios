@@ -15,7 +15,7 @@ public class UserCreatedListener {
         this.userRepository = userRepository;
     }
 
-    @RabbitListener(queues = "user.created.queue")
+    @RabbitListener(queues = "users.queue")
     public void onUserCreated(UserCreatedEvent event) {
         User user = User.builder()
                 .id(event.getId())

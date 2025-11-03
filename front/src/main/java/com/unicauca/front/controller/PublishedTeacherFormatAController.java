@@ -48,14 +48,14 @@ public class PublishedTeacherFormatAController {
         usuarioActual = SessionManager.getCurrentUser();
         configurarInterfaz();
         
-        if (usuarioActual != null && "TEACHER".equalsIgnoreCase(usuarioActual.getRole())) {
+        if (usuarioActual != null && "PROFESSOR".equalsIgnoreCase(usuarioActual.getRole())) {
             cargarFormatosDelDocente();
         }
     }
 
     public void configurarConUsuario(User usuario) {
         this.usuarioActual = usuario;
-        if (usuario != null && "TEACHER".equalsIgnoreCase(usuario.getRole())) {
+        if (usuario != null && "PROFESSOR".equalsIgnoreCase(usuario.getRole())) {
             configurarBotonesDocente();
             cargarFormatosDelDocente();
         }
@@ -302,22 +302,22 @@ public class PublishedTeacherFormatAController {
 
     @FXML
     private void onBtnFormatoDocenteClicked() {
-        if (usuarioActual != null && "TEACHER".equalsIgnoreCase(usuarioActual.getRole())) {
+        if (usuarioActual != null && "PROFESSOR".equalsIgnoreCase(usuarioActual.getRole())) {
             cargarFormatosDelDocente();
         }
     }
 
     @FXML
     private void onBtnAnteproyectoDocenteClicked() {
-        if (usuarioActual != null && "TEACHER".equalsIgnoreCase(usuarioActual.getRole())) {
+        if (usuarioActual != null && "PROFESSOR".equalsIgnoreCase(usuarioActual.getRole())) {
             navigation.showManagementTeacherFormatA();
         }
     }
 
     @FXML
     private void onAgregarPropuesta() {
-        if (usuarioActual != null && "TEACHER".equalsIgnoreCase(usuarioActual.getRole())) {
-            navigation.showManagementTeacherFormatA();
+        if (usuarioActual != null && "PROFESSOR".equalsIgnoreCase(usuarioActual.getRole())) {
+            navigation.showManagementTeacherFormatAWithFormato(usuarioActual, null);
         }
     }
 

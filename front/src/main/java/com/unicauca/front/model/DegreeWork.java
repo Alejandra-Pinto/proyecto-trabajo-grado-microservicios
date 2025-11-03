@@ -5,7 +5,7 @@ import java.util.List;
 
 public class DegreeWork {
 
-    private int id;
+    private Long id;
     private Student estudiante;
     private Teacher directorProyecto;
     private Teacher codirectorProyecto;
@@ -16,7 +16,7 @@ public class DegreeWork {
     private List<String> objetivosEspecificos;
     private String archivoPdf;
     private String cartaAceptacionEmpresa; 
-    private EstadoFormatoA estado;
+    private EnumEstadoDegreeWork estado;
     private String correcciones;
     private int noAprobadoCount;
 
@@ -32,8 +32,8 @@ public class DegreeWork {
     }
 
     //Getters y Setters
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
     public Student getEstudiante() { return estudiante; }
     public void setEstudiante(Student estudiante) { this.estudiante = estudiante; }
@@ -65,8 +65,8 @@ public class DegreeWork {
     public String getCartaAceptacionEmpresa() { return cartaAceptacionEmpresa; }
     public void setCartaAceptacionEmpresa(String cartaAceptacionEmpresa) { this.cartaAceptacionEmpresa = cartaAceptacionEmpresa; }
 
-    public EstadoFormatoA getEstado() { return estado; }
-    public void setEstado(EstadoFormatoA estado) { this.estado = estado; }
+    public EnumEstadoDegreeWork getEstado() { return estado; }
+    public void setEstado(EnumEstadoDegreeWork estado) { this.estado = estado; }
 
     public String getCorrecciones() { return correcciones; }
     public void setCorrecciones(String correcciones) { this.correcciones = correcciones; }
