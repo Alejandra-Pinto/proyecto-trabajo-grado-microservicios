@@ -2,6 +2,7 @@ package com.example.evaluation.service;
 
 import com.example.evaluation.entity.Document;
 import com.example.evaluation.entity.Evaluation;
+import com.example.evaluation.infra.messaging.EvaluationPublisher;
 import com.example.evaluation.entity.Evaluador;
 import com.example.evaluation.repository.DocumentRepository;
 import com.example.evaluation.repository.EvaluationRepository;
@@ -23,6 +24,8 @@ public class EvaluacionService {
 
     @Autowired
     private EvaluadorRepository evaluadorRepository;
+    @Autowired
+    private EvaluationPublisher evaluationPublisher;
 
     // ✅ Crear evaluación (ahora usando correo del evaluador)
     public Evaluation crearEvaluacion(Long documentId, String evaluadorCorreo, String resultado, String tipo) {
@@ -39,7 +42,18 @@ public class EvaluacionService {
         evaluacion.setType(tipo);
         evaluacion.setSentAt(LocalDateTime.now());
 
-        return evaluationRepository.save(evaluacion);
+        Evaluation saved = evaluationRepository.save(evaluacion);
+
+        // 🟢 Enviar evento al exchange
+        com.example.evaluation.infra.dto.EvaluationRequestDTO dto = new com.example.evaluation.infra.dto.EvaluationRequestDTO();
+        dto.setDocumentId(documentId);
+        dto.setEvaluadorCorreo(evaluadorCorreo);
+        dto.setResultado(resultado);
+        dto.setTipo(tipo);
+
+        evaluationPublisher.publicarEvaluacion(dto);
+
+        return saved;
     }
 
     // ✅ Listar todas las evaluaciones

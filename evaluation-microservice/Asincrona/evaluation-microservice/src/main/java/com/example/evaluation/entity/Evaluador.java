@@ -1,18 +1,21 @@
 package com.example.evaluation.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 @Entity
+@Table(name = "evaluador", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "correo", name = "uk_evaluador_correo")
+})
 public class Evaluador {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String nombre;
-    private String rol; // "Profesor" o "Coordinador"
+
+    private String rol; // "Profesor", "Coordinador", "Director", "Codirector"
+
+    @Column(unique = true, nullable = false)
     private String correo;
 
     public Evaluador() {

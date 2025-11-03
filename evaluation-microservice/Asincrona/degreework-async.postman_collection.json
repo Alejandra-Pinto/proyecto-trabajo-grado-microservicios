@@ -1,8 +1,8 @@
 {
   "info": {
     "_postman_id": "caa8b9e2-3f54-4b0a-9f1b-4e5c12345678",
-    "name": "Evaluation Microservice - Full Test",
-    "description": "Colección completa para probar los controladores EvaluationController y DegreeWorkController del microservicio de evaluación.",
+    "name": "Evaluation Microservice - Actualizado (Búsqueda por Correo)",
+    "description": "Colección completa actualizada para probar el microservicio de evaluación. Los endpoints ahora utilizan correos electrónicos en lugar de IDs para las búsquedas.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -18,7 +18,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"documentId\": 1,\n  \"evaluadorId\": 3,\n  \"resultado\": \"APROBADO\",\n  \"tipo\": \"ANTEPROYECTO\"\n}"
+              "raw": "{\n  \"documentId\": 2,\n  \"evaluadorCorreo\": \"carlos.garcia@unicauca.edu.co\",\n  \"resultado\": \"APROBADO\",\n  \"tipo\": \"ANTEPROYECTO\"\n}"
             },
             "url": {
               "raw": "http://localhost:8083/api/evaluations",
@@ -26,11 +26,54 @@
               "host": ["localhost"],
               "port": "8083",
               "path": ["api", "evaluations"]
-            }
+            },
+            "description": "Crea una nueva evaluación usando el correo del evaluador. Ejemplo con Dr. Carlos García."
           }
         },
         {
-          "name": "Listar Evaluaciones",
+          "name": "Crear Evaluación - Codirector 1",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documentId\": 2,\n  \"evaluadorCorreo\": \"laura.torres@unicauca.edu.co\",\n  \"resultado\": \"APROBADO_CON_CORRECCIONES\",\n  \"tipo\": \"ANTEPROYECTO\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8083/api/evaluations",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "evaluations"]
+            },
+            "description": "Ejemplo de evaluación con correcciones por MSc. Laura Torres."
+          }
+        },
+        {
+          "name": "Crear Evaluación - Codirector 2",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documentId\": 1,\n  \"evaluadorCorreo\": \"mateo.rojas@unicauca.edu.co\",\n  \"resultado\": \"NO_APROBADO\",\n  \"tipo\": \"FORMATO_A\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8083/api/evaluations",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "evaluations"]
+            },
+            "description": "Ejemplo de evaluación no aprobada por Ing. Mateo Rojas."
+          }
+        },
+        {
+          "name": "Listar Todas las Evaluaciones",
           "request": {
             "method": "GET",
             "url": {
@@ -39,20 +82,50 @@
               "host": ["localhost"],
               "port": "8083",
               "path": ["api", "evaluations"]
-            }
+            },
+            "description": "Obtiene todas las evaluaciones registradas en el sistema."
           }
         },
         {
-          "name": "Obtener Evaluación por ID",
+          "name": "Obtener Evaluaciones por Correo del Evaluador - Director",
           "request": {
             "method": "GET",
             "url": {
-              "raw": "http://localhost:8083/api/evaluations/1",
+              "raw": "http://localhost:8083/api/evaluations/evaluador/carlos.garcia@unicauca.edu.co",
               "protocol": "http",
               "host": ["localhost"],
               "port": "8083",
-              "path": ["api", "evaluations", "1"]
-            }
+              "path": ["api", "evaluations", "evaluador", "carlos.garcia@unicauca.edu.co"]
+            },
+            "description": "Obtiene todas las evaluaciones realizadas por Dr. Carlos García usando su correo."
+          }
+        },
+        {
+          "name": "Obtener Evaluaciones por Correo - Codirector 1",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:8083/api/evaluations/evaluador/laura.torres@unicauca.edu.co",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "evaluations", "evaluador", "laura.torres@unicauca.edu.co"]
+            },
+            "description": "Obtiene todas las evaluaciones realizadas por MSc. Laura Torres."
+          }
+        },
+        {
+          "name": "Obtener Evaluaciones por Correo - Codirector 2",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:8083/api/evaluations/evaluador/mateo.rojas@unicauca.edu.co",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "evaluations", "evaluador", "mateo.rojas@unicauca.edu.co"]
+            },
+            "description": "Obtiene todas las evaluaciones realizadas por Ing. Mateo Rojas."
           }
         },
         {
@@ -65,7 +138,8 @@
               "host": ["localhost"],
               "port": "8083",
               "path": ["api", "evaluations", "1"]
-            }
+            },
+            "description": "Elimina una evaluación específica por su ID interno (este endpoint aún usa ID)."
           }
         }
       ]
@@ -83,7 +157,8 @@
               "host": ["localhost"],
               "port": "8083",
               "path": ["api", "degreeworks"]
-            }
+            },
+            "description": "Obtiene todos los trabajos de grado registrados en el sistema."
           }
         },
         {
@@ -96,37 +171,72 @@
               "host": ["localhost"],
               "port": "8083",
               "path": ["api", "degreeworks", "anteproyectos"]
-            }
+            },
+            "description": "Obtiene únicamente los trabajos de grado que están en estado de anteproyecto."
           }
         },
         {
-          "name": "Obtener Trabajo de Grado por ID",
+          "name": "Obtener Trabajo de Grado por Correo del Estudiante - Dana",
           "request": {
             "method": "GET",
             "url": {
-              "raw": "http://localhost:8083/api/degreeworks/1",
+              "raw": "http://localhost:8083/api/degreeworks/correo/dana.romero@unicauca.edu.co",
               "protocol": "http",
               "host": ["localhost"],
               "port": "8083",
-              "path": ["api", "degreeworks", "1"]
-            }
+              "path": ["api", "degreeworks", "correo", "dana.romero@unicauca.edu.co"]
+            },
+            "description": "Obtiene el trabajo de grado asociado al estudiante Dana Romero usando su correo."
           }
         },
         {
-          "name": "Asignar Evaluadores a un Trabajo de Grado",
+          "name": "Obtener Trabajo de Grado por Correo del Estudiante - Juan",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:8083/api/degreeworks/correo/juan.perez@unicauca.edu.co",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "degreeworks", "correo", "juan.perez@unicauca.edu.co"]
+            },
+            "description": "Obtiene el trabajo de grado asociado al estudiante Juan Pérez usando su correo."
+          }
+        },
+        {
+          "name": "Asignar Evaluadores a un Trabajo de Grado (por correos)",
           "request": {
             "method": "POST",
             "url": {
-              "raw": "http://localhost:8083/api/degreeworks/1/asignar-evaluadores?evaluador1Id=3&evaluador2Id=4",
+              "raw": "http://localhost:8083/api/degreeworks/1/asignar-evaluadores?correoEvaluador1=laura.torres@unicauca.edu.co&correoEvaluador2=mateo.rojas@unicauca.edu.co",
               "protocol": "http",
               "host": ["localhost"],
               "port": "8083",
               "path": ["api", "degreeworks", "1", "asignar-evaluadores"],
               "query": [
-                { "key": "evaluador1Id", "value": "3" },
-                { "key": "evaluador2Id", "value": "4" }
+                { "key": "correoEvaluador1", "value": "laura.torres@unicauca.edu.co" },
+                { "key": "correoEvaluador2", "value": "mateo.rojas@unicauca.edu.co" }
               ]
-            }
+            },
+            "description": "Asigna dos evaluadores a un trabajo de grado usando sus correos electrónicos. En este ejemplo se asignan MSc. Laura Torres e Ing. Mateo Rojas."
+          }
+        },
+        {
+          "name": "Asignar Evaluadores - Variante con Director",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:8083/api/degreeworks/1/asignar-evaluadores?correoEvaluador1=carlos.garcia@unicauca.edu.co&correoEvaluador2=laura.torres@unicauca.edu.co",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "degreeworks", "1", "asignar-evaluadores"],
+              "query": [
+                { "key": "correoEvaluador1", "value": "carlos.garcia@unicauca.edu.co" },
+                { "key": "correoEvaluador2", "value": "laura.torres@unicauca.edu.co" }
+              ]
+            },
+            "description": "Ejemplo alternativo asignando al director Dr. Carlos García y MSc. Laura Torres como evaluadores."
           }
         }
       ]
