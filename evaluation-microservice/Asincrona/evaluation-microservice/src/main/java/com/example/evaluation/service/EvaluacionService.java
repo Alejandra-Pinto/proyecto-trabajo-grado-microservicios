@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class EvaluacionService {
@@ -25,26 +24,14 @@ public class EvaluacionService {
     @Autowired
     private EvaluadorRepository evaluadorRepository;
 
-    /**
-     * Crear una nueva evaluación
-     */
-    public Evaluation crearEvaluacion(Long documentId, Long evaluadorId, String resultado, String tipo) {
-        // Buscar el documento y el evaluador
-        Optional<Document> optionalDocument = documentRepository.findById(documentId);
-        Optional<Evaluador> optionalEvaluador = evaluadorRepository.findById(evaluadorId);
+    // ✅ Crear evaluación (ahora usando correo del evaluador)
+    public Evaluation crearEvaluacion(Long documentId, String evaluadorCorreo, String resultado, String tipo) {
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new RuntimeException("❌ Documento no encontrado con ID: " + documentId));
 
-        // Validar existencia
-        if (optionalDocument.isEmpty()) {
-            throw new RuntimeException("❌ Documento no encontrado con ID: " + documentId);
-        }
-        if (optionalEvaluador.isEmpty()) {
-            throw new RuntimeException("❌ Evaluador no encontrado con ID: " + evaluadorId);
-        }
+        Evaluador evaluador = evaluadorRepository.findByCorreo(evaluadorCorreo)
+                .orElseThrow(() -> new RuntimeException("❌ Evaluador no encontrado con correo: " + evaluadorCorreo));
 
-        Document document = optionalDocument.get();
-        Evaluador evaluador = optionalEvaluador.get();
-
-        // Crear la nueva evaluación
         Evaluation evaluacion = new Evaluation();
         evaluacion.setDocument(document);
         evaluacion.setEvaluador(evaluador);
@@ -52,39 +39,26 @@ public class EvaluacionService {
         evaluacion.setType(tipo);
         evaluacion.setSentAt(LocalDateTime.now());
 
-        // ✅ Guardar la evaluación
-        Evaluation evaluacionGuardada = evaluationRepository.save(evaluacion);
-
-        // (Opcional) Si quieres actualizar algo en el documento o degreeWork:
-        // por ejemplo, cambiar su estado cuando se evalúa
-        /*
-         * if (document.getDegreeWork() != null) {
-         * document.getDegreeWork().setEstadoP(EstadoDegreeWork.EN_EVALUACION);
-         * documentRepository.save(document);
-         * }
-         */
-
-        return evaluacionGuardada;
+        return evaluationRepository.save(evaluacion);
     }
 
-    /**
-     * Listar todas las evaluaciones
-     */
+    // ✅ Listar todas las evaluaciones
     public List<Evaluation> listarEvaluaciones() {
         return evaluationRepository.findAll();
     }
 
-    /**
-     * Buscar una evaluación por su ID
-     */
+    // ✅ Buscar todas las evaluaciones realizadas por un evaluador (por correo)
+    public List<Evaluation> obtenerPorCorreoEvaluador(String correoEvaluador) {
+        return evaluationRepository.findByEvaluadorCorreo(correoEvaluador);
+    }
+
+    // ✅ Buscar evaluación por ID (opcional, aún útil para admin o pruebas)
     public Evaluation obtenerPorId(Long id) {
         return evaluationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Evaluación no encontrada con ID: " + id));
     }
 
-    /**
-     * Eliminar una evaluación por ID
-     */
+    // ✅ Eliminar evaluación por ID
     public void eliminarEvaluacion(Long id) {
         if (!evaluationRepository.existsById(id)) {
             throw new RuntimeException("La evaluación no existe");

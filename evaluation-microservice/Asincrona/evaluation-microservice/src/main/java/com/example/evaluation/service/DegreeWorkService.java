@@ -1,4 +1,3 @@
-
 package com.example.evaluation.service;
 
 import com.example.evaluation.entity.DegreeWork;
@@ -6,7 +5,6 @@ import com.example.evaluation.entity.Evaluador;
 import com.example.evaluation.entity.enums.EnumEstadoDegreeWork;
 import com.example.evaluation.repository.DegreeWorkRepository;
 import com.example.evaluation.repository.EvaluadorRepository;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,38 +19,40 @@ public class DegreeWorkService {
     @Autowired
     private EvaluadorRepository evaluadorRepository;
 
-    // Método para listar los anteproyectos
+    // ✅ Listar los anteproyectos
     public List<DegreeWork> listarAnteproyectos() {
         return degreeWorkRepository.findByEstado(EnumEstadoDegreeWork.ANTEPROYECTO);
     }
 
-    // Método para asignar evaluadores
-    public DegreeWork asignarEvaluadores(Integer degreeWorkId, Long evaluador1Id, Long evaluador2Id) {
-        // Buscar el trabajo de grado
-        DegreeWork degreeWork = degreeWorkRepository.findById(degreeWorkId)
-                .orElseThrow(() -> new RuntimeException("Trabajo de grado no encontrado"));
-
-        // Buscar los evaluadores
-        Evaluador evaluador1 = evaluadorRepository.findById(evaluador1Id)
-                .orElseThrow(() -> new RuntimeException("Evaluador 1 no encontrado"));
-        Evaluador evaluador2 = evaluadorRepository.findById(evaluador2Id)
-                .orElseThrow(() -> new RuntimeException("Evaluador 2 no encontrado"));
-
-        // Asignar los evaluadores al trabajo
-        degreeWork.setEvaluador1(evaluador1);
-        degreeWork.setEvaluador2(evaluador2);
-
-        // No tocamos el estado, se mantiene igual (por ejemplo ANTEPROYECTO)
-        return degreeWorkRepository.save(degreeWork);
-    }
-
+    // ✅ Listar todos los trabajos de grado
     public List<DegreeWork> listarTodos() {
         return degreeWorkRepository.findAll();
     }
 
-    public DegreeWork obtenerPorId(Integer id) {
-        return degreeWorkRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Trabajo de grado no encontrado"));
+    // ✅ Obtener trabajo de grado por correo del estudiante
+    public DegreeWork obtenerPorCorreo(String correo) {
+        return degreeWorkRepository.findByCorreoEstudiante(correo)
+                .orElseThrow(() -> new RuntimeException(
+                        "❌ No se encontró trabajo de grado del estudiante con correo: " + correo));
     }
 
+    // ✅ Asignar evaluadores por correo
+    public DegreeWork asignarEvaluadoresPorCorreo(Integer degreeWorkId, String correoEvaluador1,
+            String correoEvaluador2) {
+        // Buscar el trabajo de grado
+        DegreeWork degreeWork = degreeWorkRepository.findById(degreeWorkId)
+                .orElseThrow(() -> new RuntimeException("❌ Trabajo de grado no encontrado"));
+
+        // Buscar evaluadores por correo
+        Evaluador evaluador1 = evaluadorRepository.findByCorreo(correoEvaluador1)
+                .orElseThrow(() -> new RuntimeException("❌ Evaluador 1 no encontrado con correo: " + correoEvaluador1));
+        Evaluador evaluador2 = evaluadorRepository.findByCorreo(correoEvaluador2)
+                .orElseThrow(() -> new RuntimeException("❌ Evaluador 2 no encontrado con correo: " + correoEvaluador2));
+
+        // Asignar evaluadores
+        degreeWork.setEvaluador1(evaluador1);
+        degreeWork.setEvaluador2(evaluador2);
+
+        return degreeWorkRepository.save(degreeWork);
+    }
 }
