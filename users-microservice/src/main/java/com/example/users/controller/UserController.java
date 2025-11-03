@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.users.entity.User;
@@ -55,7 +56,11 @@ public class UserController {
         }
     }
 
-
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@RequestParam String email) {
+        String message = service.logout(email);
+        return ResponseEntity.ok(message);
+    }
 
     @GetMapping
     public List<User> getAll() {
