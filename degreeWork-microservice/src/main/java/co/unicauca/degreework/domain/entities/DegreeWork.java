@@ -81,4 +81,123 @@ public class DegreeWork {
     public void incrementNoAprobadoCount() {
         this.noAprobadoCount++;
     }
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public List<User> getEstudiantes() {
+        return estudiantes;
+    }
+
+    public void setEstudiantes(List<User> estudiantes) {
+        this.estudiantes = estudiantes;
+    }
+
+    public User getDirectorProyecto() {
+        return directorProyecto;
+    }
+
+    public void setDirectorProyecto(User directorProyecto) {
+        this.directorProyecto = directorProyecto;
+    }
+
+    public List<User> getCodirectoresProyecto() {
+        return codirectoresProyecto;
+    }
+
+    public void setCodirectoresProyecto(List<User> codirectoresProyecto) {
+        this.codirectoresProyecto = codirectoresProyecto;
+    }
+
+    public String getTitulo() {
+        return titulo;
+    }
+
+    public void setTitulo(String titulo) {
+        this.titulo = titulo;
+    }
+
+    public EnumModalidad getModalidad() {
+        return modalidad;
+    }
+
+    public void setModalidad(EnumModalidad modalidad) {
+        this.modalidad = modalidad;
+    }
+
+    public LocalDate getFechaActual() {
+        return fechaActual;
+    }
+
+    public void setFechaActual(LocalDate fechaActual) {
+        this.fechaActual = fechaActual;
+    }
+
+    public String getObjetivoGeneral() {
+        return objetivoGeneral;
+    }
+
+    public void setObjetivoGeneral(String objetivoGeneral) {
+        this.objetivoGeneral = objetivoGeneral;
+    }
+
+    public List<String> getObjetivosEspecificos() {
+        return objetivosEspecificos;
+    }
+
+    public void setObjetivosEspecificos(List<String> objetivosEspecificos) {
+        this.objetivosEspecificos = objetivosEspecificos;
+    }
+
+    public List<Document> getFormatosA() {
+        return formatosA;
+    }
+
+    public void setFormatosA(List<Document> formatosA) {
+        this.formatosA = formatosA;
+    }
+
+    public List<Document> getAnteproyectos() {
+        return anteproyectos;
+    }
+
+    public void setAnteproyectos(List<Document> anteproyectos) {
+        this.anteproyectos = anteproyectos;
+    }
+
+    public List<Document> getCartasAceptacion() {
+        return cartasAceptacion;
+    }
+
+    public void setCartasAceptacion(List<Document> cartasAceptacion) {
+        this.cartasAceptacion = cartasAceptacion;
+    }
+
+    public EnumEstadoDegreeWork getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EnumEstadoDegreeWork estado) {
+        this.estado = estado;
+    }
+
+    public int getNoAprobadoCount() {
+        return noAprobadoCount;
+    }
+
+    public void setNoAprobadoCount(int noAprobadoCount) {
+        this.noAprobadoCount = noAprobadoCount;
+    }
+
+    public String getCorrecciones() {
+        return correcciones;
+    }
+
+    public void setCorrecciones(String correcciones) {
+        this.correcciones = correcciones;
+    }
 }
