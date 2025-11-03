@@ -1,6 +1,9 @@
 package com.unicauca.front.controller;
 
+import com.unicauca.front.dto.EvaluationRequestDTO;
+import com.unicauca.front.dto.EvaluationResponseDTO;
 import com.unicauca.front.model.DegreeWork;
+import com.unicauca.front.model.Document;
 import com.unicauca.front.model.User;
 import com.unicauca.front.service.ApiGatewayService;
 import com.unicauca.front.util.NavigationController;
@@ -119,7 +122,8 @@ public class CoordinatorReviewFormatAController {
     public void configurarConUsuario(User usuario) {
         this.usuarioActual = usuario;
     }
-
+    //-------------------------------
+    //cargar datos del formato en la interfaz
     private void cargarDatosFormato() {
         if (formato == null) return;
 
@@ -128,14 +132,21 @@ public class CoordinatorReviewFormatAController {
             String modalidad = formato.getModalidad() != null ? formato.getModalidad().toString() : "";
             lblEstudiante.setText(estudiante + (modalidad.isEmpty() ? "" : " - " + modalidad));
 
-            //Archivo principal (Formato A)
-            String ruta = formato.getArchivoPdf() != null ? formato.getArchivoPdf() : "";
-            txtArchivoAdjunto.setText(ruta);
+            // Cargar información del documento (Formato A)
+            if (!formato.getFormatosA().isEmpty()) {
+                Document formatoA = formato.getFormatosA().get(0);
+                String ruta = formatoA.getRutaArchivo() != null ? formatoA.getRutaArchivo() : "";
+                txtArchivoAdjunto.setText(ruta);
+                
+                // Cargar evaluaciones existentes para este documento
+                cargarEvaluacionesDocumento(formatoA.getId());
+            }
 
-            //Si modalidad es PRACTICA_PROFESIONAL mostramos la carta
-            if ("PRACTICA_PROFESIONAL".equalsIgnoreCase(modalidad)) {
-                String carta = formato.getCartaAceptacionEmpresa() != null ? formato.getCartaAceptacionEmpresa() : "";
-
+            // Cargar carta de aceptación si aplica
+            if ("PRACTICA_PROFESIONAL".equalsIgnoreCase(modalidad) && !formato.getCartasAceptacion().isEmpty()) {
+                Document cartaDoc = formato.getCartasAceptacion().get(0);
+                String carta = cartaDoc.getRutaArchivo() != null ? cartaDoc.getRutaArchivo() : "";
+                
                 lblCartaEmpresa.setVisible(true);
                 txtCartaEmpresa.setVisible(true);
                 btnAbrirCartaEmpresa.setVisible(true);
@@ -146,40 +157,14 @@ public class CoordinatorReviewFormatAController {
                 btnAbrirCartaEmpresa.setVisible(false);
             }
 
-            //Cargar datos del formato
-            lblCargarTitulo.setText(formato.getTituloProyecto() != null ? formato.getTituloProyecto() : "No hay trabajo registrado");
-            lblCargarModalidad.setText(modalidad.isEmpty() ? "No disponible" : modalidad);
-            lblCargarFecha.setText(formato.getFechaActual() != null ? formato.getFechaActual().toString() : "No registrada");
-            lblCargarDirector.setText(formato.getDirectorProyecto() != null ? formato.getDirectorProyecto().getEmail() : "No definido");
-            lblCargarCodirector.setText(formato.getCodirectorProyecto() != null ? formato.getCodirectorProyecto().getEmail() : "No definido");
-            lblCargarObjetivoGeneral.setText(formato.getObjetivoGeneral() != null ? formato.getObjetivoGeneral() : "No definido");
-            
-            if (formato.getObjetivosEspecificos() != null && !formato.getObjetivosEspecificos().isEmpty()) {
-                lblCargarObjetivosEspecificos.setText(String.join("; ", formato.getObjetivosEspecificos()));
-            } else {
-                lblCargarObjetivosEspecificos.setText("No disponibles");
-            }
+            // Cargar datos básicos del formato
+            cargarDatosBasicosFormato();
 
-            //Habilitar RECHAZADO si tiene 3 intentos fallidos
+            // Habilitar RECHAZADO si tiene 3 intentos fallidos
             if (formato.getNoAprobadoCount() >= 3) {
                 if (!cmbEstado.getItems().contains("RECHAZADO")) {
                     cmbEstado.getItems().add("RECHAZADO");
                 }
-            }
-
-            //Habilitar/deshabilitar controles según estado actual
-            String estadoActual = formato.getEstado() != null ? formato.getEstado().toString() : "";
-            boolean puedeEvaluar = "PRIMERA_EVALUACION".equals(estadoActual) || 
-                                 "SEGUNDA_EVALUACION".equals(estadoActual) || 
-                                 "TERCERA_EVALUACION".equals(estadoActual) || 
-                                 "NO_ACEPTADO".equals(estadoActual);
-
-            btnEnviar.setDisable(!puedeEvaluar);
-            cmbEstado.setDisable(!puedeEvaluar);
-
-            //Cargar correcciones existentes si las hay
-            if (formato.getCorrecciones() != null && !formato.getCorrecciones().trim().isEmpty()) {
-                txtCorrecciones.setText(formato.getCorrecciones());
             }
 
         } catch (Exception e) {
@@ -187,6 +172,83 @@ public class CoordinatorReviewFormatAController {
             mostrarAlerta("Error", "Error cargando datos del formato: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
+
+    private void cargarDatosBasicosFormato() {
+        lblCargarTitulo.setText(formato.getTituloProyecto() != null ? formato.getTituloProyecto() : "No hay trabajo registrado");
+        
+        String modalidad = formato.getModalidad() != null ? formato.getModalidad().toString() : "";
+        lblCargarModalidad.setText(modalidad.isEmpty() ? "No disponible" : modalidad);
+        
+        lblCargarFecha.setText(formato.getFechaActual() != null ? formato.getFechaActual().toString() : "No registrada");
+        lblCargarDirector.setText(formato.getDirectorProyecto() != null ? formato.getDirectorProyecto().getEmail() : "No definido");
+        lblCargarCodirector.setText(formato.getCodirectorProyecto() != null ? formato.getCodirectorProyecto().getEmail() : "No definido");
+        lblCargarObjetivoGeneral.setText(formato.getObjetivoGeneral() != null ? formato.getObjetivoGeneral() : "No definido");
+        
+        if (formato.getObjetivosEspecificos() != null && !formato.getObjetivosEspecificos().isEmpty()) {
+            lblCargarObjetivosEspecificos.setText(String.join("; ", formato.getObjetivosEspecificos()));
+        } else {
+            lblCargarObjetivosEspecificos.setText("No disponibles");
+        }
+    }
+
+    private void cargarEvaluacionesDocumento(Long documentoId) {
+        try {
+            ResponseEntity<EvaluationResponseDTO[]> response = apiService.get(
+                "api/evaluations", 
+                "?documentId=" + documentoId, 
+                EvaluationResponseDTO[].class
+            );
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                EvaluationResponseDTO[] evaluaciones = response.getBody();
+                
+                if (evaluaciones.length > 0) {
+                    // Tomar la última evaluación
+                    EvaluationResponseDTO ultimaEvaluacion = evaluaciones[evaluaciones.length - 1];
+                    
+                    // Actualizar UI basado en la evaluación
+                    actualizarUIDesdeEvaluacion(ultimaEvaluacion);
+                }
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error cargando evaluaciones: " + e.getMessage());
+            // No interrumpir la carga principal por error en evaluaciones
+        }
+    }
+
+    private void actualizarUIDesdeEvaluacion(EvaluationResponseDTO evaluacion) {
+        // Actualizar estado en combobox
+        switch (evaluacion.getResultado()) {
+            case "APROBADO":
+                cmbEstado.setValue("ACEPTADO");
+                break;
+            case "NO_APROBADO":
+                cmbEstado.setValue("NO ACEPTADO");
+                break;
+            case "RECHAZADO":
+                cmbEstado.setValue("RECHAZADO");
+                break;
+        }
+        
+        // Cargar correcciones si existen
+        if (evaluacion.getCorrecciones() != null && !evaluacion.getCorrecciones().isEmpty()) {
+            txtCorrecciones.setText(evaluacion.getCorrecciones());
+        }
+        
+        // Habilitar/deshabilitar controles según estado
+        boolean puedeEvaluar = true; // O tu lógica específica
+        btnEnviar.setDisable(!puedeEvaluar);
+        cmbEstado.setDisable(!puedeEvaluar);
+    }
+
+
+
+
+
+
+
+    //------------------------------
 
     @FXML
     private void onAbrirArchivo() {
@@ -244,69 +306,81 @@ public class CoordinatorReviewFormatAController {
         }
 
         try {
-            //Crear una copia del formato para enviar al microservicio
-            DegreeWork formatoActualizado = new DegreeWork();
-            formatoActualizado.setId(formato.getId()); // Mantener el mismo ID
+            // Obtener el primer formato A
+            if (formato.getFormatosA().isEmpty()) {
+                mostrarAlerta("Error", "No se encontró el documento Formato A.", Alert.AlertType.ERROR);
+                return;
+            }
+
+            Document formatoA = formato.getFormatosA().get(0);
+            User usuarioActual = SessionManager.getCurrentUser();
             
-            //Copiar todos los campos existentes
-            formatoActualizado.setEstudiante(formato.getEstudiante());
-            formatoActualizado.setDirectorProyecto(formato.getDirectorProyecto());
-            formatoActualizado.setCodirectorProyecto(formato.getCodirectorProyecto());
-            formatoActualizado.setTituloProyecto(formato.getTituloProyecto());
-            formatoActualizado.setModalidad(formato.getModalidad());
-            formatoActualizado.setFechaActual(formato.getFechaActual());
-            formatoActualizado.setObjetivoGeneral(formato.getObjetivoGeneral());
-            formatoActualizado.setObjetivosEspecificos(formato.getObjetivosEspecificos());
-            formatoActualizado.setArchivoPdf(formato.getArchivoPdf());
-            formatoActualizado.setCartaAceptacionEmpresa(formato.getCartaAceptacionEmpresa());
+            if (usuarioActual == null) {
+                mostrarAlerta("Error", "No hay usuario autenticado.", Alert.AlertType.ERROR);
+                return;
+            }
 
-            boolean exito = false;
+            // Validar correcciones si es "NO ACEPTADO"
+            if ("NO ACEPTADO".equals(estadoSeleccionado)) {
+                String correcciones = txtCorrecciones.getText();
+                if (correcciones == null || correcciones.trim().isEmpty()) {
+                    mostrarAlerta("Advertencia", "Debes escribir correcciones para un NO ACEPTADO.", Alert.AlertType.WARNING);
+                    return;
+                }
+            }
 
+            // Crear evaluación directamente con EvaluationRequestDTO
+            EvaluationRequestDTO evaluationRequest = new EvaluationRequestDTO();
+            evaluationRequest.setDocumentId(formatoA.getId());
+            evaluationRequest.setEvaluadorId(usuarioActual.getId());
+            evaluationRequest.setCorrecciones(txtCorrecciones.getText());
+            evaluationRequest.setTipo("FORMATO_A");
+
+            // Mapear estado seleccionado al resultado
             switch (estadoSeleccionado) {
                 case "ACEPTADO":
-                    //Actualizar estado a ACEPTADO
-                    formatoActualizado.setEstado(EnumEstadoDegreeWork.ACEPTADO);
-                    formatoActualizado.setNoAprobadoCount(0); // Reiniciar contador
-                    exito = actualizarFormato(formatoActualizado);
+                    evaluationRequest.setResultado("APROBADO");
                     break;
-
                 case "NO ACEPTADO":
-                    String correcciones = txtCorrecciones.getText();
-                    if (correcciones == null || correcciones.trim().isEmpty()) {
-                        mostrarAlerta("Advertencia", "Debes escribir correcciones para un NO ACEPTADO.", Alert.AlertType.WARNING);
-                        return;
-                    }
-                    //Guardar correcciones y actualizar estado
-                    formatoActualizado.setCorrecciones(correcciones);
-                    formatoActualizado.setEstado(EnumEstadoDegreeWork.NO_ACEPTADO);
-                    formatoActualizado.setNoAprobadoCount(formato.getNoAprobadoCount() + 1); // Incrementar contador
-                    exito = actualizarFormato(formatoActualizado);
+                    evaluationRequest.setResultado("NO_APROBADO");
                     break;
-
                 case "RECHAZADO":
-                    //Actualizar estado a RECHAZADO
-                    formatoActualizado.setEstado(EnumEstadoDegreeWork.RECHAZADO);
-                    formatoActualizado.setNoAprobadoCount(formato.getNoAprobadoCount());
-                    exito = actualizarFormato(formatoActualizado);
+                    evaluationRequest.setResultado("RECHAZADO");
                     break;
             }
 
+            // Enviar al microservicio de evaluaciones
+            boolean exito = enviarEvaluacionAlBackend(evaluationRequest);
+
             if (exito) {
-                mostrarAlerta("Éxito", "Correcciones enviadas y estado actualizado.", Alert.AlertType.INFORMATION);
-                //Actualizar el formato local con los cambios
-                this.formato = formatoActualizado;
-                //Regresar a la vista anterior
+                mostrarAlerta("Éxito", "Evaluación enviada exitosamente.", Alert.AlertType.INFORMATION);
                 navigation.showManagementCoordinatorFormatA();
             } else {
-                mostrarAlerta("Error", "No se pudo actualizar el estado.", Alert.AlertType.ERROR);
+                mostrarAlerta("Error", "No se pudo enviar la evaluación.", Alert.AlertType.ERROR);
             }
 
         } catch (Exception e) {
             e.printStackTrace();
-            mostrarAlerta("Error", "Error al enviar correcciones: " + e.getMessage(), Alert.AlertType.ERROR);
+            mostrarAlerta("Error", "Error al enviar evaluación: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
+    private boolean enviarEvaluacionAlBackend(EvaluationRequestDTO request) {
+        try {
+            ResponseEntity<EvaluationResponseDTO> response = apiService.post(
+                "api/evaluations", 
+                "", 
+                request, 
+                EvaluationResponseDTO.class
+            );
+
+            return response.getStatusCode().is2xxSuccessful() && response.getBody() != null;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
     private boolean actualizarFormato(DegreeWork formatoActualizado) {
         try {
             //Enviar el objeto DegreeWork completo como JSON (igual que en RegisterController)

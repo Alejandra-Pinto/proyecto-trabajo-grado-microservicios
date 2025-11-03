@@ -1,6 +1,7 @@
 package com.unicauca.front.model;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 public class DegreeWork {
@@ -14,8 +15,12 @@ public class DegreeWork {
     private LocalDate fechaActual;
     private String objetivoGeneral;
     private List<String> objetivosEspecificos;
-    private String archivoPdf;
-    private String cartaAceptacionEmpresa; 
+    
+    //listas de documentos
+    private List<Document> formatosA = new ArrayList<>();
+    private List<Document> anteproyectos = new ArrayList<>();
+    private List<Document> cartasAceptacion = new ArrayList<>();
+
     private EnumEstadoDegreeWork estado;
     private String correcciones;
     private int noAprobadoCount;
@@ -59,11 +64,7 @@ public class DegreeWork {
     public List<String> getObjetivosEspecificos() { return objetivosEspecificos; }
     public void setObjetivosEspecificos(List<String> objetivosEspecificos) { this.objetivosEspecificos = objetivosEspecificos; }
 
-    public String getArchivoPdf() { return archivoPdf; }
-    public void setArchivoPdf(String archivoPdf) { this.archivoPdf = archivoPdf; }
-
-    public String getCartaAceptacionEmpresa() { return cartaAceptacionEmpresa; }
-    public void setCartaAceptacionEmpresa(String cartaAceptacionEmpresa) { this.cartaAceptacionEmpresa = cartaAceptacionEmpresa; }
+    
 
     public EnumEstadoDegreeWork getEstado() { return estado; }
     public void setEstado(EnumEstadoDegreeWork estado) { this.estado = estado; }
@@ -74,6 +75,18 @@ public class DegreeWork {
     public int getNoAprobadoCount() { return noAprobadoCount; }
     public void setNoAprobadoCount(int noAprobadoCount) { this.noAprobadoCount = noAprobadoCount; }
 
+
+     // Getters y Setters para documentos
+    public List<Document> getFormatosA() { return formatosA; }
+    public void setFormatosA(List<Document> formatosA) { this.formatosA = formatosA; }
+
+    public List<Document> getAnteproyectos() { return anteproyectos; }
+    public void setAnteproyectos(List<Document> anteproyectos) { this.anteproyectos = anteproyectos; }
+
+    public List<Document> getCartasAceptacion() { return cartasAceptacion; }
+    public void setCartasAceptacion(List<Document> cartasAceptacion) { this.cartasAceptacion = cartasAceptacion; }
+
+    
     @Override
     public String toString() {
         return "DegreeWork{" +
