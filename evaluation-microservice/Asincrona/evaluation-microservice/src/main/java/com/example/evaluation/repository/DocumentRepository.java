@@ -1,0 +1,8 @@
+package com.example.evaluation.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.example.evaluation.entity.Document;
+
+public interface DocumentRepository extends JpaRepository<Document, Long> {
+}
