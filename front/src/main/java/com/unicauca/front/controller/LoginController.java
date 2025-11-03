@@ -46,7 +46,7 @@ public class LoginController {
             loginRequest.setEmail(usuario);
             loginRequest.setPassword(contrasenia);
 
-            ResponseEntity<User> response = apiService.post("usuarios", "/auth/login", loginRequest, User.class);
+            ResponseEntity<User> response = apiService.post("api/usuarios", "/login", loginRequest, User.class);
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 User usuarioLogueado = response.getBody();
@@ -65,9 +65,11 @@ public class LoginController {
                         return;
                     }
                 }
-
-                //Navegar al Home y pasar el usuario
-                navigation.showHomeWithUser(usuarioLogueado);
+                if("ADMIN".equalsIgnoreCase(usuarioLogueado.getRole())) {
+                    navigation.showHomeAdmin(usuarioLogueado);
+                } else {
+                    navigation.showHomeWithUser(usuarioLogueado);
+}
                 
             } else {
                 mostrarAlerta("Error de login", "Usuario o contraseña incorrectos.", Alert.AlertType.ERROR);

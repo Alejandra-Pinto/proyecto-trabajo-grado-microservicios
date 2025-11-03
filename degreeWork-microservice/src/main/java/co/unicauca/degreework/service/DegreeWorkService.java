@@ -1,43 +1,89 @@
 package co.unicauca.degreework.service;
 
-import co.unicauca.degreework.domain.entities.DegreeWork;
-import co.unicauca.degreework.domain.entities.enums.EnumModalidad;
+import co.unicauca.degreework.access.*;
+import co.unicauca.degreework.domain.entities.*;
 import co.unicauca.degreework.domain.entities.builder.DegreeWorkBuilder;
-import co.unicauca.degreework.access.DegreeWorkRepository;
-
-import java.util.List;
+import co.unicauca.degreework.domain.entities.builder.DegreeWorkDirector;
+import co.unicauca.degreework.infra.dto.DegreeWorkDTO;
+import co.unicauca.degreework.infra.dto.DocumentDTO;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class DegreeWorkService {
 
     private final DegreeWorkRepository repository;
+    private final UserService userService;
+    private final DocumentRepository documentRepository;
 
-    public DegreeWorkService(DegreeWorkRepository repository) {
+    public DegreeWorkService(DegreeWorkRepository repository, UserService userService, DocumentRepository documentRepository) {
         this.repository = repository;
+        this.userService = userService;
+        this.documentRepository = documentRepository;
     }
 
     /**
-     * Registra un nuevo trabajo de grado usando el patrón Builder
+     * Registra un nuevo trabajo de grado usando el patrón Builder + Director.
+     * Ahora obtiene los usuarios por su email.
      */
-    public DegreeWork registrarDegreeWork(DegreeWorkBuilder builder) {
-        DegreeWork degreeWork = builder.build();
+    public DegreeWork registrarDegreeWork(DegreeWorkDTO dto, DegreeWorkBuilder builder) {
+        DegreeWorkDirector director = new DegreeWorkDirector();
+        director.setBuilder(builder);
 
-        // Validar modalidad y cantidad de estudiantes
-        if (degreeWork.getModalidad() == EnumModalidad.PRACTICA_PROFESIONAL 
-                && degreeWork.getEstudiantes().size() != 1) {
-            throw new IllegalArgumentException("La práctica profesional debe tener exactamente un estudiante.");
+        // --- Obtener director ---
+        User directorProyecto = userService.obtenerPorEmail(dto.getDirectorEmail());
+        if (directorProyecto == null) {
+            throw new IllegalArgumentException("No se encontró el director con correo: " + dto.getDirectorEmail());
         }
 
-        if (degreeWork.getModalidad() == EnumModalidad.INVESTIGACION 
-                && degreeWork.getEstudiantes().size() > 2) {
-            throw new IllegalArgumentException("La modalidad de investigación puede tener máximo dos estudiantes.");
+        // --- Obtener estudiantes ---
+        List<User> estudiantes = new ArrayList<>();
+        for (String email : dto.getEstudiantesEmails()) {
+            User estudiante = userService.obtenerPorEmail(email);
+            if (estudiante == null) {
+                throw new IllegalArgumentException("No se encontró el estudiante con correo: " + email);
+            }
+            estudiantes.add(estudiante);
         }
 
+        // --- Obtener codirectores ---
+        List<User> codirectores = new ArrayList<>();
+        if (dto.getCodirectoresEmails() != null) {
+            for (String email : dto.getCodirectoresEmails()) {
+                User codirector = userService.obtenerPorEmail(email);
+                if (codirector == null) {
+                    throw new IllegalArgumentException("No se encontró el codirector con correo: " + email);
+                }
+                codirectores.add(codirector);
+            }
+        }
+
+        // --- Configurar el builder ---
+        builder.titulo(dto.getTitulo())
+                .director(directorProyecto)
+                .objetivoGeneral(dto.getObjetivoGeneral())
+                .objetivosEspecificos(dto.getObjetivosEspecificos())
+                .fechaActual(dto.getFechaActual())
+                .estadoInicial(dto.getEstado());
+                
+        // --- Agregar estudiantes y codirectores ---
+        estudiantes.forEach(builder::agregarEstudiante);
+        codirectores.forEach(builder::agregarCodirector);
+
+        // --- Construir el trabajo final ---
+        DegreeWork degreeWork = director.construirTrabajo();
+
+
+        // --- Guardar el trabajo ---
         return repository.save(degreeWork);
+
+        
     }
 
     /**
@@ -55,17 +101,79 @@ public class DegreeWorkService {
     }
 
     /**
-     * Listar trabajos de grado asignados a un docente (director o codirector)
+     * Listar trabajos por docente (director o codirector)
      */
     public List<DegreeWork> listarDegreeWorksPorDocente(String teacherEmail) {
         return repository.listByTeacher(teacherEmail);
     }
 
     /**
-     * Actualizar un trabajo de grado
+     * Actualizar un trabajo de grado (usando emails)
      */
-    public DegreeWork actualizarDegreeWork(DegreeWork degreeWork) {
-        return repository.save(degreeWork);
+    @Transactional
+    public DegreeWork actualizarDegreeWork(Long id, DegreeWorkDTO dto) {
+        DegreeWork existente = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró el trabajo de grado con ID " + id));
+
+        // --- Actualizar datos básicos ---
+        existente.setTitulo(dto.getTitulo());
+        existente.setObjetivoGeneral(dto.getObjetivoGeneral());
+        existente.setCorrecciones(dto.getCorrecciones());
+        existente.setEstado(dto.getEstado());
+        existente.setFechaActual(dto.getFechaActual());
+        existente.setModalidad(dto.getModalidad());
+
+        if (dto.getObjetivosEspecificos() != null) {
+            existente.setObjetivosEspecificos(new ArrayList<>(dto.getObjetivosEspecificos()));
+        }
+
+        // --- Actualizar director ---
+        if (dto.getDirectorEmail() != null) {
+            User nuevoDirector = userService.obtenerPorEmail(dto.getDirectorEmail());
+            if (nuevoDirector == null) {
+                throw new IllegalArgumentException("No se encontró el director con correo: " + dto.getDirectorEmail());
+            }
+            existente.setDirectorProyecto(nuevoDirector);
+        }
+
+        // --- Actualizar estudiantes ---
+        if (dto.getEstudiantesEmails() != null && !dto.getEstudiantesEmails().isEmpty()) {
+            List<User> estudiantes = dto.getEstudiantesEmails().stream()
+                    .map(userService::obtenerPorEmail)
+                    .collect(Collectors.toList());
+            existente.setEstudiantes(estudiantes);
+        }
+
+        // --- Actualizar codirectores ---
+        if (dto.getCodirectoresEmails() != null && !dto.getCodirectoresEmails().isEmpty()) {
+            List<User> codirectores = dto.getCodirectoresEmails().stream()
+                    .map(userService::obtenerPorEmail)
+                    .collect(Collectors.toList());
+            existente.setCodirectoresProyecto(codirectores);
+        }
+
+        // --- Actualizar documentos ---
+        actualizarDocumentos(existente.getFormatosA(), dto.getFormatosA());
+        actualizarDocumentos(existente.getCartasAceptacion(), dto.getCartasAceptacion());
+        actualizarDocumentos(existente.getAnteproyectos(), dto.getAnteproyectos());
+
+        return repository.save(existente);
+    }
+
+    /**
+     * Método auxiliar para actualizar documentos
+     */
+    private void actualizarDocumentos(List<Document> existentes, List<DocumentDTO> nuevos) {
+        if (nuevos != null) {
+            existentes.clear();
+            for (DocumentDTO docDto : nuevos) {
+                Document doc = new Document();
+                doc.setTipo(docDto.getTipoDocumento());
+                doc.setEstado(docDto.getEstado());
+                doc.setRutaArchivo(docDto.getRutaArchivo());
+                existentes.add(doc);
+            }
+        }
     }
 
     /**
@@ -76,7 +184,7 @@ public class DegreeWorkService {
     }
 
     /**
-     * Guardar correcciones del trabajo de grado
+     * Guardar correcciones
      */
     public DegreeWork guardarCorrecciones(Long id, String correcciones) {
         DegreeWork degreeWork = obtenerPorId(id);

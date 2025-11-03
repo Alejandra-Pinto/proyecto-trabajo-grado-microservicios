@@ -77,19 +77,20 @@ public class RegisterController {
             user.setProgram(programa);
             user.setEmail(correo);
             user.setPassword(pass);
+            user.setStatus("ACEPTADO");
             
             //Cambio: Determinar rol basado en RadioButtons
             if (rbEstudiante.isSelected()) {
                 user.setRole("STUDENT");
             } else if (rbDocente.isSelected()) {
-                user.setRole("TEACHER");
+                user.setRole("PROFESSOR");
             } else if (rbCoordinador.isSelected()) {
                 user.setRole("COORDINATOR");
                 user.setStatus("PENDIENTE"); // Coordinadores requieren aprobación
             }
 
             //Cambio: Enviar registro al microservicio de usuarios
-            ResponseEntity<User> response = apiService.post("usuarios", "/auth/register", user, User.class);
+            ResponseEntity<User> response = apiService.post("api/usuarios", "/register", user, User.class);
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 User usuarioRegistrado = response.getBody();

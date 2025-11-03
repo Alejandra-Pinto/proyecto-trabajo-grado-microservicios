@@ -12,6 +12,13 @@ public class ResearchDegreeWorkBuilder extends DegreeWorkBuilder {
 
     @Override
     public void buildDocumentosIniciales() {
+        // Si no tiene formatos A, crear o lanzar excepción
+        if (degreeWork.getFormatosA() == null || degreeWork.getFormatosA().isEmpty()) {
+            Document formatoA = new Document();
+            formatoA.setTipo(EnumTipoDocumento.FORMATO_A);
+            formatoA.setEstado(EnumEstadoDocument.PRIMERA_REVISION);
+            degreeWork.getFormatosA().add(formatoA);
+        }
         degreeWork.setEstado(EnumEstadoDegreeWork.FORMATO_A);
     }
 
