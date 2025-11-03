@@ -25,10 +25,10 @@ public class DegreeWork {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Student> estudiantes = new ArrayList<>();
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     private Evaluador directorProyecto;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany
     private List<Evaluador> codirectoresProyecto = new ArrayList<>();
 
     private String titulo;
