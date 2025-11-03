@@ -2,7 +2,7 @@ package com.unicauca.front.controller;
 
 import com.unicauca.front.dto.DegreeWorkDTO;
 import com.unicauca.front.model.DegreeWork;
-import com.unicauca.front.model.EstadoFormatoA;
+import com.unicauca.front.model.EnumEstadoDegreeWork;
 import com.unicauca.front.model.Modalidad;
 import com.unicauca.front.model.Student;
 import com.unicauca.front.model.Teacher;
@@ -255,7 +255,7 @@ public class ManagementTeacherFormatAController {
             }
             
             // Estado inicial
-            dto.setEstado(EstadoFormatoA.PRIMERA_EVALUACION.toString());
+            dto.setEstado("FORMATO_A");
 
             // Enviar al microservicio - USAR DTO
             ResponseEntity<DegreeWork> response;

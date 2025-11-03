@@ -5,7 +5,7 @@ import com.unicauca.front.model.User;
 import com.unicauca.front.service.ApiGatewayService;
 import com.unicauca.front.util.NavigationController;
 import com.unicauca.front.util.SessionManager;
-import com.unicauca.front.model.EstadoFormatoA;
+import com.unicauca.front.model.EnumEstadoDegreeWork;
 import javafx.application.HostServices;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -265,7 +265,7 @@ public class CoordinatorReviewFormatAController {
             switch (estadoSeleccionado) {
                 case "ACEPTADO":
                     //Actualizar estado a ACEPTADO
-                    formatoActualizado.setEstado(EstadoFormatoA.ACEPTADO);
+                    formatoActualizado.setEstado(EnumEstadoDegreeWork.ACEPTADO);
                     formatoActualizado.setNoAprobadoCount(0); // Reiniciar contador
                     exito = actualizarFormato(formatoActualizado);
                     break;
@@ -278,14 +278,14 @@ public class CoordinatorReviewFormatAController {
                     }
                     //Guardar correcciones y actualizar estado
                     formatoActualizado.setCorrecciones(correcciones);
-                    formatoActualizado.setEstado(EstadoFormatoA.NO_ACEPTADO);
+                    formatoActualizado.setEstado(EnumEstadoDegreeWork.NO_ACEPTADO);
                     formatoActualizado.setNoAprobadoCount(formato.getNoAprobadoCount() + 1); // Incrementar contador
                     exito = actualizarFormato(formatoActualizado);
                     break;
 
                 case "RECHAZADO":
                     //Actualizar estado a RECHAZADO
-                    formatoActualizado.setEstado(EstadoFormatoA.RECHAZADO);
+                    formatoActualizado.setEstado(EnumEstadoDegreeWork.RECHAZADO);
                     formatoActualizado.setNoAprobadoCount(formato.getNoAprobadoCount());
                     exito = actualizarFormato(formatoActualizado);
                     break;
