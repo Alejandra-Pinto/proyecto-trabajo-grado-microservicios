@@ -17,9 +17,9 @@
 <AnchorPane id="AnchorPane" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.unicauca.front.controller.RegisterController">
 
    <children>
-      <Pane layoutX="-8.0" prefHeight="804.0" prefWidth="1552.0" style="-fx-background-color: #0F3FA5;">
+      <Pane layoutX="17.0" layoutY="-4.0" prefHeight="804.0" prefWidth="1552.0" style="-fx-background-color: #0F3FA5;">
          <children>
-            <ImageView fitHeight="757.0" fitWidth="490.0" layoutX="930.0" layoutY="30.0" pickOnBounds="true" preserveRatio="true">
+            <ImageView fitHeight="757.0" fitWidth="490.0" layoutX="915.0" layoutY="25.0" pickOnBounds="true" preserveRatio="true">
                <image><Image url="@images/antorcha.png" /></image>
             </ImageView>
             <ImageView fitHeight="169.0" fitWidth="671.0" layoutY="636.0" pickOnBounds="true" preserveRatio="true">
@@ -30,38 +30,43 @@
             </ImageView>
             
             <!-- Contenedor principal del formulario -->
-            <Pane layoutX="600.0" layoutY="215.0" prefHeight="415.0" prefWidth="382.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 10;">
+            <Pane layoutX="476.0" layoutY="140.0" prefHeight="514.0" prefWidth="617.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 10;">
                <children>
-                  <Label layoutX="142.0" layoutY="14.0" text="Registro" textFill="#a01f18">
+                  <Label layoutX="264.0" layoutY="50.0" text="Registro" textFill="#a01f18">
                      <font><Font name="System Bold" size="25.0" /></font>
                   </Label>
-                  <Label layoutX="90.0" layoutY="50.0" text="Complete los datos del nuevo usuario" />
-                  <TextField fx:id="txt_nombre" layoutX="90.0" layoutY="74.0" prefHeight="25.0" prefWidth="200.0" promptText="Nombre*" />
-                  <TextField fx:id="txt_apellido" layoutX="90.0" layoutY="108.0" prefHeight="25.0" prefWidth="200.0" promptText="Apellido*" />
-                  <ComboBox fx:id="cbx_programa" layoutX="90.0" layoutY="141.0" prefHeight="25.0" prefWidth="200.0" promptText="Programa*" />
-                  <TextField fx:id="txt_email" layoutX="90.0" layoutY="175.0" prefHeight="25.0" prefWidth="200.0" promptText="Correo Institucional*" />
+                  <Label layoutX="212.0" layoutY="86.0" text="Complete los datos del nuevo usuario" />
+                  <TextField fx:id="txt_nombre" layoutX="191.0" layoutY="122.0" prefHeight="25.0" prefWidth="255.0" promptText="Nombre*" />
+                  <TextField fx:id="txt_apellido" layoutX="191.0" layoutY="156.0" prefHeight="25.0" prefWidth="255.0" promptText="Apellido*" />
+                  <ComboBox fx:id="cbx_programa" layoutX="191.0" layoutY="189.0" prefHeight="25.0" prefWidth="253.0" promptText="Programa*" />
+                  <TextField fx:id="txt_email" layoutX="191.0" layoutY="223.0" prefHeight="25.0" prefWidth="255.0" promptText="Correo Institucional*" />
 
                   <!-- Roles -->
-                  <Label layoutX="90.0" layoutY="215.0" text="Selecciona el rol:" />
-                  <RadioButton fx:id="rbEstudiante" layoutX="22.0" layoutY="240.0" mnemonicParsing="false" text="Soy Estudiante" textFill="#0f3ea4">
+                  <Label layoutX="192.0" layoutY="258.0" text="Selecciona el rol:" />
+                  <RadioButton fx:id="rbEstudiante" layoutX="123.0" layoutY="284.0" mnemonicParsing="false" text="Soy Estudiante" textFill="#0f3ea4">
                      <font><Font name="System Bold" size="12.0" /></font>
                      <toggleGroup>
                         <ToggleGroup fx:id="rolesGroup" />
                      </toggleGroup>
                   </RadioButton>
-                  <RadioButton fx:id="rbDocente" layoutX="144.0" layoutY="240.0" mnemonicParsing="false" text="Soy Docente" textFill="#821313" toggleGroup="$rolesGroup">
+                  <RadioButton fx:id="rbDocente" layoutX="259.0" layoutY="284.0" mnemonicParsing="false" text="Soy Docente" textFill="#821313" toggleGroup="$rolesGroup">
                      <font><Font name="System Bold" size="12.0" /></font>
                   </RadioButton>
-                  <RadioButton fx:id="rbCoordinador" layoutX="250.0" layoutY="240.0" mnemonicParsing="false" text="Soy Coordinador" textFill="#19a310" toggleGroup="$rolesGroup">
+                  <RadioButton fx:id="rbCoordinador" layoutX="379.0" layoutY="284.0" mnemonicParsing="false" text="Soy Coordinador" textFill="#19a310" toggleGroup="$rolesGroup">
                      <font><Font name="System Bold" size="12.0" /></font>
                   </RadioButton>
 
-                  <PasswordField fx:id="txt_password" layoutX="90.0" layoutY="274.0" prefHeight="25.0" prefWidth="200.0" promptText="Contraseña*" />
-                  <PasswordField fx:id="txt_confirmPassword" layoutX="90.0" layoutY="307.0" prefHeight="25.0" prefWidth="200.0" promptText="Confirmar contraseña*" />
-                  <Button fx:id="btn_register" layoutX="109.0" layoutY="348.0" mnemonicParsing="false" onAction="#onRegister" style="-fx-background-color: #111F63;" text="REGISTRAR USUARIO" textFill="WHITE">
+                  <PasswordField fx:id="txt_password" layoutX="191.0" layoutY="350.0" prefHeight="25.0" prefWidth="255.0" promptText="Contraseña*" />
+                  <PasswordField fx:id="txt_confirmPassword" layoutX="191.0" layoutY="384.0" prefHeight="25.0" prefWidth="255.0" promptText="Confirmar contraseña*" />
+                  <Button fx:id="btn_register" layoutX="238.0" layoutY="422.0" mnemonicParsing="false" onAction="#onRegister" style="-fx-background-color: #111F63;" text="REGISTRAR USUARIO" textFill="WHITE">
                      <font><Font name="System Bold" size="14.0" /></font>
                   </Button>
-                  <Hyperlink fx:id="hpl_login" layoutX="102.0" layoutY="378.0" onAction="#onGoToLogin" text="¿Ya tienes cuenta? Inicia sesión" />
+                  <Hyperlink fx:id="hpl_login" layoutX="230.0" layoutY="460.0" onAction="#onGoToLogin" text="¿Ya tienes cuenta? Inicia sesión" />
+                  <RadioButton fx:id="rbJefeDepartamento" layoutX="123.0" layoutY="319.0" mnemonicParsing="false" text="Soy Jefe de Departamento" textFill="#5e5e5e">
+                     <font>
+                        <Font name="System Bold" size="12.0" />
+                     </font>
+                  </RadioButton>
                </children>
             </Pane>
          </children>
