@@ -25,52 +25,65 @@ public class DegreeWorkService {
     public DegreeWorkService(DegreeWorkRepository repository, UserService userService, DocumentRepository documentRepository) {
         this.repository = repository;
         this.userService = userService;
-        this.documentRepository = documentRepository; // 👈
+        this.documentRepository = documentRepository;
     }
 
     /**
      * Registra un nuevo trabajo de grado usando el patrón Builder + Director.
+     * Ahora obtiene los usuarios por su email.
      */
     public DegreeWork registrarDegreeWork(DegreeWorkDTO dto, DegreeWorkBuilder builder) {
         DegreeWorkDirector director = new DegreeWorkDirector();
         director.setBuilder(builder);
 
-        // Convertir DTO a entidades
-        User directorProyecto = userService.obtenerPorId(dto.getDirectorId());
-        List<User> estudiantes = new ArrayList<>();
-        for (Integer id : dto.getEstudiantesIds()) {
-            estudiantes.add(userService.obtenerPorId(id.longValue()));
+        // --- Obtener director ---
+        User directorProyecto = userService.obtenerPorEmail(dto.getDirectorEmail());
+        if (directorProyecto == null) {
+            throw new IllegalArgumentException("No se encontró el director con correo: " + dto.getDirectorEmail());
         }
 
+        // --- Obtener estudiantes ---
+        List<User> estudiantes = new ArrayList<>();
+        for (String email : dto.getEstudiantesEmails()) {
+            User estudiante = userService.obtenerPorEmail(email);
+            if (estudiante == null) {
+                throw new IllegalArgumentException("No se encontró el estudiante con correo: " + email);
+            }
+            estudiantes.add(estudiante);
+        }
+
+        // --- Obtener codirectores ---
         List<User> codirectores = new ArrayList<>();
-        if (dto.getCodirectoresIds() != null) {
-            for (Integer id : dto.getCodirectoresIds()) {
-                codirectores.add(userService.obtenerPorId(id.longValue()));
+        if (dto.getCodirectoresEmails() != null) {
+            for (String email : dto.getCodirectoresEmails()) {
+                User codirector = userService.obtenerPorEmail(email);
+                if (codirector == null) {
+                    throw new IllegalArgumentException("No se encontró el codirector con correo: " + email);
+                }
+                codirectores.add(codirector);
             }
         }
 
-        // Configurar el builder
+        // --- Configurar el builder ---
         builder.titulo(dto.getTitulo())
                 .director(directorProyecto)
                 .objetivoGeneral(dto.getObjetivoGeneral())
                 .objetivosEspecificos(dto.getObjetivosEspecificos())
                 .fechaActual(dto.getFechaActual())
                 .estadoInicial(dto.getEstado());
+                
+        // --- Agregar estudiantes y codirectores ---
+        estudiantes.forEach(builder::agregarEstudiante);
+        codirectores.forEach(builder::agregarCodirector);
 
-        // Agregar estudiantes (valida internamente según modalidad)
-        for (User estudiante : estudiantes) {
-            builder.agregarEstudiante(estudiante);
-        }
-
-        // Agregar codirectores
-        for (User codirector : codirectores) {
-            builder.agregarCodirector(codirector);
-        }
-
-        // Construir el trabajo final
+        // --- Construir el trabajo final ---
         DegreeWork degreeWork = director.construirTrabajo();
 
+
+        // --- Guardar el trabajo ---
         return repository.save(degreeWork);
+
+        
     }
 
     /**
@@ -95,7 +108,7 @@ public class DegreeWorkService {
     }
 
     /**
-     * Actualizar un trabajo de grado
+     * Actualizar un trabajo de grado (usando emails)
      */
     @Transactional
     public DegreeWork actualizarDegreeWork(Long id, DegreeWorkDTO dto) {
@@ -108,76 +121,59 @@ public class DegreeWorkService {
         existente.setCorrecciones(dto.getCorrecciones());
         existente.setEstado(dto.getEstado());
         existente.setFechaActual(dto.getFechaActual());
+        existente.setModalidad(dto.getModalidad());
 
         if (dto.getObjetivosEspecificos() != null) {
             existente.setObjetivosEspecificos(new ArrayList<>(dto.getObjetivosEspecificos()));
-        } else {
-            existente.setObjetivosEspecificos(new ArrayList<>());
         }
 
         // --- Actualizar director ---
-        if (dto.getDirectorId() != null) {
-            existente.setDirectorProyecto(userService.obtenerPorId(dto.getDirectorId()));
+        if (dto.getDirectorEmail() != null) {
+            User nuevoDirector = userService.obtenerPorEmail(dto.getDirectorEmail());
+            if (nuevoDirector == null) {
+                throw new IllegalArgumentException("No se encontró el director con correo: " + dto.getDirectorEmail());
+            }
+            existente.setDirectorProyecto(nuevoDirector);
         }
 
         // --- Actualizar estudiantes ---
-        if (dto.getEstudiantesIds() != null && !dto.getEstudiantesIds().isEmpty()) {
-            List<User> estudiantes = dto.getEstudiantesIds().stream()
-                    .map(idEst -> userService.obtenerPorId(idEst.longValue()))
+        if (dto.getEstudiantesEmails() != null && !dto.getEstudiantesEmails().isEmpty()) {
+            List<User> estudiantes = dto.getEstudiantesEmails().stream()
+                    .map(userService::obtenerPorEmail)
                     .collect(Collectors.toList());
             existente.setEstudiantes(estudiantes);
-        } else if (existente.getEstudiantes() == null) {
-            existente.setEstudiantes(new ArrayList<>());
         }
 
         // --- Actualizar codirectores ---
-        if (dto.getCodirectoresIds() != null && !dto.getCodirectoresIds().isEmpty()) {
-            List<User> codirectores = dto.getCodirectoresIds().stream()
-                    .map(idCod -> userService.obtenerPorId(idCod.longValue()))
+        if (dto.getCodirectoresEmails() != null && !dto.getCodirectoresEmails().isEmpty()) {
+            List<User> codirectores = dto.getCodirectoresEmails().stream()
+                    .map(userService::obtenerPorEmail)
                     .collect(Collectors.toList());
             existente.setCodirectoresProyecto(codirectores);
-        } else if (existente.getCodirectoresProyecto() == null) {
-            existente.setCodirectoresProyecto(new ArrayList<>());
         }
 
-        // --- Actualizar formatos A ---
-        if (dto.getFormatosA() != null) {
-            existente.getFormatosA().clear(); // mantener la misma referencia
-            for (DocumentDTO docDto : dto.getFormatosA()) {
-                Document doc = new Document();
-                doc.setTipo(docDto.getTipoDocumento());
-                doc.setEstado(docDto.getEstado());
-                doc.setRutaArchivo(docDto.getRutaArchivo());
-                existente.getFormatosA().add(doc);
-            }
-        }
+        // --- Actualizar documentos ---
+        actualizarDocumentos(existente.getFormatosA(), dto.getFormatosA());
+        actualizarDocumentos(existente.getCartasAceptacion(), dto.getCartasAceptacion());
+        actualizarDocumentos(existente.getAnteproyectos(), dto.getAnteproyectos());
 
-        // --- Actualizar cartas de aceptación ---
-        if (dto.getCartasAceptacion() != null) {
-            existente.getCartasAceptacion().clear();
-            for (DocumentDTO docDto : dto.getCartasAceptacion()) {
-                Document doc = new Document();
-                doc.setTipo(docDto.getTipoDocumento());
-                doc.setEstado(docDto.getEstado());
-                doc.setRutaArchivo(docDto.getRutaArchivo());
-                existente.getCartasAceptacion().add(doc);
-            }
-        }
-
-        // --- Actualizar anteproyectos ---
-        if (dto.getAnteproyectos() != null) {
-            existente.getAnteproyectos().clear();
-            for (DocumentDTO docDto : dto.getAnteproyectos()) {
-                Document doc = new Document();
-                doc.setTipo(docDto.getTipoDocumento());
-                doc.setEstado(docDto.getEstado());
-                doc.setRutaArchivo(docDto.getRutaArchivo());
-                existente.getAnteproyectos().add(doc);
-            }
-        }
-
-        // --- Guardar cambios ---
         return repository.save(existente);
+    }
+
+    /**
+     * Método auxiliar para actualizar documentos
+     */
+    private void actualizarDocumentos(List<Document> existentes, List<DocumentDTO> nuevos) {
+        if (nuevos != null) {
+            existentes.clear();
+            for (DocumentDTO docDto : nuevos) {
+                Document doc = new Document();
+                doc.setTipo(docDto.getTipoDocumento());
+                doc.setEstado(docDto.getEstado());
+                doc.setRutaArchivo(docDto.getRutaArchivo());
+                existentes.add(doc);
+            }
+        }
     }
 
     /**
@@ -199,6 +195,4 @@ public class DegreeWorkService {
         degreeWork.setCorrecciones(correcciones);
         return repository.save(degreeWork);
     }
-
-    
 }

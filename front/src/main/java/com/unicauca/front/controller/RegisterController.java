@@ -83,7 +83,7 @@ public class RegisterController {
             if (rbEstudiante.isSelected()) {
                 user.setRole("STUDENT");
             } else if (rbDocente.isSelected()) {
-                user.setRole("TEACHER");
+                user.setRole("PROFESSOR");
             } else if (rbCoordinador.isSelected()) {
                 user.setRole("COORDINATOR");
                 user.setStatus("PENDIENTE"); // Coordinadores requieren aprobación

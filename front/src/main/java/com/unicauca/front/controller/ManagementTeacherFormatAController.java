@@ -1,6 +1,8 @@
 package com.unicauca.front.controller;
 
+import com.unicauca.front.dto.DegreeWorkDTO;
 import com.unicauca.front.model.DegreeWork;
+import com.unicauca.front.model.EstadoFormatoA;
 import com.unicauca.front.model.Modalidad;
 import com.unicauca.front.model.Student;
 import com.unicauca.front.model.Teacher;
@@ -90,7 +92,7 @@ public class ManagementTeacherFormatAController {
             //Cargar profesores desde microservicio
             ResponseEntity<User[]> responseProfesores = apiService.get(
                 "api/usuarios", 
-                "/rol/TEACHER", 
+                "/rol/PROFESSOR", 
                 User[].class
             );
             
@@ -212,61 +214,66 @@ public class ManagementTeacherFormatAController {
             return;
         }
         try {
-            DegreeWork formato = new DegreeWork();
+            // Crear DTO en lugar de DegreeWork
+            DegreeWorkDTO dto = new DegreeWorkDTO();
             
-            //Usar Student (que hereda de User)
-            Student estudiante = new Student();
-            estudiante.setEmail(cbEstudiante.getValue());
-            formato.setEstudiante(estudiante);
-            
-            //Usar Teacher (que hereda de User)  
-            Teacher director = new Teacher();
-            director.setEmail(cbDirector.getValue());
-            formato.setDirectorProyecto(director);
-            
-            if (cbCodirector.getValue() != null && !cbCodirector.getValue().isEmpty()) {
-                Teacher codirector = new Teacher();
-                codirector.setEmail(cbCodirector.getValue());
-                formato.setCodirectorProyecto(codirector);
+            // Configurar estudiantes (lista de emails)
+            String estudianteEmail = cbEstudiante.getValue();
+            if (estudianteEmail != null && !estudianteEmail.isEmpty()) {
+                dto.setEstudiantesEmails(List.of(estudianteEmail));
             }
             
-            //Resto de campos
-            formato.setTituloProyecto(txtTituloTrabajo.getText());
+            // Configurar director
+            String directorEmail = cbDirector.getValue();
+            if (directorEmail != null && !directorEmail.isEmpty()) {
+                dto.setDirectorEmail(directorEmail);
+            }
             
-            //Convertir String a Enum
+            // Configurar codirector (si existe)
+            String codirectorEmail = cbCodirector.getValue();
+            if (codirectorEmail != null && !codirectorEmail.isEmpty()) {
+                dto.setCodirectoresEmails(List.of(codirectorEmail));
+            }
+            
+            // Resto de campos
+            dto.setTitulo(txtTituloTrabajo.getText());
+            
+            // Convertir String a Enum
             try {
-                formato.setModalidad(Modalidad.valueOf(cbModalidad.getValue()));
+                dto.setModalidad(cbModalidad.getValue());
             } catch (IllegalArgumentException e) {
                 mostrarAlerta("Error", "Modalidad no válida", Alert.AlertType.ERROR);
                 return;
             }
             
-            formato.setFechaActual(dpFechaActual.getValue());
-            formato.setObjetivoGeneral(txtObjetivoGeneral.getText());
-            formato.setObjetivosEspecificos(Arrays.asList(txtObjetivosEspecificos.getText().split(";")));
-            formato.setArchivoPdf(txtArchivoAdjunto.getText());
+            dto.setFechaActual(dpFechaActual.getValue());
+            dto.setObjetivoGeneral(txtObjetivoGeneral.getText());
             
-            if ("PRACTICA_PROFESIONAL".equals(cbModalidad.getValue())) {
-                formato.setCartaAceptacionEmpresa(txtCartaAceptacion.getText());
+            // Convertir objetivos específicos
+            if (txtObjetivosEspecificos.getText() != null && !txtObjetivosEspecificos.getText().isEmpty()) {
+                dto.setObjetivosEspecificos(Arrays.asList(txtObjetivosEspecificos.getText().split(";")));
             }
+            
+            // Estado inicial
+            dto.setEstado(EstadoFormatoA.PRIMERA_EVALUACION.toString());
 
-            //Enviar al microservicio
+            // Enviar al microservicio - USAR DTO
             ResponseEntity<DegreeWork> response;
             if (formatoActual != null && formatoActual.getId() > 0) {
-                //Actualizar formato existente
-                formato.setId(formatoActual.getId());
+                // Actualizar formato existente
+                dto.setId((long) formatoActual.getId());
                 response = apiService.put(
                     "api/degreeworks", 
                     "/" + formatoActual.getId(), 
-                    formato,
+                    dto, // ✅ Enviar DTO
                     DegreeWork.class
                 );
             } else {
-                //Crear nuevo formato
+                // Crear nuevo formato
                 response = apiService.post(
                     "api/degreeworks", 
                     "/registrar", 
-                    formato,
+                    dto, // ✅ Enviar DTO
                     DegreeWork.class
                 );
             }
@@ -281,9 +288,8 @@ public class ManagementTeacherFormatAController {
         } catch (Exception e) {
             e.printStackTrace();
             mostrarAlerta("Error", "Error al guardar: " + e.getMessage(), Alert.AlertType.ERROR);
+        }
     }
-
-}
 
     private boolean validarCamposObligatorios() {
         if (cbEstudiante.getValue() == null || txtTituloTrabajo.getText().isEmpty() ||
@@ -346,8 +352,8 @@ public class ManagementTeacherFormatAController {
 
     @FXML
     private void onBtnFormatoDocenteClicked() {
-        if (usuarioActual != null && "TEACHER".equalsIgnoreCase(usuarioActual.getRole())) {
-            navigation.showManagementTeacherFormatA();
+        if (usuarioActual != null && "PROFESSOR".equalsIgnoreCase(usuarioActual.getRole())) {
+            navigation.showPublishedTeacherFormatA(usuarioActual);
         } else {
             mostrarAlerta("Acceso denegado", "Solo los docentes pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
         }
@@ -384,11 +390,11 @@ public class ManagementTeacherFormatAController {
     }
 
     public void deshabilitarCamposFijos() {
-        cbEstudiante.setDisable(true);
-        cbModalidad.setDisable(true);
-        dpFechaActual.setDisable(true);
-        cbDirector.setDisable(true);
-        cbCodirector.setDisable(true);
+        cbEstudiante.setDisable(false);
+        cbModalidad.setDisable(false);
+        dpFechaActual.setDisable(false);
+        cbDirector.setDisable(false);
+        cbCodirector.setDisable(false);
     }
 
 }

@@ -66,6 +66,7 @@
                               </ImageView>
                            </graphic>
                         </ToggleButton>
+                        <!--
                         <ToggleButton fx:id="btnFormatoEstudiante" graphicTextGap="20" layoutX="3.0" layoutY="309.0" mnemonicParsing="false" onAction="#onBtnFormatoEstudianteClicked" prefHeight="101.0" prefWidth="453.0" text="Formato propuesta Estudiante" visible="false">
                            <font>
                               <Font size="16.0" />
@@ -90,30 +91,35 @@
                               </ImageView>
                            </graphic>
                         </ToggleButton>
-                        <ToggleButton fx:id="btnEvaluarPropuestas" graphicTextGap="20" layoutX="3.0" layoutY="515.0" mnemonicParsing="false" onAction="#onBtnEvaluarPropuestasClicked" prefHeight="101.0" prefWidth="453.0" text="Evaluar propuestas" visible="false">
-                           <font>
-                              <Font size="16.0" />
-                           </font>
-                           <graphic>
-                              <ImageView fitHeight="51.0" fitWidth="51.0" preserveRatio="true">
-                                 <image>
-                                    <Image url="@images/carpeta2.png" />
-                                 </image>
-                              </ImageView>
-                           </graphic>
-                        </ToggleButton>
-                        <ToggleButton fx:id="btnEvaluarAnteproyectos" graphicTextGap="20" layoutX="3.0" layoutY="618.0" mnemonicParsing="false" onAction="#onBtnEvaluarAnteproyectosClicked" prefHeight="101.0" prefWidth="453.0" text="Evaluar anteproyectos" visible="false">
-                           <font>
-                              <Font size="16.0" />
-                           </font>
-                           <graphic>
-                              <ImageView fitHeight="51.0" fitWidth="51.0" preserveRatio="true">
-                                 <image>
-                                    <Image url="@images/birrete2.png" />
-                                 </image>
-                              </ImageView>
-                           </graphic>
-                        </ToggleButton>
+                        -->
+                        <!-- COMENTA estos dos botones también -->
+<!--
+<ToggleButton fx:id="btnEvaluarPropuestas" graphicTextGap="20" layoutX="3.0" layoutY="515.0" mnemonicParsing="false" onAction="#onBtnEvaluarPropuestasClicked" prefHeight="101.0" prefWidth="453.0" text="Evaluar propuestas" visible="false">
+   <font>
+      <Font size="16.0" />
+   </font>
+   <graphic>
+      <ImageView fitHeight="51.0" fitWidth="51.0" preserveRatio="true">
+         <image>
+            <Image url="@images/carpeta2.png" />
+         </image>
+      </ImageView>
+   </graphic>
+</ToggleButton>
+
+<ToggleButton fx:id="btnEvaluarAnteproyectos" graphicTextGap="20" layoutX="3.0" layoutY="618.0" mnemonicParsing="false" onAction="#onBtnEvaluarAnteproyectosClicked" prefHeight="101.0" prefWidth="453.0" text="Evaluar anteproyectos" visible="false">
+   <font>
+      <Font size="16.0" />
+   </font>
+   <graphic>
+      <ImageView fitHeight="51.0" fitWidth="51.0" preserveRatio="true">
+         <image>
+            <Image url="@images/birrete2.png" />
+         </image>
+      </ImageView>
+   </graphic>
+</ToggleButton>
+-->
                      </children>
                   </AnchorPane>
                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="682.0" prefWidth="1067.0">

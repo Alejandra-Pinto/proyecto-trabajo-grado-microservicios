@@ -7,6 +7,6 @@ public class Teacher extends User{
     
     public Teacher(String firstName, String lastName, String phone, String program,
                    String email, String password, String role, String status) {
-        super(firstName, lastName, phone, program, email, password, "TEACHER", "ACEPTADO");
+        super(firstName, lastName, phone, program, email, password, "PROFESSOR", "ACEPTADO");
     }
 }

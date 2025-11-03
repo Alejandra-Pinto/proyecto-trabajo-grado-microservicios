@@ -74,4 +74,14 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/rol/{role}")
+    public ResponseEntity<List<User>> getUsersByRole(@PathVariable String role) {
+        try {
+            List<User> users = service.findByRole(role);
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
 }

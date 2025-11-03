@@ -13,13 +13,13 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitMQConfig {
 
     // === Cola de usuarios ===
-    @Value("${app.rabbitmq.user.exchange}")
+    @Value("${app.rabbitmq.users.exchange}")
     private String userExchangeName;
 
-    @Value("${app.rabbitmq.user.queue}")
+    @Value("${app.rabbitmq.users.queue}")
     private String userQueueName;
 
-    @Value("${app.rabbitmq.user.routingkey}")
+    @Value("${app.rabbitmq.users.routingkey}")
     private String userRoutingKey;
 
     // === Cola de proyectos de grado ===

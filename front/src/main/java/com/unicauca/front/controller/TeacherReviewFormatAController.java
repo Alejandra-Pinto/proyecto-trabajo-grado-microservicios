@@ -113,7 +113,7 @@ public class TeacherReviewFormatAController {
     }
 
     private void cargarFormatosDelDocente() {
-        if (usuarioActual == null || !"TEACHER".equalsIgnoreCase(usuarioActual.getRole())) {
+        if (usuarioActual == null || !"PROFESSOR".equalsIgnoreCase(usuarioActual.getRole())) {
             return;
         }
 
@@ -145,7 +145,7 @@ public class TeacherReviewFormatAController {
 
     @FXML
     private void onBtnFormatoDocenteClicked() {
-        if (usuarioActual != null && "TEACHER".equalsIgnoreCase(usuarioActual.getRole())) {
+        if (usuarioActual != null && "PROFESSOR".equalsIgnoreCase(usuarioActual.getRole())) {
             //Navegar a gestión de propuestas del docente
             navigation.showManagementTeacherFormatA();
         } else {
@@ -155,7 +155,7 @@ public class TeacherReviewFormatAController {
 
     @FXML
     private void onBtnAnteproyectoDocenteClicked() {
-        if (usuarioActual != null && "TEACHER".equalsIgnoreCase(usuarioActual.getRole())) {
+        if (usuarioActual != null && "PROFESSOR".equalsIgnoreCase(usuarioActual.getRole())) {
             //Navegar a gestión de anteproyectos del docente
             navigation.showManagementTeacherFormatA();
         } else {
@@ -176,7 +176,7 @@ public class TeacherReviewFormatAController {
             return;
         }
         
-        if (usuarioActual != null && "TEACHER".equalsIgnoreCase(usuarioActual.getRole())) {
+        if (usuarioActual != null && "PROFESSOR".equalsIgnoreCase(usuarioActual.getRole())) {
             //Navegar a ManagementTeacherFormatA con el formato para edición
             navigation.showManagementTeacherFormatAWithFormato(usuarioActual, formatoActual);
         } else {
@@ -193,7 +193,7 @@ public class TeacherReviewFormatAController {
 
     @FXML
     private void handleBackToTeacherManagement() {
-        if (usuarioActual != null && "TEACHER".equalsIgnoreCase(usuarioActual.getRole())) {
+        if (usuarioActual != null && "PROFESSOR".equalsIgnoreCase(usuarioActual.getRole())) {
             navigation.showManagementTeacherFormatA();
         }
     }

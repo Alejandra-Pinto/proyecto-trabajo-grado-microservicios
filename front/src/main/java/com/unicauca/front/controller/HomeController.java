@@ -61,7 +61,7 @@ public class HomeController {
         //Usa el campo 'role' en lugar de instanceof
         btnRol.setText(rol + "\n(" + programa + ")");
 
-        if ("TEACHER".equalsIgnoreCase(rol)) {
+        if ("PROFESSOR".equalsIgnoreCase(rol)) {
             btnAnteproyectoDocente.setVisible(true);
             btnFormatoDocente.setVisible(true);
 
@@ -89,11 +89,11 @@ public class HomeController {
     //Botones de navegación según rol
     @FXML
     private void onBtnFormatoDocenteClicked() {
-        if (!"TEACHER".equalsIgnoreCase(usuario.getRole())) {
+        if (!"PROFESSOR".equalsIgnoreCase(usuario.getRole())) {
             mostrarAlerta("Acceso denegado", "Solo los docentes pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
             return;
         }
-        navigation.showPublishedTeacherFormatA();
+        navigation.showPublishedTeacherFormatA(usuario);
     }
 
     @FXML

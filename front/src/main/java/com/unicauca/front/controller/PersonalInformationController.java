@@ -79,7 +79,7 @@ public class PersonalInformationController {
         switch (usuarioActual.getRole().toUpperCase()) {
             case "STUDENT":
                 return "Estudiante";
-            case "TEACHER":
+            case "PROFESSOR":
                 return "Docente";
             case "COORDINATOR":
                 return "Coordinador";
@@ -105,7 +105,7 @@ public class PersonalInformationController {
         //Mostrar botones según el rol
         String rol = usuarioActual.getRole().toUpperCase();
         switch (rol) {
-            case "TEACHER":
+            case "PROFESSOR":
                 btnFormatoDocente.setVisible(true);
                 btnAnteproyectoDocente.setVisible(true);
                 break;
@@ -143,7 +143,7 @@ public class PersonalInformationController {
 
     @FXML
     private void onBtnFormatoDocenteClicked() {
-        if (usuarioActual != null && "TEACHER".equalsIgnoreCase(usuarioActual.getRole())) {
+        if (usuarioActual != null && "PROFESSOR".equalsIgnoreCase(usuarioActual.getRole())) {
             navigation.showPublishedTeacherFormatA();
         } else {
             mostrarAlerta("Acceso denegado", "Solo los docentes pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
@@ -152,7 +152,7 @@ public class PersonalInformationController {
 
     @FXML
     private void onBtnAnteproyectoDocenteClicked() {
-        if (usuarioActual != null && "TEACHER".equalsIgnoreCase(usuarioActual.getRole())) {
+        if (usuarioActual != null && "PROFESSOR".equalsIgnoreCase(usuarioActual.getRole())) {
             navigation.showManagementTeacherFormatA();
         } else {
             mostrarAlerta("Acceso denegado", "Solo los docentes pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);

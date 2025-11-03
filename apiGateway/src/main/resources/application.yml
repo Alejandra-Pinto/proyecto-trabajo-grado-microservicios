@@ -11,12 +11,13 @@ spring:
         - id: proyecto-service
           uri: http://localhost:8081
           predicates:
-            - Path=/api/proyectos/**
-          filters:
-            - name: CircuitBreaker
-              args:
-                name: proyectoServiceCircuitBreaker
-                fallbackUri: forward:/fallback/proyectos
+            - Path=/api/degreeworks/**
+          # ⚠️ COMENTA temporalmente el Circuit Breaker:
+          # filters:
+          #   - name: CircuitBreaker
+          #     args:
+          #       name: proyectoServiceCircuitBreaker
+          #       fallbackUri: forward:/fallback/proyectos
 
         - id: usuario-service
           uri: http://localhost:8082
