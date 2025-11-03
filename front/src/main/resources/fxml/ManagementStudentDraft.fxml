@@ -4,13 +4,15 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane id="AnchorPane" prefHeight="804.0" prefWidth="1552.0" style="-fx-background-color: #0f3ea4;" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.unicauca.front.controller.ManagementStudentFormatAController">
+<AnchorPane id="AnchorPane" prefHeight="804.0" prefWidth="1552.0" style="-fx-background-color: #0f3ea4;" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.unicauca.front.controller.ManagementStudentDraftController">
    <children>
       <SplitPane fx:id="splitMain" dividerPositions="0.30523255813953487" layoutY="115.0" prefHeight="705.0" prefWidth="1553.0">
         <items>
@@ -30,7 +32,7 @@
                      </font>
                   </ToggleButton>
 
-                  <ToggleButton fx:id="btnFormatoPropuesta" layoutY="101.0" mnemonicParsing="false" prefHeight="101.0" prefWidth="470.0" text="Formato de Propuesta">
+                  <ToggleButton fx:id="btnFormatoPropuesta" layoutY="101.0" mnemonicParsing="false" onAction="#onBtnFormatoPropuestaClicked" prefHeight="101.0" prefWidth="470.0" text="Formato de Propuesta">
                      <graphic>
                         <ImageView fitHeight="51.0" fitWidth="51.0" preserveRatio="true">
                            <image>
@@ -72,7 +74,7 @@
                         <Image url="@images/antorcha.png" />
                      </image>
                   </ImageView>
-                  <Label fx:id="lblTitulo" layoutX="49.0" layoutY="17.0" text="ESTADO DE PROPUESTA">
+                  <Label fx:id="lblTitulo" layoutX="49.0" layoutY="17.0" text="ESTADO DEL ANTEPROYECTO">
                      <font>
                         <Font name="System Bold" size="44.0" />
                      </font>
@@ -82,31 +84,31 @@
                         <Font name="System Bold" size="22.0" />
                      </font>
                   </Label>
-                  <Label fx:id="lblTituloTrabajo" layoutX="50.0" layoutY="135.0" text="Título Trabajo de Grado:">
+                  <Label fx:id="lblTituloTrabajo" layoutX="50.0" layoutY="122.0" text="Título Trabajo de Grado:">
                      <font>
                         <Font size="16.0" />
                      </font></Label>
-                  <Label fx:id="lblModalidadTitulo" layoutX="50.0" layoutY="185.0" text="Modalidad:">
+                  <Label fx:id="lblModalidadTitulo" layoutX="50.0" layoutY="162.0" text="Modalidad:">
                      <font>
                         <Font size="16.0" />
                      </font></Label>
-                  <Label fx:id="lblFechaTitulo" layoutX="50.0" layoutY="235.0" text="Fecha:">
+                  <Label fx:id="lblFechaTitulo" layoutX="50.0" layoutY="202.0" text="Fecha:">
                      <font>
                         <Font size="16.0" />
                      </font></Label>
-                  <Label fx:id="lblDirectorTitulo" layoutX="50.0" layoutY="285.0" text="Director del Proyecto:">
+                  <Label fx:id="lblDirectorTitulo" layoutX="50.0" layoutY="242.0" text="Director del Proyecto:">
                      <font>
                         <Font size="16.0" />
                      </font></Label>
-                  <Label fx:id="lblCodirectorTitulo" layoutX="50.0" layoutY="335.0" text="Codirector del Proyecto:">
+                  <Label fx:id="lblCodirectorTitulo" layoutX="50.0" layoutY="282.0" text="Codirector del Proyecto:">
                      <font>
                         <Font size="16.0" />
                      </font></Label>
-                  <Label fx:id="lblObjGeneralTitulo" layoutX="50.0" layoutY="395.0" text="Objetivo general:">
+                  <Label fx:id="lblObjGeneralTitulo" layoutX="50.0" layoutY="322.0" text="Objetivo general:">
                      <font>
                         <Font size="16.0" />
                      </font></Label>
-                  <Label fx:id="lblObjEspecificosTitulo" layoutX="50.0" layoutY="515.0" text="Objetivos específicos:">
+                  <Label fx:id="lblObjEspecificosTitulo" layoutX="50.0" layoutY="392.0" text="Objetivos específicos:">
                      <font>
                         <Font size="16.0" />
                      </font></Label>
@@ -124,34 +126,49 @@
                 </Button>
 
                   <!-- Labels dinámicos -->
-                  <Label fx:id="lblFechaValor" layoutX="407.0" layoutY="235.0" text="Cargar Fecha">
+                  <Label fx:id="lblFechaValor" layoutX="407.0" layoutY="202.0" text="Cargar Fecha">
                      <font>
                         <Font size="16.0" />
                      </font></Label>
-                  <Label fx:id="lblDirectorValor" layoutX="407.0" layoutY="285.0" text="Cargar Director">
+                  <Label fx:id="lblDirectorValor" layoutX="407.0" layoutY="242.0" text="Cargar Director">
                      <font>
                         <Font size="16.0" />
                      </font></Label>
-                  <Label fx:id="lblModalidadValor" layoutX="407.0" layoutY="185.0" text="Cargar Modalidad">
+                  <Label fx:id="lblModalidadValor" layoutX="407.0" layoutY="162.0" text="Cargar Modalidad">
                      <font>
                         <Font size="16.0" />
                      </font></Label>
-                  <Label fx:id="lblCodirectorValor" layoutX="407.0" layoutY="335.0" text="Cargar Codirector">
+                  <Label fx:id="lblCodirectorValor" layoutX="407.0" layoutY="282.0" text="Cargar Codirector">
                      <font>
                         <Font size="16.0" />
                      </font></Label>
-                  <TextArea fx:id="txtObjEspecificos" layoutX="407.0" layoutY="515.0" prefHeight="111.0" prefWidth="558.0" text="Cargar objetivos específicos">
+                  <TextArea fx:id="txtObjEspecificos" layoutX="407.0" layoutY="392.0" prefHeight="66.0" prefWidth="558.0" text="Cargar objetivos específicos">
                      <font>
                         <Font size="16.0" />
                      </font></TextArea>
-                  <Label fx:id="lblTituloValor" layoutX="407.0" layoutY="135.0" text="Cargar Titulo">
+                  <Label fx:id="lblTituloValor" layoutX="407.0" layoutY="122.0" text="Cargar Titulo">
                      <font>
                         <Font size="16.0" />
                      </font></Label>
-                  <TextArea fx:id="txtObjGeneral" layoutX="407.0" layoutY="395.0" prefHeight="71.0" prefWidth="558.0" text="Cargar objetivo general">
+                  <TextArea fx:id="txtObjGeneral" layoutX="407.0" layoutY="322.0" prefHeight="54.0" prefWidth="558.0" text="Cargar objetivo general">
                      <font>
                         <Font size="16.0" />
                      </font></TextArea>
+                  <Label layoutX="50.0" layoutY="472.0" text="Documento - Anteproyecto*">
+                     <font>
+                        <Font size="16.0" />
+                     </font>
+                  </Label>
+                  <HBox fx:id="hbAnteproyecto" layoutX="50.0" layoutY="507.0" prefHeight="26.0" prefWidth="362.0">
+                     <children>
+                        <TextField fx:id="txtArchivoAnteproyecto" prefHeight="26.0" prefWidth="366.0" editable="false" />
+                     </children>
+                  </HBox>
+                  <Button fx:id="btnAbrirAnteproyecto" layoutX="427.0" layoutY="502.0" mnemonicParsing="false" onAction="#onAbrirAnteproyecto" style="-fx-background-color: #ae2f2f;" text="ABRIR" textFill="WHITE">
+                     <font>
+                        <Font name="System Bold" size="16.0" />
+                     </font>
+                  </Button>
                </children>
             </AnchorPane>
         </items>

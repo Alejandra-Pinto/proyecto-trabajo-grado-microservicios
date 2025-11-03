@@ -8,9 +8,13 @@ import org.springframework.stereotype.Component;
 import com.unicauca.front.controller.CoordinatorReviewFormatAController;
 import com.unicauca.front.controller.HomeAdminController;
 import com.unicauca.front.controller.HomeController;
+import com.unicauca.front.controller.ManagementCoordinatorFormatAController;
+import com.unicauca.front.controller.ManagementStudentDraftController;
 import com.unicauca.front.controller.ManagementStudentFormatAController;
+import com.unicauca.front.controller.ManagementTeacherDraftController;
 import com.unicauca.front.controller.ManagementTeacherFormatAController;
 import com.unicauca.front.controller.PersonalInformationController;
+import com.unicauca.front.controller.PublishedDepartmentHeadDraftController;
 import com.unicauca.front.controller.PublishedTeacherFormatAController;
 import com.unicauca.front.controller.StudentReviewFormatAController;
 import com.unicauca.front.controller.TeacherReviewFormatAController;
@@ -132,6 +136,24 @@ public class NavigationController {
       this.loadFXML("/fxml/ManagementCoordinatorFormatA.fxml", "Gestión Coordinadores Formato A");
    }
 
+   public void showManagementCoordinatorFormatA(User usuario) {
+    try {
+        FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/ManagementCoordinatorFormatA.fxml"));
+        loader.setControllerFactory(applicationContext::getBean);
+        Parent root = loader.load();
+        
+        ManagementCoordinatorFormatAController controller = loader.getController();
+        controller.configurarConUsuario(usuario);
+        
+        Scene scene = new Scene(root);
+        this.primaryStage.setScene(scene);
+        this.primaryStage.setTitle("Gestión Coordinadores Formato A");
+        this.primaryStage.show();
+    } catch (IOException e) {
+        throw new RuntimeException("Error cargando ManagementCoordinatorFormatA", e);
+    }
+}
+
    public void showReviewStudentFormatA() {
       this.loadFXML("/fxml/ReviewStudentFormatA.fxml", "Revisión Estudiantes Formato A");
    }
@@ -251,6 +273,86 @@ public class NavigationController {
          throw new RuntimeException("Error cargando Home", var7);
       }
    }
+
+
+   public void showManagementStudentDraft() {
+      this.loadFXML("/fxml/ManagementStudentDraft.fxml", "Gestión Anteproyectos - Estudiante");
+   }
+
+   public void showManagementStudentDraft(User usuario) {
+      try {
+         FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/ManagementStudentDraft.fxml"));
+         loader.setControllerFactory(applicationContext::getBean);
+         Parent root = loader.load();
+         
+         // Necesitarás crear este controller o ajustar el nombre según corresponda
+         Object controller = loader.getController();
+         if (controller instanceof ManagementStudentDraftController) {
+               ((ManagementStudentDraftController) controller).configurarConUsuario(usuario);
+         }
+         
+         Scene scene = new Scene(root);
+         this.primaryStage.setScene(scene);
+         this.primaryStage.setTitle("Gestión Anteproyectos - Estudiante");
+         this.primaryStage.show();
+      } catch (IOException e) {
+         throw new RuntimeException("Error cargando ManagementStudentDraft", e);
+      }
+   }
+
+   public void showManagementTeacherDraft() {
+      this.loadFXML("/fxml/ManagementTeacherDraft.fxml", "Gestión Anteproyectos - Docente");
+}
+
+public void showManagementTeacherDraft(User usuario) {
+   try {
+      FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/ManagementTeacherDraft.fxml"));
+      loader.setControllerFactory(applicationContext::getBean);
+      Parent root = loader.load();
+      
+      // Necesitarás crear este controller o ajustar el nombre según corresponda
+      Object controller = loader.getController();
+      if (controller instanceof ManagementTeacherDraftController) {
+            ((ManagementTeacherDraftController) controller).configurarConUsuario(usuario);
+      }
+      
+      Scene scene = new Scene(root);
+      this.primaryStage.setScene(scene);
+      this.primaryStage.setTitle("Gestión Anteproyectos - Docente");
+      this.primaryStage.show();
+   } catch (IOException e) {
+      throw new RuntimeException("Error cargando ManagementTeacherDraft", e);
+   }
+}
+
+public void showManagementDepartmentHeadDraft() {
+   this.loadFXML("/fxml/ManagementDepartmentHeadDraft.fxml", "Gestión Anteproyectos - Jefe Departamento");
+}
+
+public void showPublishedDepartmentHeadDraft() {
+   this.loadFXML("/fxml/PublishedDepartmentHeadDraft.fxml", "Anteproyectos Publicados - Jefe Departamento");
+}
+
+public void showPublishedDepartmentHeadDraft(User usuario) {
+   try {
+      FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/PublishedDepartmentHeadDraft.fxml"));
+      loader.setControllerFactory(applicationContext::getBean);
+      Parent root = loader.load();
+      
+      // Necesitarás crear este controller o ajustar el nombre según corresponda
+      Object controller = loader.getController();
+      if (controller instanceof PublishedDepartmentHeadDraftController) {
+            ((PublishedDepartmentHeadDraftController) controller).configurarConUsuario(usuario);
+      }
+      
+      Scene scene = new Scene(root);
+      this.primaryStage.setScene(scene);
+      this.primaryStage.setTitle("Anteproyectos Publicados - Jefe Departamento");
+      this.primaryStage.show();
+   } catch (IOException e) {
+      throw new RuntimeException("Error cargando PublishedDepartmentHeadDraft", e);
+   }
+}
 
    public void showStatistics() {
     loadFXML("/fxml/Statistics.fxml", "Estadísticas de Formatos");

@@ -8,7 +8,6 @@ import com.unicauca.front.model.User;
 import com.unicauca.front.service.ApiGatewayService;
 import com.unicauca.front.util.NavigationController;
 import com.unicauca.front.util.SessionManager;
-import com.unicauca.front.model.EnumEstadoDegreeWork;
 import javafx.application.HostServices;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
