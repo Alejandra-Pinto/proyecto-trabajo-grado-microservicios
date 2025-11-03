@@ -1,0 +1,135 @@
+{
+  "info": {
+    "_postman_id": "caa8b9e2-3f54-4b0a-9f1b-4e5c12345678",
+    "name": "Evaluation Microservice - Full Test",
+    "description": "Colección completa para probar los controladores EvaluationController y DegreeWorkController del microservicio de evaluación.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "📄 Evaluations",
+      "item": [
+        {
+          "name": "Crear Evaluación",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documentId\": 1,\n  \"evaluadorId\": 3,\n  \"resultado\": \"APROBADO\",\n  \"tipo\": \"ANTEPROYECTO\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8083/api/evaluations",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "evaluations"]
+            }
+          }
+        },
+        {
+          "name": "Listar Evaluaciones",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:8083/api/evaluations",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "evaluations"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Evaluación por ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:8083/api/evaluations/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "evaluations", "1"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar Evaluación por ID",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://localhost:8083/api/evaluations/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "evaluations", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎓 Degree Works",
+      "item": [
+        {
+          "name": "Listar Todos los Trabajos de Grado",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:8083/api/degreeworks",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "degreeworks"]
+            }
+          }
+        },
+        {
+          "name": "Listar Solo Anteproyectos",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:8083/api/degreeworks/anteproyectos",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "degreeworks", "anteproyectos"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Trabajo de Grado por ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:8083/api/degreeworks/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "degreeworks", "1"]
+            }
+          }
+        },
+        {
+          "name": "Asignar Evaluadores a un Trabajo de Grado",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:8083/api/degreeworks/1/asignar-evaluadores?evaluador1Id=3&evaluador2Id=4",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "degreeworks", "1", "asignar-evaluadores"],
+              "query": [
+                { "key": "evaluador1Id", "value": "3" },
+                { "key": "evaluador2Id", "value": "4" }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
