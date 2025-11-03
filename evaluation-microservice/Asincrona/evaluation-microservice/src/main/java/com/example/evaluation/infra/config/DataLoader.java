@@ -19,14 +19,32 @@ public class DataLoader implements CommandLineRunner {
 
     private final DegreeWorkRepository degreeWorkRepository;
     private final EvaluadorRepository evaluadorRepository;
-    private final HeadOfDepartmentRepository HeadOfDepartmentRepository;
+    private final HeadOfDepartmentRepository headOfDepartmentRepository;
 
     @Override
     public void run(String... args) {
 
-        if (degreeWorkRepository.count() == 0) {
+        if (degreeWorkRepository.count() == 0 && evaluadorRepository.count() == 0) {
 
-            // 👩‍🎓 Estudiantes
+            // 👨‍🏫 Crear y guardar evaluadores PRIMERO (evita duplicados)
+            Evaluador director = crearOObtenerEvaluador(
+                    "Dr. Carlos García", "Director", "carlos.garcia@unicauca.edu.co");
+
+            Evaluador codirector1 = crearOObtenerEvaluador(
+                    "MSc. Laura Torres", "Codirector", "laura.torres@unicauca.edu.co");
+
+            Evaluador codirector2 = crearOObtenerEvaluador(
+                    "Ing. Mateo Rojas", "Codirector", "mateo.rojas@unicauca.edu.co");
+
+            System.out.println("✅ Evaluadores guardados correctamente");
+
+            // 👔 Jefe de departamento
+            HeadOfDepartment jefeDepto = new HeadOfDepartment(
+                    "Luis", "Martínez", "3115550001", "Ingeniería de Sistemas",
+                    "luis.martinez@unicauca.edu.co", "12345");
+            headOfDepartmentRepository.save(jefeDepto);
+
+            // 👩‍🎓 Estudiantes (se crean directamente en el trabajo)
             Student estudiante1 = new Student();
             estudiante1.setId(1L);
             estudiante1.setName("Dana Romero");
@@ -37,20 +55,6 @@ public class DataLoader implements CommandLineRunner {
             estudiante2.setName("Juan Pérez");
             estudiante2.setEmail("juan.perez@unicauca.edu.co");
 
-            // 👨‍🏫 Evaluadores
-            Evaluador director = new Evaluador("Dr. Carlos García", "Director", "carlos.garcia@unicauca.edu.co");
-            Evaluador codirector1 = new Evaluador("MSc. Laura Torres", "Codirector", "laura.torres@unicauca.edu.co");
-            Evaluador codirector2 = new Evaluador("Ing. Mateo Rojas", "Codirector", "mateo.rojas@unicauca.edu.co");
-
-            // 🔹 Guardar evaluadores antes de usarlos
-            evaluadorRepository.saveAll(List.of(director, codirector1, codirector2));
-
-            // 👔 Jefe de departamento
-            HeadOfDepartment jefeDepto = new HeadOfDepartment(
-                    "Luis", "Martínez", "3115550001", "Ingeniería de Sistemas",
-                    "luis.martinez@unicauca.edu.co", "12345");
-            // 💾 Guardar jefe de departamento
-            HeadOfDepartmentRepository.save(jefeDepto);
             // 📄 Documentos
             Document formatoA = new Document();
             formatoA.setId(1L);
@@ -79,8 +83,8 @@ public class DataLoader implements CommandLineRunner {
                     "Desarrollar un módulo de carga y validación de documentos.",
                     "Implementar notificaciones automáticas para los evaluadores."));
             trabajo.setEstado(EnumEstadoDegreeWork.ANTEPROYECTO);
-            trabajo.setDirectorProyecto(director);
-            trabajo.setCodirectoresProyecto(List.of(codirector1, codirector2));
+            trabajo.setDirectorProyecto(director); // Usa el evaluador ya guardado
+            trabajo.setCodirectoresProyecto(List.of(codirector1, codirector2)); // Usa evaluadores ya guardados
             trabajo.setEstudiantes(List.of(estudiante1, estudiante2));
             trabajo.setFormatosA(List.of(formatoA));
             trabajo.setAnteproyectos(List.of(anteproyecto));
@@ -100,7 +104,18 @@ public class DataLoader implements CommandLineRunner {
             System.out.println("✅ Datos de prueba cargados correctamente (evaluadores, jefe y trabajo).");
 
         } else {
-            System.out.println("ℹ️ Ya existen registros en DegreeWork, no se cargaron datos nuevos.");
+            System.out.println("ℹ️ Ya existen registros en la base de datos, no se cargaron datos nuevos.");
         }
+    }
+
+    /**
+     * Crea un evaluador si no existe, o lo obtiene si ya existe por correo
+     */
+    private Evaluador crearOObtenerEvaluador(String nombre, String rol, String correo) {
+        return evaluadorRepository.findByCorreo(correo)
+                .orElseGet(() -> {
+                    Evaluador nuevoEvaluador = new Evaluador(nombre, rol, correo);
+                    return evaluadorRepository.save(nuevoEvaluador);
+                });
     }
 }

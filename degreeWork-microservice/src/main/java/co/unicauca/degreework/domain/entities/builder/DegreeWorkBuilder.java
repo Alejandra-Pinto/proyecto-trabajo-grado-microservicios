@@ -2,6 +2,8 @@ package co.unicauca.degreework.domain.entities.builder;
 
 import co.unicauca.degreework.domain.entities.*;
 import co.unicauca.degreework.domain.entities.enums.*;
+import co.unicauca.degreework.infra.dto.DocumentDTO;
+
 import java.time.LocalDate;
 import java.util.*;
 
@@ -61,9 +63,14 @@ public abstract class DegreeWorkBuilder {
     /**
      * Carga los documentos enviados en el DTO.
      */
-    public DegreeWorkBuilder documentos(List<Document> documentos) {
-        if (documentos != null && !documentos.isEmpty()) {
-            for (Document doc : documentos) {
+    public DegreeWorkBuilder documentosDesdeDTOs(List<DocumentDTO> documentosDTO) {
+        if (documentosDTO != null && !documentosDTO.isEmpty()) {
+            for (DocumentDTO docDto : documentosDTO) {
+                Document doc = new Document();
+                doc.setTipo(docDto.getTipo());
+                doc.setEstado(docDto.getEstado());
+                doc.setRutaArchivo(docDto.getRutaArchivo());
+
                 if (doc.getTipo() == EnumTipoDocumento.FORMATO_A) {
                     degreeWork.getFormatosA().add(doc);
                 } else if (doc.getTipo() == EnumTipoDocumento.CARTA_ACEPTACION) {
@@ -75,6 +82,7 @@ public abstract class DegreeWorkBuilder {
         }
         return this;
     }
+
 
     public DegreeWork build() {
         return degreeWork;

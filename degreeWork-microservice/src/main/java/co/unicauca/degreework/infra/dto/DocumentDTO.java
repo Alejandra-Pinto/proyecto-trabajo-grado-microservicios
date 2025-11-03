@@ -28,7 +28,7 @@ public class DocumentDTO {
     /**
      * @return EnumTipoDocumento return the tipoDocumento
      */
-    public EnumTipoDocumento getTipoDocumento() {
+    public EnumTipoDocumento getTipo() {
         return tipo;
     }
 

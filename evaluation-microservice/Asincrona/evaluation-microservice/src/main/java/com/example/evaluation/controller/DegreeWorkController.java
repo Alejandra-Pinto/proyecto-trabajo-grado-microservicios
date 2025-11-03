@@ -16,30 +16,30 @@ public class DegreeWorkController {
         this.degreeWorkService = degreeWorkService;
     }
 
-    // Listar solo los anteproyectos
+    // ✅ Listar solo los anteproyectos
     @GetMapping("/anteproyectos")
     public List<DegreeWork> listarAnteproyectos() {
         return degreeWorkService.listarAnteproyectos();
     }
 
-    // Listar todos los trabajos de grado
+    // ✅ Listar todos los trabajos de grado
     @GetMapping
     public List<DegreeWork> listarTodos() {
         return degreeWorkService.listarTodos();
     }
 
-    // Obtener un trabajo de grado específico
-    @GetMapping("/{id}")
-    public DegreeWork obtenerPorId(@PathVariable Integer id) {
-        return degreeWorkService.obtenerPorId(id);
+    // ✅ Obtener un trabajo de grado por correo del estudiante
+    @GetMapping("/correo/{correo}")
+    public DegreeWork obtenerPorCorreo(@PathVariable String correo) {
+        return degreeWorkService.obtenerPorCorreo(correo);
     }
 
-    // Asignar evaluadores (por parte del jefe de departamento)
+    // ✅ Asignar evaluadores (usando sus correos)
     @PostMapping("/{id}/asignar-evaluadores")
     public DegreeWork asignarEvaluadores(
             @PathVariable Integer id,
-            @RequestParam Long evaluador1Id,
-            @RequestParam Long evaluador2Id) {
-        return degreeWorkService.asignarEvaluadores(id, evaluador1Id, evaluador2Id);
+            @RequestParam String correoEvaluador1,
+            @RequestParam String correoEvaluador2) {
+        return degreeWorkService.asignarEvaluadoresPorCorreo(id, correoEvaluador1, correoEvaluador2);
     }
 }

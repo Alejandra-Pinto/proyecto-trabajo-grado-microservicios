@@ -4,8 +4,10 @@ import co.unicauca.degreework.access.*;
 import co.unicauca.degreework.domain.entities.*;
 import co.unicauca.degreework.domain.entities.builder.DegreeWorkBuilder;
 import co.unicauca.degreework.domain.entities.builder.DegreeWorkDirector;
+import co.unicauca.degreework.infra.dto.DegreeWorkCreatedEvent;
 import co.unicauca.degreework.infra.dto.DegreeWorkDTO;
 import co.unicauca.degreework.infra.dto.DocumentDTO;
+import co.unicauca.degreework.infra.messaging.DegreeWorkProducer;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,11 +23,13 @@ public class DegreeWorkService {
     private final DegreeWorkRepository repository;
     private final UserService userService;
     private final DocumentRepository documentRepository;
+    private final DegreeWorkProducer degreeWorkProducer;
 
-    public DegreeWorkService(DegreeWorkRepository repository, UserService userService, DocumentRepository documentRepository) {
+    public DegreeWorkService(DegreeWorkRepository repository, UserService userService, DocumentRepository documentRepository, DegreeWorkProducer degreeWorkProducer) {
         this.repository = repository;
         this.userService = userService;
         this.documentRepository = documentRepository;
+        this.degreeWorkProducer = degreeWorkProducer;
     }
 
     /**
@@ -76,15 +80,33 @@ public class DegreeWorkService {
         estudiantes.forEach(builder::agregarEstudiante);
         codirectores.forEach(builder::agregarCodirector);
 
+        // --- Cargar documentos desde DTOs ---
+        builder.documentosDesdeDTOs(dto.getFormatosA());
+        builder.documentosDesdeDTOs(dto.getAnteproyectos());
+        builder.documentosDesdeDTOs(dto.getCartasAceptacion());
+
         // --- Construir el trabajo final ---
         DegreeWork degreeWork = director.construirTrabajo();
+        DegreeWork saved = repository.save(degreeWork);
 
+        //Enviar evento a RabbitMQ
+        DegreeWorkCreatedEvent event = new DegreeWorkCreatedEvent(
+                saved.getTitulo(),
+                saved.getModalidad().name(),
+                directorProyecto.getEmail(),
+                estudiantes.stream().map(User::getEmail).collect(Collectors.toList()),
+                codirectores.stream().map(User::getEmail).collect(Collectors.toList()),
+                saved.getFechaActual(),
+                saved.getEstado().name(),
+                dto.getFormatosA(),
+                dto.getAnteproyectos(),
+                dto.getCartasAceptacion()
+        );
+        degreeWorkProducer.sendDegreeWorkCreated(event);
 
-        // --- Guardar el trabajo ---
-        return repository.save(degreeWork);
-
-        
+        return saved;
     }
+
 
     /**
      * Obtener un trabajo de grado por ID
@@ -157,7 +179,24 @@ public class DegreeWorkService {
         actualizarDocumentos(existente.getCartasAceptacion(), dto.getCartasAceptacion());
         actualizarDocumentos(existente.getAnteproyectos(), dto.getAnteproyectos());
 
-        return repository.save(existente);
+        DegreeWork saved = repository.save(existente);
+
+        //Enviar evento a RabbitMQ
+        DegreeWorkCreatedEvent event = new DegreeWorkCreatedEvent(
+                saved.getTitulo(),
+                saved.getModalidad().name(),
+                saved.getDirectorProyecto().getEmail(),
+                saved.getEstudiantes().stream().map(User::getEmail).collect(Collectors.toList()),
+                saved.getCodirectoresProyecto().stream().map(User::getEmail).collect(Collectors.toList()),
+                saved.getFechaActual(),
+                saved.getEstado().name(),
+                dto.getFormatosA(),
+                dto.getAnteproyectos(),
+                dto.getCartasAceptacion()
+        );
+        degreeWorkProducer.sendDegreeWorkCreated(event);
+
+        return saved;
     }
 
     /**
@@ -168,7 +207,7 @@ public class DegreeWorkService {
             existentes.clear();
             for (DocumentDTO docDto : nuevos) {
                 Document doc = new Document();
-                doc.setTipo(docDto.getTipoDocumento());
+                doc.setTipo(docDto.getTipo());
                 doc.setEstado(docDto.getEstado());
                 doc.setRutaArchivo(docDto.getRutaArchivo());
                 existentes.add(doc);

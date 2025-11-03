@@ -3,7 +3,7 @@ package com.example.evaluation.infra.dto;
 public class EvaluationRequestDTO {
 
     private Long documentId;
-    private Long evaluadorId;
+    private String evaluadorCorreo;
     private String resultado;
     private String tipo;
 
@@ -16,12 +16,12 @@ public class EvaluationRequestDTO {
         this.documentId = documentId;
     }
 
-    public Long getEvaluadorId() {
-        return evaluadorId;
+    public String getEvaluadorCorreo() {
+        return evaluadorCorreo;
     }
 
-    public void setEvaluadorId(Long evaluadorId) {
-        this.evaluadorId = evaluadorId;
+    public void setEvaluadorCorreo(String evaluadorCorreo) {
+        this.evaluadorCorreo = evaluadorCorreo;
     }
 
     public String getResultado() {
