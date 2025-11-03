@@ -2,13 +2,9 @@ package co.unicauca.degreework.domain.entities;
 
 import co.unicauca.degreework.domain.entities.enums.*;
 import jakarta.persistence.*;
-import lombok.*;
+import java.time.LocalDate;
 
 @Entity
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Document {
 
     @Id
@@ -20,8 +16,49 @@ public class Document {
 
     private String rutaArchivo;
 
-    private java.time.LocalDate fechaActual;
+    private LocalDate fechaActual;
 
     @Enumerated(EnumType.STRING)
     private EnumEstadoDocument estado;
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public EnumTipoDocumento getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(EnumTipoDocumento tipo) {
+        this.tipo = tipo;
+    }
+
+    public String getRutaArchivo() {
+        return rutaArchivo;
+    }
+
+    public void setRutaArchivo(String rutaArchivo) {
+        this.rutaArchivo = rutaArchivo;
+    }
+
+    public LocalDate getFechaActual() {
+        return fechaActual;
+    }
+
+    public void setFechaActual(LocalDate fechaActual) {
+        this.fechaActual = fechaActual;
+    }
+
+    public EnumEstadoDocument getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EnumEstadoDocument estado) {
+        this.estado = estado;
+    }
 }
