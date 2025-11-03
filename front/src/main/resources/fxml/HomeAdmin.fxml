@@ -11,7 +11,14 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane id="AnchorPane" prefHeight="804.0" prefWidth="1552.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.unicauca.front.controller.HomeAdminController">
+<AnchorPane id="AnchorPane"
+    prefHeight="804.0"
+    prefWidth="1552.0"
+    xmlns="http://javafx.com/javafx/21"
+    xmlns:fx="http://javafx.com/fxml/1"
+    fx:controller="com.unicauca.front.controller.HomeAdminController">
+
+
 
    <children>
       <Pane prefHeight="804.0" prefWidth="1552.0" style="-fx-background-color: #0F3EA4;">
@@ -39,7 +46,7 @@
                               <Font name="System Bold" size="16.0" />
                            </font>
                         </ToggleButton>
-                        <ToggleButton fx:id="btnCoordinadores" layoutY="101.0" mnemonicParsing="false" prefHeight="101.0" prefWidth="468.0" text="Gestión de Coordinadores">
+                        <ToggleButton fx:id="btnCoordinadores" onAction="#onBtnCoordinadoresClicked" layoutY="101.0"  mnemonicParsing="false" prefHeight="101.0" prefWidth="468.0" text="Gestión de Coordinadores">
                            <graphic>
                               <ImageView fitHeight="51.0" fitWidth="51.0" preserveRatio="true">
                                  <image>

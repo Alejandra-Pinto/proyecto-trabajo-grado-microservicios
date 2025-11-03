@@ -10,6 +10,8 @@ public class Admin {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(nullable = false)
+    private String role = "ADMIN";
 
     private String firstName;
     private String lastName;
@@ -37,6 +39,13 @@ public class Admin {
 
     // ===== Getters y Setters con validaciones =====
     public Long getId() { return id; }
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
 
     public String getFirstName() { return firstName; }
     public void setFirstName(String firstName) {

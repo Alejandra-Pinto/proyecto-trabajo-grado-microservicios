@@ -329,10 +329,10 @@ public class CoordinatorReviewFormatAController {
                 }
             }
 
-            // Crear evaluación directamente con EvaluationRequestDTO
+            // Crear evaluación usando el email del evaluador
             EvaluationRequestDTO evaluationRequest = new EvaluationRequestDTO();
             evaluationRequest.setDocumentId(formatoA.getId());
-            evaluationRequest.setEvaluadorId(usuarioActual.getId());
+            evaluationRequest.setEvaluadorEmail(usuarioActual.getEmail()); // Usar email en lugar de ID
             evaluationRequest.setCorrecciones(txtCorrecciones.getText());
             evaluationRequest.setTipo("FORMATO_A");
 

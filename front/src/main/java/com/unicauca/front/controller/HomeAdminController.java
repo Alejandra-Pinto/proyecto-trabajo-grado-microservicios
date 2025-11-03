@@ -27,14 +27,17 @@ public class HomeAdminController {
     @FXML
     private void initialize() {
         usuarioActual = SessionManager.getCurrentUser();
+        System.out.println("HomeAdminController inicializado: " + this);
     }
 
     public void configurarConUsuario(User usuario) {
+        System.out.println("configurarConUsuario ejecutado en: " + this + " con usuario: " + usuario);
         this.usuarioActual = usuario;
         if (usuario != null) {
             btnUsuario.setText("Admin: " + usuario.getFirstName());
         }
     }
+
 
     @FXML
     private void handleLogout() {
@@ -51,12 +54,15 @@ public class HomeAdminController {
 
     @FXML
     private void onBtnCoordinadoresClicked() {
+        System.out.println("onBtnCoordinadoresClicked ejecutado. Usuario: " + usuarioActual);
         if (usuarioActual != null && "ADMIN".equalsIgnoreCase(usuarioActual.getRole())) {
+            System.out.println("Abriendo ManagementAdmin...");
             navigation.showManagementAdmin();
         } else {
             mostrarAlerta("Acceso denegado", "Solo los administradores pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
         }
     }
+
 
     @FXML
     private void handleBackToHome() {

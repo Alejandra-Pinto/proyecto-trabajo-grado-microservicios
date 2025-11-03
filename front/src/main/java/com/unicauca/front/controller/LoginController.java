@@ -46,11 +46,21 @@ public class LoginController {
             loginRequest.setEmail(usuario);
             loginRequest.setPassword(contrasenia);
 
-            ResponseEntity<User> response = apiService.post("api/usuarios", "/login", loginRequest, User.class);
+            String basePath;
+            if (usuario.toLowerCase().contains("admin")) {
+                basePath = "api/admin";
+            } else {
+                basePath = "api/usuarios";
+            }
+
+            ResponseEntity<User> response = apiService.post(basePath, "/login", loginRequest, User.class);
+
+
+            //ResponseEntity<User> response = apiService.post("api/usuarios", "/login", loginRequest, User.class);
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 User usuarioLogueado = response.getBody();
-                
+                System.out.println("ROL del usuario logueado: " + usuarioLogueado.getRole());
                 //Verifica estado del coordinador (si aplica)
                 if ("COORDINATOR".equalsIgnoreCase(usuarioLogueado.getRole())) {
                     if ("PENDIENTE".equals(usuarioLogueado.getStatus())) {
@@ -66,6 +76,8 @@ public class LoginController {
                     }
                 }
                 if("ADMIN".equalsIgnoreCase(usuarioLogueado.getRole())) {
+                    
+
                     navigation.showHomeAdmin(usuarioLogueado);
                 } else {
                     navigation.showHomeWithUser(usuarioLogueado);
@@ -101,6 +113,7 @@ public class LoginController {
 
         alerta.showAndWait();
     }
+
 
     @FXML
     private void initialize() {

@@ -20,6 +20,7 @@ import com.unicauca.front.model.User;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 
 @Component
@@ -48,6 +49,8 @@ public class NavigationController {
    }
 
    public void showHomeAdmin(User usuario) {
+      System.out.println("showHomeAdmin invocado con usuario: " + usuario);
+
     try {
         FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/HomeAdmin.fxml"));
         loader.setControllerFactory(applicationContext::getBean);
@@ -61,8 +64,14 @@ public class NavigationController {
         this.primaryStage.setTitle("Panel de Administración");
         this.primaryStage.show();
     } catch (IOException e) {
-        throw new RuntimeException("Error cargando HomeAdmin", e);
-    }
+      e.printStackTrace();
+      Alert alert = new Alert(Alert.AlertType.ERROR);
+      alert.setTitle("Error al cargar interfaz");
+      alert.setHeaderText("No se pudo cargar HomeAdmin.fxml");
+      alert.setContentText(e.getMessage());
+      alert.showAndWait();
+   }
+
 }
 
    public void showHome() {

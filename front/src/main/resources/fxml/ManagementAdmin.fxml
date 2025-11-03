@@ -80,6 +80,7 @@
                             <TableColumn fx:id="colCorreo" prefWidth="147.9999294281006" text="CORREO" />
                             <TableColumn fx:id="colNombre" prefWidth="151.20001220703125" text="NOMBRE" />
                             <TableColumn fx:id="colEstado" prefWidth="136.0" text="ESTADO" />
+                            <TableColumn fx:id="colAcciones" prefWidth="120.0" text="ACCIONES" />
                           </columns>
                         </TableView>
                      </children>

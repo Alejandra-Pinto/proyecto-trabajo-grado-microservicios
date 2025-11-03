@@ -2,17 +2,17 @@ package com.unicauca.front.dto;
 
 public class EvaluationRequestDTO {
     private Long documentId;
-    private Long evaluadorId;
+    private String evaluadorEmail;  // Cambiar de evaluadorId a evaluadorEmail
     private String resultado;
-    private String tipo = "FORMATO_A"; // Valor por defecto
+    private String tipo = "FORMATO_A";
     private String correcciones;
 
     // Getters y Setters
     public Long getDocumentId() { return documentId; }
     public void setDocumentId(Long documentId) { this.documentId = documentId; }
     
-    public Long getEvaluadorId() { return evaluadorId; }
-    public void setEvaluadorId(Long evaluadorId) { this.evaluadorId = evaluadorId; }
+    public String getEvaluadorEmail() { return evaluadorEmail; }
+    public void setEvaluadorEmail(String evaluadorEmail) { this.evaluadorEmail = evaluadorEmail; }
     
     public String getResultado() { return resultado; }
     public void setResultado(String resultado) { this.resultado = resultado; }
