@@ -26,7 +26,7 @@ public class EvaluationController {
         this.evaluationPublisher = evaluationPublisher;
     }
 
-    // Crear evaluación
+    // ✅ Crear evaluación
     @PostMapping
     public EvaluationResponseDTO crearEvaluacion(@RequestBody EvaluationRequestDTO dto) {
         Evaluation evaluacion = evaluacionService.crearEvaluacion(
@@ -50,7 +50,7 @@ public class EvaluationController {
         return response;
     }
 
-    // Listar todas las evaluaciones
+    // ✅ Listar todas las evaluaciones
     @GetMapping
     public List<EvaluationResponseDTO> listarEvaluaciones() {
         return evaluacionService.listarEvaluaciones().stream().map(e -> {
@@ -67,7 +67,7 @@ public class EvaluationController {
         }).collect(Collectors.toList());
     }
 
-    // Obtener evaluación por correo del evaluador
+    // ✅ Obtener evaluación por correo del evaluador
     @GetMapping("/evaluador/{correo}")
     public List<EvaluationResponseDTO> obtenerEvaluacionesPorCorreo(@PathVariable String correo) {
         return evaluacionService.obtenerPorCorreoEvaluador(correo).stream().map(e -> {
@@ -84,7 +84,7 @@ public class EvaluationController {
         }).collect(Collectors.toList());
     }
 
-    // Eliminar evaluación
+    // ✅ Eliminar evaluación
     @DeleteMapping("/{id}")
     public void eliminarEvaluacion(@PathVariable Long id) {
         evaluacionService.eliminarEvaluacion(id);

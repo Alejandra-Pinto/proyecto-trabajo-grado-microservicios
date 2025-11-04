@@ -37,9 +37,9 @@ public class DegreeWorkService {
     private final NotificationProducer notificationProducer;
 
     public DegreeWorkService(DegreeWorkRepository repository, UserService userService,
-            DocumentRepository documentRepository,
-            DegreeWorkProducer degreeWorkProducer,
-            NotificationProducer notificationProducer) {
+                            DocumentRepository documentRepository,
+                            DegreeWorkProducer degreeWorkProducer,
+                            NotificationProducer notificationProducer) {
         this.repository = repository;
         this.userService = userService;
         this.documentRepository = documentRepository;
@@ -75,12 +75,9 @@ public class DegreeWorkService {
             boolean tieneDocumentoActivo = trabajos.stream().anyMatch(dw -> {
                 // Revisa todos los documentos asociados
                 List<Document> todosDocs = new ArrayList<>();
-                if (dw.getFormatosA() != null)
-                    todosDocs.addAll(dw.getFormatosA());
-                if (dw.getAnteproyectos() != null)
-                    todosDocs.addAll(dw.getAnteproyectos());
-                if (dw.getCartasAceptacion() != null)
-                    todosDocs.addAll(dw.getCartasAceptacion());
+                if (dw.getFormatosA() != null) todosDocs.addAll(dw.getFormatosA());
+                if (dw.getAnteproyectos() != null) todosDocs.addAll(dw.getAnteproyectos());
+                if (dw.getCartasAceptacion() != null) todosDocs.addAll(dw.getCartasAceptacion());
 
                 // Si hay documentos y el último no está rechazado, retorna true
                 if (!todosDocs.isEmpty()) {
@@ -93,7 +90,8 @@ public class DegreeWorkService {
             if (tieneDocumentoActivo) {
                 throw new IllegalStateException(
                         "El estudiante con correo " + email +
-                                " ya tiene un trabajo con documentos activos (no rechazados) y no puede registrar otro.");
+                        " ya tiene un trabajo con documentos activos (no rechazados) y no puede registrar otro."
+                );
             }
 
             estudiantes.add(estudiante);
@@ -118,7 +116,7 @@ public class DegreeWorkService {
                 .objetivosEspecificos(dto.getObjetivosEspecificos())
                 .fechaActual(dto.getFechaActual())
                 .estadoInicial(dto.getEstado());
-
+                
         // --- Agregar estudiantes y codirectores ---
         estudiantes.forEach(builder::agregarEstudiante);
         codirectores.forEach(builder::agregarCodirector);
@@ -130,32 +128,34 @@ public class DegreeWorkService {
 
         // --- Construir el trabajo final ---
         DegreeWork degreeWork = director.construirTrabajo();
-        DegreeWork saved = repository.save(degreeWork);
+         DegreeWork saved = repository.save(degreeWork);
 
         // Evento original (para evaluation, etc.)
         DegreeWorkCreatedEvent event = new DegreeWorkCreatedEvent(
-                saved.getId(),
-                saved.getTitulo(),
-                saved.getModalidad().name(),
-                directorProyecto.getEmail(),
-                estudiantes.stream().map(User::getEmail).collect(Collectors.toList()),
-                codirectores.stream().map(User::getEmail).collect(Collectors.toList()),
-                saved.getFechaActual(),
-                saved.getEstado().name(),
-                dto.getFormatosA(),
-                dto.getAnteproyectos(),
-                dto.getCartasAceptacion());
+            saved.getId(),
+            saved.getTitulo(),
+            saved.getModalidad().name(),
+            directorProyecto.getEmail(),
+            estudiantes.stream().map(User::getEmail).collect(Collectors.toList()),
+            codirectores.stream().map(User::getEmail).collect(Collectors.toList()),
+            saved.getFechaActual(),
+            saved.getEstado().name(),
+            dto.getFormatosA(),
+            dto.getAnteproyectos(),
+            dto.getCartasAceptacion()
+        );
         degreeWorkProducer.sendDegreeWorkCreated(event);
 
         // NUEVO: enviar notificación al microservicio notification
         NotificationEventDTO notificationEvent = new NotificationEventDTO(
-                "TRABAJO_GRADO_REGISTRADO",
-                saved.getTitulo(),
-                saved.getModalidad().name(),
-                estudiantes.isEmpty() ? null : estudiantes.get(0).getEmail(),
-                directorProyecto.getEmail(),
-                codirectores.size() > 0 ? codirectores.get(0).getEmail() : null,
-                codirectores.size() > 1 ? codirectores.get(1).getEmail() : null);
+            "TRABAJO_GRADO_REGISTRADO",
+            saved.getTitulo(),
+            saved.getModalidad().name(),
+            estudiantes.isEmpty() ? null : estudiantes.get(0).getEmail(),
+            directorProyecto.getEmail(),
+            codirectores.size() > 0 ? codirectores.get(0).getEmail() : null,
+            codirectores.size() > 1 ? codirectores.get(1).getEmail() : null
+        );
 
         notificationProducer.sendNotification(notificationEvent);
 
@@ -191,8 +191,7 @@ public class DegreeWorkService {
             if (dto.getDirectorEmail() != null) {
                 User nuevoDirector = userService.obtenerPorEmail(dto.getDirectorEmail());
                 if (nuevoDirector == null) {
-                    throw new IllegalArgumentException(
-                            "No se encontró el director con correo: " + dto.getDirectorEmail());
+                    throw new IllegalArgumentException("No se encontró el director con correo: " + dto.getDirectorEmail());
                 }
                 existente.setDirectorProyecto(nuevoDirector);
             }
@@ -214,39 +213,23 @@ public class DegreeWorkService {
             // --- Actualizar documentos ---
             actualizarDocumentos(dto, existente);
 
-            // 🔧 Validaciones de integridad antes de guardar/enviar evento
-            if (existente.getModalidad() == null) {
-                throw new IllegalStateException(
-                        "El trabajo de grado ID " + id + " no tiene modalidad asignada. " +
-                                "Corrige el registro o crea/actualiza usando los builders que establecen la modalidad.");
-            }
-            if (existente.getEstado() == null) {
-                throw new IllegalStateException(
-                        "El trabajo de grado ID " + id + " no tiene estado asignado. " +
-                                "Asegúrate de enviar un estado válido en el DTO.");
-            }
-
             // --- Guardar cambios ---
             DegreeWork saved = repository.save(existente);
 
-            // 🔧 Evitar NPE si aún no hay director sincronizado
-            String directorEmailSeguro = (saved.getDirectorProyecto() != null)
-                    ? saved.getDirectorProyecto().getEmail()
-                    : null;
-
             // --- Enviar evento ---
             DegreeWorkCreatedEvent event = new DegreeWorkCreatedEvent(
-                    saved.getId(),
-                    saved.getTitulo(),
-                    saved.getModalidad().name(), // safe por validación previa
-                    directorEmailSeguro, // puede ser null; el listener debe tolerarlo
-                    saved.getEstudiantes().stream().map(User::getEmail).collect(Collectors.toList()),
-                    saved.getCodirectoresProyecto().stream().map(User::getEmail).collect(Collectors.toList()),
-                    saved.getFechaActual(),
-                    saved.getEstado().name(), // safe por validación previa
-                    dto.getFormatosA(),
-                    dto.getAnteproyectos(),
-                    dto.getCartasAceptacion());
+                saved.getId(),
+                saved.getTitulo(),
+                saved.getModalidad().name(),
+                saved.getDirectorProyecto().getEmail(),
+                saved.getEstudiantes().stream().map(User::getEmail).collect(Collectors.toList()),
+                saved.getCodirectoresProyecto().stream().map(User::getEmail).collect(Collectors.toList()),
+                saved.getFechaActual(),
+                saved.getEstado().name(),
+                dto.getFormatosA(),
+                dto.getAnteproyectos(),
+                dto.getCartasAceptacion()
+            );
             degreeWorkProducer.sendDegreeWorkCreated(event);
 
             System.out.println("[MEMENTO] Actualización completada correctamente.");
@@ -259,14 +242,15 @@ public class DegreeWorkService {
                 DegreeWorkMemento ultimoMemento = caretaker.getMemento(caretaker.getHistorySize() - 1);
                 originator.restore(ultimoMemento);
                 repository.save(originator.getDegreeWork());
-                System.out.println(
-                        "[MEMENTO] Error detectado. Estado anterior restaurado para el trabajo de grado con ID " + id);
+                System.out.println("[MEMENTO] Error detectado. Estado anterior restaurado para el trabajo de grado con ID " + id);
             } else {
                 System.out.println("[MEMENTO] No había un estado previo guardado para restaurar.");
             }
+
             throw e;
         }
     }
+
 
     /**
      * Método auxiliar para actualizar documentos
@@ -299,8 +283,7 @@ public class DegreeWorkService {
             Document formatoA = existente.getUltimoDocumentoPorTipo(EnumTipoDocumento.FORMATO_A);
 
             if (formatoA == null || formatoA.getEstado() != EnumEstadoDocument.ACEPTADO) {
-                throw new IllegalStateException(
-                        "No se puede subir un anteproyecto hasta que el Formato A haya sido ACEPTADO.");
+                throw new IllegalStateException("No se puede subir un anteproyecto hasta que el Formato A haya sido ACEPTADO.");
             }
 
             // Si está permitido, se agrega o actualiza
@@ -330,6 +313,8 @@ public class DegreeWorkService {
             carta.setEstado(cartaDto.getEstado());
         }
     }
+
+
 
     /**
      * Obtener un trabajo de grado por ID
@@ -375,7 +360,7 @@ public class DegreeWorkService {
 
     /**
      * Actualizar correcciones y estado desde el microservicio de evaluaciones
-     */
+    */
     @Transactional
     public void actualizarDesdeEvaluacion(DegreeWorkUpdateDTO dto) {
         if (dto == null || dto.getDegreeWorkId() == null) {
@@ -426,8 +411,7 @@ public class DegreeWorkService {
         // --- Guardar cambios ---
         repository.save(degreeWork);
 
-        System.out.println(
-                "[Evaluaciones] Estado del último documento y correcciones actualizados para DegreeWork ID " + id);
+        System.out.println("[Evaluaciones] Estado del último documento y correcciones actualizados para DegreeWork ID " + id);
     }
 
 }

@@ -108,7 +108,7 @@
                                 <TableColumn fx:id="colModalidad" prefWidth="100.0" text="Modalidad" />
                                 <TableColumn fx:id="colFecha" prefWidth="120.0" text="Fecha" />
                                 <TableColumn fx:id="colEstado" prefWidth="100.0" text="Estado" />
-                                <TableColumn fx:id="colAccion" prefWidth="100.0" text="Acción" />
+                                <TableColumn fx:id="colAcciones" prefWidth="100.0" text="Acción" />
                             </columns>
                         </TableView>
 

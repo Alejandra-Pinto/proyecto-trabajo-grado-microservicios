@@ -363,7 +363,7 @@ public void showPublishedDepartmentHeadDraft(User usuario) {
 
    public void showNotificationPanel() {
       try {
-         FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/NotificationPanel.fxml"));
+         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Notification.fxml"));
          loader.setControllerFactory(applicationContext::getBean); 
          Parent root = loader.load();
          

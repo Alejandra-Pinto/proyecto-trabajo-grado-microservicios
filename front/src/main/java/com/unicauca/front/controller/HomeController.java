@@ -129,11 +129,18 @@ public class HomeController {
     //COORDINADOR Y JEFE DE DEPARTAMENTO
     @FXML
     private void onBtnEvaluarPropuestasClicked() {
+        System.out.println("=== DEBUG: onBtnEvaluarPropuestasClicked ===");
+        System.out.println("Usuario: " + (usuario != null ? usuario.getEmail() : "null"));
+        System.out.println("Rol: " + (usuario != null ? usuario.getRole() : "null"));
+        
         if (!"COORDINATOR".equalsIgnoreCase(usuario.getRole()) && !"DEPARTMENT_HEAD".equalsIgnoreCase(usuario.getRole())) {
+            System.out.println("DEBUG: Acceso denegado - rol no permitido");
             mostrarAlerta("Acceso denegado", "Solo los coordinadores y jefes de departamento pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
             return;
         }
-        navigation.showManagementCoordinatorFormatA(usuario);
+        
+        System.out.println("DEBUG: Navegando a ManagementCoordinatorFormatA");
+        navigation.showManagementCoordinatorFormatA(usuario); // ✅ CON parámetro
     }
 
     @FXML
@@ -151,7 +158,7 @@ public class HomeController {
         // Navegar a la vista correspondiente según el rol
         if ("COORDINATOR".equalsIgnoreCase(usuario.getRole())) {
             System.out.println("DEBUG: Navegando a ManagementCoordinatorFormatA");
-            navigation.showManagementCoordinatorFormatA();
+            navigation.showManagementCoordinatorFormatA(usuario); // ✅ CORREGIDO: con parámetro
         } else if ("DEPARTMENT_HEAD".equalsIgnoreCase(usuario.getRole())) {
             System.out.println("DEBUG: Navegando a PublishedDepartmentHeadDraft");
             navigation.showPublishedDepartmentHeadDraft(usuario);

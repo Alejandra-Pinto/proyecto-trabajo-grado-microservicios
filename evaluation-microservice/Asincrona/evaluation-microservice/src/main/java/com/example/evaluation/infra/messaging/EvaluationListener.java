@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class EvaluationListener {
 
-    // Escucha mensajes del microservicio de usuarios
+    // 🟢 Escucha mensajes del microservicio de usuarios
     @RabbitListener(queues = "user.queue")
     public void escucharUsuarios(Object mensaje) {
         System.out.println("📥 Mensaje recibido desde USER SERVICE:");
@@ -15,7 +15,7 @@ public class EvaluationListener {
         // Ejemplo: actualizar datos del evaluador si cambió su rol o correo
     }
 
-    // Escucha mensajes del microservicio de trabajos de grado
+    // 🟢 Escucha mensajes del microservicio de trabajos de grado
     @RabbitListener(queues = "degreework.queue")
     public void escucharTrabajosGrado(Object mensaje) {
         System.out.println("📥 Mensaje recibido desde DEGREEWORK SERVICE:");

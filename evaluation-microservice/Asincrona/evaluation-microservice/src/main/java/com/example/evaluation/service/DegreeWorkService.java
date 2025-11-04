@@ -16,65 +16,70 @@ import java.util.List;
 @Service
 public class DegreeWorkService {
 
-        @Autowired
-        private DegreeWorkRepository degreeWorkRepository;
+    @Autowired
+    private DegreeWorkRepository degreeWorkRepository;
 
-        @Autowired
-        private EvaluadorRepository evaluadorRepository;
+    @Autowired
+    private EvaluadorRepository evaluadorRepository;
 
-        @Autowired
-        private DegreeWorkPublisher degreeWorkPublisher;
+    @Autowired
+    private DegreeWorkPublisher degreeWorkPublisher;
 
-        /**
-         * ✅ Listar trabajos en estado ANTEPROYECTO
-         */
-        public List<DegreeWork> listarAnteproyectos() {
-                return degreeWorkRepository.findByEstado(EnumEstadoDegreeWork.ANTEPROYECTO);
-        }
+    /**
+     * ✅ Listar trabajos en estado ANTEPROYECTO
+     */
+    public List<DegreeWork> listarAnteproyectos() {
+        return degreeWorkRepository.findByEstado(EnumEstadoDegreeWork.ANTEPROYECTO);
+    }
 
-        /**
-         * ✅ Listar todos los trabajos de grado
-         */
-        public List<DegreeWork> listarTodos() {
-                return degreeWorkRepository.findAll();
-        }
+    /**
+     * ✅ Listar todos los trabajos de grado
+     */
+    public List<DegreeWork> listarTodos() {
+        return degreeWorkRepository.findAll();
+    }
 
-        /**
-         * ✅ Obtener trabajo de grado por correo de un estudiante
-         */
-        public DegreeWork obtenerPorCorreo(String correo) {
-                return degreeWorkRepository.findByCorreoEstudiante(correo)
-                                .orElseThrow(() -> new RuntimeException(
-                                                "❌ No se encontró trabajo de grado del estudiante con correo: "
-                                                                + correo));
-        }
+    /**
+     * ✅ Obtener trabajo de grado por correo de un estudiante
+     */
+    public DegreeWork obtenerPorCorreo(String correo) {
+        return degreeWorkRepository.findByCorreoEstudiante(correo)
+                .orElseThrow(() -> new RuntimeException(
+                        "❌ No se encontró trabajo de grado del estudiante con correo: " + correo));
+    }
 
-        /**
-         * ✅ Asignar evaluadores por correo y notificar al microservicio de proyectos
-         * 
-         * Nota: No se guardan los evaluadores dentro de DegreeWork (ya no existe esa
-         * relación),
-         * solo se envía la asignación como evento a RabbitMQ.
-         */
-        @Transactional
-        public void asignarEvaluadoresPorCorreo(Integer degreeWorkId,
-                        String correoEvaluador1, String correoEvaluador2) {
-                DegreeWork degreeWork = degreeWorkRepository.findById(degreeWorkId)
-                                .orElseThrow(() -> new RuntimeException("❌ TG no encontrado con ID: " + degreeWorkId));
+    /**
+     * ✅ Asignar evaluadores por correo y notificar al microservicio de proyectos
+     * 
+     * Nota: No se guardan los evaluadores dentro de DegreeWork (ya no existe esa relación),
+     * solo se envía la asignación como evento a RabbitMQ.
+     */
+    @Transactional
+    public void asignarEvaluadoresPorCorreo(int degreeWorkId, String correoEvaluador1, String correoEvaluador2) {
+        // 1️⃣ Buscar el trabajo de grado
+        DegreeWork degreeWork = degreeWorkRepository.findById(degreeWorkId)
+                .orElseThrow(() -> new RuntimeException("❌ Trabajo de grado no encontrado con ID: " + degreeWorkId));
 
-                Evaluador evaluador1 = evaluadorRepository.findByCorreo(correoEvaluador1)
-                                .orElseThrow(() -> new RuntimeException("❌ Eval 1 no encontrado: " + correoEvaluador1));
+        // 2️⃣ Buscar evaluadores por correo
+        Evaluador evaluador1 = evaluadorRepository.findByCorreo(correoEvaluador1)
+                .orElseThrow(() -> new RuntimeException("❌ Evaluador 1 no encontrado con correo: " + correoEvaluador1));
 
-                Evaluador evaluador2 = evaluadorRepository.findByCorreo(correoEvaluador2)
-                                .orElseThrow(() -> new RuntimeException("❌ Eval 2 no encontrado: " + correoEvaluador2));
+        Evaluador evaluador2 = evaluadorRepository.findByCorreo(correoEvaluador2)
+                .orElseThrow(() -> new RuntimeException("❌ Evaluador 2 no encontrado con correo: " + correoEvaluador2));
 
-                DegreeWorkAssignmentDTO dto = new DegreeWorkAssignmentDTO(
-                                /* degreeWorkId */ Long.valueOf(degreeWork.getId()),
-                                degreeWork.getTitulo(),
-                                evaluador1.getCorreo(), evaluador1.getNombre(),
-                                evaluador2.getCorreo(), evaluador2.getNombre(),
-                                degreeWork.getEstado().name());
-                degreeWorkPublisher.publicarAsignacionEvaluadores(dto);
-                System.out.println("✅ Evaluadores asignados y evento publicado a DEGREEWORK SERVICE");
-        }
+        // 3️⃣ Publicar evento de asignación en RabbitMQ
+        DegreeWorkAssignmentDTO dto = new DegreeWorkAssignmentDTO(
+                degreeWork.getId().intValue(),
+                degreeWork.getTitulo(),
+                evaluador1.getCorreo(),
+                evaluador1.getNombre(),
+                evaluador2.getCorreo(),
+                evaluador2.getNombre(),
+                degreeWork.getEstado().name()
+        );
+
+        degreeWorkPublisher.publicarAsignacionEvaluadores(dto);
+
+        System.out.println("✅ Evaluadores asignados y evento publicado a DEGREEWORK SERVICE");
+    }
 }

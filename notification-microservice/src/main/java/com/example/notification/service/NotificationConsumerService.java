@@ -18,7 +18,7 @@ public class NotificationConsumerService {
     @Autowired
     private EmailSimulator emailSimulator;
 
-    @RabbitListener(queues = "${rabbitmq.queue.name}")
+    @RabbitListener(queues = "${app.rabbitmq.queue}")
     public void receive(NotificationEventDTO dto) {
         try {
             // 1️ Guardar en la BD
