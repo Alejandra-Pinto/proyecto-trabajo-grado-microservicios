@@ -1,24 +1,32 @@
 package com.example.evaluation.entity;
 
-import com.example.evaluation.entity.enums.EnumEstadoDocument;
-import com.fasterxml.jackson.annotation.JsonBackReference;
-
+import com.example.evaluation.entity.enums.*;
 import jakarta.persistence.*;
+import java.time.LocalDate;
+import lombok.*;
 
 @Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Document {
+
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String url;
+
+    @Enumerated(EnumType.STRING)
+    private EnumTipoDocumento tipo;
+
+    private String rutaArchivo;
+
+    private LocalDate fechaActual;
 
     @Enumerated(EnumType.STRING)
     private EnumEstadoDocument estado;
 
-    @ManyToOne
-    @JsonBackReference
-    private DegreeWork degreeWork;
-
-    // getters/setters
+    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -27,12 +35,28 @@ public class Document {
         this.id = id;
     }
 
-    public String getUrl() {
-        return url;
+    public EnumTipoDocumento getTipo() {
+        return tipo;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
+    public void setTipo(EnumTipoDocumento tipo) {
+        this.tipo = tipo;
+    }
+
+    public String getRutaArchivo() {
+        return rutaArchivo;
+    }
+
+    public void setRutaArchivo(String rutaArchivo) {
+        this.rutaArchivo = rutaArchivo;
+    }
+
+    public LocalDate getFechaActual() {
+        return fechaActual;
+    }
+
+    public void setFechaActual(LocalDate fechaActual) {
+        this.fechaActual = fechaActual;
     }
 
     public EnumEstadoDocument getEstado() {
@@ -42,13 +66,4 @@ public class Document {
     public void setEstado(EnumEstadoDocument estado) {
         this.estado = estado;
     }
-
-    public DegreeWork getDegreeWork() {
-        return degreeWork;
-    }
-
-    public void setDegreeWork(DegreeWork degreeWork) {
-        this.degreeWork = degreeWork;
-    }
-
 }

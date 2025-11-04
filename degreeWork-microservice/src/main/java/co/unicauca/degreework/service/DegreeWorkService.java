@@ -132,6 +132,7 @@ public class DegreeWorkService {
 
         // Evento original (para evaluation, etc.)
         DegreeWorkCreatedEvent event = new DegreeWorkCreatedEvent(
+            saved.getId(),
             saved.getTitulo(),
             saved.getModalidad().name(),
             directorProyecto.getEmail(),
@@ -217,16 +218,17 @@ public class DegreeWorkService {
 
             // --- Enviar evento ---
             DegreeWorkCreatedEvent event = new DegreeWorkCreatedEvent(
-                    saved.getTitulo(),
-                    saved.getModalidad().name(),
-                    saved.getDirectorProyecto().getEmail(),
-                    saved.getEstudiantes().stream().map(User::getEmail).collect(Collectors.toList()),
-                    saved.getCodirectoresProyecto().stream().map(User::getEmail).collect(Collectors.toList()),
-                    saved.getFechaActual(),
-                    saved.getEstado().name(),
-                    dto.getFormatosA(),
-                    dto.getAnteproyectos(),
-                    dto.getCartasAceptacion()
+                saved.getId(),
+                saved.getTitulo(),
+                saved.getModalidad().name(),
+                saved.getDirectorProyecto().getEmail(),
+                saved.getEstudiantes().stream().map(User::getEmail).collect(Collectors.toList()),
+                saved.getCodirectoresProyecto().stream().map(User::getEmail).collect(Collectors.toList()),
+                saved.getFechaActual(),
+                saved.getEstado().name(),
+                dto.getFormatosA(),
+                dto.getAnteproyectos(),
+                dto.getCartasAceptacion()
             );
             degreeWorkProducer.sendDegreeWorkCreated(event);
 
@@ -364,6 +366,8 @@ public class DegreeWorkService {
         if (dto == null || dto.getDegreeWorkId() == null) {
             throw new IllegalArgumentException("El DTO recibido desde Evaluaciones es inválido.");
         }
+
+        System.out.println("📥 [RabbitMQ] Recibido mensaje de Evaluaciones: " + dto);
 
         Long id = dto.getDegreeWorkId().longValue();
         DegreeWork degreeWork = repository.findById(id)

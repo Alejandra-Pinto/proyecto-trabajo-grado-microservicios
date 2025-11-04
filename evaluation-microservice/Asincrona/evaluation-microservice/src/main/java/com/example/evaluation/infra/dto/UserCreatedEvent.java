@@ -1,4 +1,4 @@
-package co.unicauca.degreework.infra.dto;
+package com.example.evaluation.infra.dto;
 
 import java.io.Serializable;
 
