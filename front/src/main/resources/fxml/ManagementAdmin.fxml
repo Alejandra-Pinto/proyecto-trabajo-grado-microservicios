@@ -28,7 +28,7 @@
                               <Image url="@images/bandera.png" />
                            </image>
                         </ImageView>
-                        <ToggleButton fx:id="btnUsuario" mnemonicParsing="false" onAction="#onBtnUsuarioClicked" prefHeight="101.0" prefWidth="468.0" text="Administrador" textFill="#111f63">
+                        <ToggleButton fx:id="btnUsuario" mnemonicParsing="false" onAction="#onBtnUsuarioClicked" prefHeight="102.0" prefWidth="479.0" text="Administrador" textFill="#111f63">
                            <graphic>
                               <ImageView fitHeight="51.0" fitWidth="51.0" preserveRatio="true">
                                  <image>
@@ -40,7 +40,7 @@
                               <Font name="System Bold" size="16.0" />
                            </font>
                         </ToggleButton>
-                        <ToggleButton fx:id="btnFormatoPropuesta" layoutY="101.0" mnemonicParsing="false" prefHeight="101.0" prefWidth="468.0" text="Gestión de Coordinadores">
+                        <ToggleButton fx:id="btnFormatoPropuesta" layoutY="101.0" mnemonicParsing="false" prefHeight="102.0" prefWidth="479.0" text="Gestión de Usuarios">
                            <graphic>
                               <ImageView fitHeight="51.0" fitWidth="51.0" preserveRatio="true">
                                  <image>
@@ -58,11 +58,11 @@
                 <!-- Panel derecho -->
                 <AnchorPane prefHeight="690.0" prefWidth="1077.0">
                      <children>
-                        <Label layoutX="37.0" layoutY="14.0" text="GESTIÓN DE COORDINADORES">
-                           <font>
-                              <Font name="System Bold" size="44.0" />
-                           </font>
-                        </Label>
+                     <Label layoutX="37.0" layoutY="14.0" text="GESTIÓN DE USUARIOS (COORDINADORES Y JEFES)">
+                     <font>
+                        <Font name="System Bold" size="36.0" />
+                     </font>
+                     </Label>
       
                         <ImageView fitHeight="695.0" fitWidth="291.0" layoutX="692.0" layoutY="13.0" pickOnBounds="true" preserveRatio="true">
                            <image>
@@ -75,13 +75,14 @@
                               <Font name="System Bold" size="16.0" />
                            </font>
                         </Button>
-                        <TableView fx:id="tblCoordinadores" layoutX="78.0" layoutY="96.0" prefHeight="470.0" prefWidth="920.0">
-                          <columns>
-                            <TableColumn fx:id="colCorreo" prefWidth="147.9999294281006" text="CORREO" />
-                            <TableColumn fx:id="colNombre" prefWidth="151.20001220703125" text="NOMBRE" />
-                            <TableColumn fx:id="colEstado" prefWidth="136.0" text="ESTADO" />
-                            <TableColumn fx:id="colAcciones" prefWidth="120.0" text="ACCIONES" />
-                          </columns>
+                        <TableView fx:id="tblUsuarios" layoutX="78.0" layoutY="96.0" prefHeight="470.0" prefWidth="920.0">
+                        <columns>
+                           <TableColumn fx:id="colCorreo" prefWidth="187.19995880126953" text="CORREO" />
+                           <TableColumn fx:id="colNombre" prefWidth="161.5999755859375" text="NOMBRE" />
+                           <TableColumn fx:id="colRol" prefWidth="182.39999389648438" text="ROL" />
+                           <TableColumn fx:id="colEstado" prefWidth="149.5999755859375" text="ESTADO" />
+                           <TableColumn fx:id="colAcciones" prefWidth="128.0" text="ACCIONES" />
+                        </columns>
                         </TableView>
                      </children>
                   </AnchorPane>

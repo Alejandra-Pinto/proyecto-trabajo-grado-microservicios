@@ -46,7 +46,7 @@
                               <Font name="System Bold" size="16.0" />
                            </font>
                         </ToggleButton>
-                        <ToggleButton fx:id="btnCoordinadores" onAction="#onBtnCoordinadoresClicked" layoutY="101.0"  mnemonicParsing="false" prefHeight="101.0" prefWidth="468.0" text="Gestión de Coordinadores">
+                        <ToggleButton fx:id="btnCoordinadores" onAction="#onBtnCoordinadoresClicked" layoutY="101.0"  mnemonicParsing="false" prefHeight="101.0" prefWidth="468.0" text="Gestión de Usuarios">
                            <graphic>
                               <ImageView fitHeight="51.0" fitWidth="51.0" preserveRatio="true">
                                  <image>

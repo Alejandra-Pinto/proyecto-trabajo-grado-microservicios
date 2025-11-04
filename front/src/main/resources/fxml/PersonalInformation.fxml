@@ -37,7 +37,7 @@
                         </ImageView>
 
                         <!-- Botón Rol -->
-                        <ToggleButton fx:id="btnRol" onAction="#onBtnRolClicked" prefHeight="101.0" prefWidth="468.0" text="Rol" textFill="#111f63">
+                        <ToggleButton fx:id="btnRol" onAction="#onBtnRolClicked" prefHeight="101.0" prefWidth="468.0" text="Usuario" textFill="#111f63">
                            <font>
                               <Font name="System Bold" size="16.0" />
                            </font>
@@ -53,7 +53,7 @@
                         <!-- ========== NUEVOS BOTONES DE HOMEADMIN ========== -->
 
                         <!-- Gestión de Coordinadores -->
-                        <ToggleButton fx:id="btnCoordinadores" layoutY="101.0" onAction="#onBtnCoordinadoresClicked" prefHeight="101.0" prefWidth="468.0" text="Gestión de Coordinadores">
+                        <ToggleButton fx:id="btnCoordinadores" layoutY="101.0" onAction="#onBtnCoordinadoresClicked" prefHeight="101.0" prefWidth="468.0" text="Gestión de Usuarios">
                            <graphic>
                               <ImageView fitHeight="51.0" fitWidth="51.0" preserveRatio="true">
                                  <image>

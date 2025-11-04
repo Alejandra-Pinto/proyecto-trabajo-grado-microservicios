@@ -121,20 +121,6 @@
                           </font>
                        </ToggleButton>
 
-                       <!-- Jefe de departametno -->
-                       <ToggleButton fx:id="btnFormatoJefeDepartamento" layoutY="101.0" onAction="#onBtnAnteproyectosJefeClicked" prefHeight="101.0" prefWidth="468.0" text="Formato de Propuesta" visible="false">
-                          <graphic>
-                             <ImageView fitHeight="51.0" fitWidth="51.0" preserveRatio="true">
-                                <image>
-                                   <Image url="@images/carpeta2.png" />
-                                </image>
-                             </ImageView>
-                          </graphic>
-                          <font>
-                             <Font size="16.0" />
-                          </font>
-                       </ToggleButton>
-
                         <ImageView fitHeight="291.0" fitWidth="468.0" layoutX="-7.0" layoutY="508.0" pickOnBounds="true" preserveRatio="true">
                            <image>
                               <Image url="@images/bandera.png" />
