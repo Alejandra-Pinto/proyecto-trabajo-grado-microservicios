@@ -70,11 +70,20 @@ public class DegreeWorkController {
     }
 
     /**
-     * Listar trabajos de grado asociados a un docente (como director o codirector)
+     * Listar trabajos de grado asociados a un docente (como director)
      */
     @GetMapping("/docente/{email}")
     public ResponseEntity<List<DegreeWork>> listarPorDocente(@PathVariable String email) {
         List<DegreeWork> trabajos = service.listarDegreeWorksPorDocente(email);
+        return ResponseEntity.ok(trabajos);
+    }
+
+    /**
+     * Listar trabajos de grado asociados a un estudiante
+     */
+    @GetMapping("/estudiante/{email}")
+    public ResponseEntity<List<DegreeWork>> listarPorEstudiante(@PathVariable String email) {
+        List<DegreeWork> trabajos = service.listarDegreeWorksPorEstudiante(email);
         return ResponseEntity.ok(trabajos);
     }
 

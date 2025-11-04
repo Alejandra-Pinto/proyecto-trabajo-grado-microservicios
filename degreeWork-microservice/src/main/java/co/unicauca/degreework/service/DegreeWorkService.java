@@ -4,14 +4,23 @@ import co.unicauca.degreework.access.*;
 import co.unicauca.degreework.domain.entities.*;
 import co.unicauca.degreework.domain.entities.builder.DegreeWorkBuilder;
 import co.unicauca.degreework.domain.entities.builder.DegreeWorkDirector;
+import co.unicauca.degreework.domain.entities.enums.EnumEstadoDegreeWork;
+import co.unicauca.degreework.domain.entities.enums.EnumEstadoDocument;
+import co.unicauca.degreework.domain.entities.enums.EnumTipoDocumento;
+import co.unicauca.degreework.domain.entities.memento.DegreeWorkCaretaker;
+import co.unicauca.degreework.domain.entities.memento.DegreeWorkMemento;
+import co.unicauca.degreework.domain.entities.memento.DegreeWorkOriginator;
 import co.unicauca.degreework.infra.dto.DegreeWorkCreatedEvent;
 import co.unicauca.degreework.infra.dto.DegreeWorkDTO;
 import co.unicauca.degreework.infra.dto.DocumentDTO;
+import co.unicauca.degreework.infra.dto.NotificationEventDTO;
 import co.unicauca.degreework.infra.messaging.DegreeWorkProducer;
+import co.unicauca.degreework.infra.messaging.NotificationProducer;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,12 +33,17 @@ public class DegreeWorkService {
     private final UserService userService;
     private final DocumentRepository documentRepository;
     private final DegreeWorkProducer degreeWorkProducer;
+    private final NotificationProducer notificationProducer;
 
-    public DegreeWorkService(DegreeWorkRepository repository, UserService userService, DocumentRepository documentRepository, DegreeWorkProducer degreeWorkProducer) {
+    public DegreeWorkService(DegreeWorkRepository repository, UserService userService,
+                            DocumentRepository documentRepository,
+                            DegreeWorkProducer degreeWorkProducer,
+                            NotificationProducer notificationProducer) {
         this.repository = repository;
         this.userService = userService;
         this.documentRepository = documentRepository;
         this.degreeWorkProducer = degreeWorkProducer;
+        this.notificationProducer = notificationProducer;
     }
 
     /**
@@ -53,6 +67,32 @@ public class DegreeWorkService {
             if (estudiante == null) {
                 throw new IllegalArgumentException("No se encontró el estudiante con correo: " + email);
             }
+
+            // 🔍 Validar que no tenga trabajos con documentos no rechazados
+            List<DegreeWork> trabajos = repository.listByStudent(email);
+
+            boolean tieneDocumentoActivo = trabajos.stream().anyMatch(dw -> {
+                // Revisa todos los documentos asociados
+                List<Document> todosDocs = new ArrayList<>();
+                if (dw.getFormatosA() != null) todosDocs.addAll(dw.getFormatosA());
+                if (dw.getAnteproyectos() != null) todosDocs.addAll(dw.getAnteproyectos());
+                if (dw.getCartasAceptacion() != null) todosDocs.addAll(dw.getCartasAceptacion());
+
+                // Si hay documentos y el último no está rechazado, retorna true
+                if (!todosDocs.isEmpty()) {
+                    Document ultimo = todosDocs.get(todosDocs.size() - 1);
+                    return ultimo.getEstado() != EnumEstadoDocument.RECHAZADO;
+                }
+                return false;
+            });
+
+            if (tieneDocumentoActivo) {
+                throw new IllegalStateException(
+                        "El estudiante con correo " + email +
+                        " ya tiene un trabajo con documentos activos (no rechazados) y no puede registrar otro."
+                );
+            }
+
             estudiantes.add(estudiante);
         }
 
@@ -87,25 +127,190 @@ public class DegreeWorkService {
 
         // --- Construir el trabajo final ---
         DegreeWork degreeWork = director.construirTrabajo();
-        DegreeWork saved = repository.save(degreeWork);
+         DegreeWork saved = repository.save(degreeWork);
 
-        //Enviar evento a RabbitMQ
+        // Evento original (para evaluation, etc.)
         DegreeWorkCreatedEvent event = new DegreeWorkCreatedEvent(
-                saved.getTitulo(),
-                saved.getModalidad().name(),
-                directorProyecto.getEmail(),
-                estudiantes.stream().map(User::getEmail).collect(Collectors.toList()),
-                codirectores.stream().map(User::getEmail).collect(Collectors.toList()),
-                saved.getFechaActual(),
-                saved.getEstado().name(),
-                dto.getFormatosA(),
-                dto.getAnteproyectos(),
-                dto.getCartasAceptacion()
+            saved.getTitulo(),
+            saved.getModalidad().name(),
+            directorProyecto.getEmail(),
+            estudiantes.stream().map(User::getEmail).collect(Collectors.toList()),
+            codirectores.stream().map(User::getEmail).collect(Collectors.toList()),
+            saved.getFechaActual(),
+            saved.getEstado().name(),
+            dto.getFormatosA(),
+            dto.getAnteproyectos(),
+            dto.getCartasAceptacion()
         );
         degreeWorkProducer.sendDegreeWorkCreated(event);
 
+        // NUEVO: enviar notificación al microservicio notification
+        NotificationEventDTO notificationEvent = new NotificationEventDTO(
+            "TRABAJO_GRADO_REGISTRADO",
+            saved.getTitulo(),
+            saved.getModalidad().name(),
+            estudiantes.isEmpty() ? null : estudiantes.get(0).getEmail(),
+            directorProyecto.getEmail(),
+            codirectores.size() > 0 ? codirectores.get(0).getEmail() : null,
+            codirectores.size() > 1 ? codirectores.get(1).getEmail() : null
+        );
+
+        notificationProducer.sendNotification(notificationEvent);
+
         return saved;
     }
+
+    @Transactional
+    public DegreeWork actualizarDegreeWork(Long id, DegreeWorkDTO dto) {
+        DegreeWork existente = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró el trabajo de grado con ID " + id));
+
+        // === INICIO MEMENTO ===
+        DegreeWorkOriginator originator = new DegreeWorkOriginator(existente);
+        DegreeWorkCaretaker caretaker = new DegreeWorkCaretaker();
+
+        caretaker.addMemento(originator.save());
+        System.out.println("[MEMENTO] Estado previo del trabajo de grado con ID " + id + " guardado correctamente.");
+        // === FIN MEMENTO ===
+
+        try {
+            // --- Actualización de la información general ---
+            existente.setTitulo(dto.getTitulo());
+            existente.setObjetivoGeneral(dto.getObjetivoGeneral());
+            existente.setCorrecciones(dto.getCorrecciones());
+            existente.setEstado(dto.getEstado());
+            existente.setFechaActual(dto.getFechaActual());
+            existente.setModalidad(dto.getModalidad());
+
+            if (dto.getObjetivosEspecificos() != null) {
+                existente.setObjetivosEspecificos(new ArrayList<>(dto.getObjetivosEspecificos()));
+            }
+
+            if (dto.getDirectorEmail() != null) {
+                User nuevoDirector = userService.obtenerPorEmail(dto.getDirectorEmail());
+                if (nuevoDirector == null) {
+                    throw new IllegalArgumentException("No se encontró el director con correo: " + dto.getDirectorEmail());
+                }
+                existente.setDirectorProyecto(nuevoDirector);
+            }
+
+            if (dto.getEstudiantesEmails() != null && !dto.getEstudiantesEmails().isEmpty()) {
+                List<User> estudiantes = dto.getEstudiantesEmails().stream()
+                        .map(userService::obtenerPorEmail)
+                        .collect(Collectors.toList());
+                existente.setEstudiantes(estudiantes);
+            }
+
+            if (dto.getCodirectoresEmails() != null && !dto.getCodirectoresEmails().isEmpty()) {
+                List<User> codirectores = dto.getCodirectoresEmails().stream()
+                        .map(userService::obtenerPorEmail)
+                        .collect(Collectors.toList());
+                existente.setCodirectoresProyecto(codirectores);
+            }
+
+            // --- Actualizar documentos ---
+            actualizarDocumentos(dto, existente);
+
+            // --- Guardar cambios ---
+            DegreeWork saved = repository.save(existente);
+
+            // --- Enviar evento ---
+            DegreeWorkCreatedEvent event = new DegreeWorkCreatedEvent(
+                    saved.getTitulo(),
+                    saved.getModalidad().name(),
+                    saved.getDirectorProyecto().getEmail(),
+                    saved.getEstudiantes().stream().map(User::getEmail).collect(Collectors.toList()),
+                    saved.getCodirectoresProyecto().stream().map(User::getEmail).collect(Collectors.toList()),
+                    saved.getFechaActual(),
+                    saved.getEstado().name(),
+                    dto.getFormatosA(),
+                    dto.getAnteproyectos(),
+                    dto.getCartasAceptacion()
+            );
+            degreeWorkProducer.sendDegreeWorkCreated(event);
+
+            System.out.println("[MEMENTO] Actualización completada correctamente.");
+
+            return saved;
+
+        } catch (Exception e) {
+            // === REVERTIR SI FALLA ===
+            if (caretaker.getHistorySize() > 0) {
+                DegreeWorkMemento ultimoMemento = caretaker.getMemento(caretaker.getHistorySize() - 1);
+                originator.restore(ultimoMemento);
+                repository.save(originator.getDegreeWork());
+                System.out.println("[MEMENTO] Error detectado. Estado anterior restaurado para el trabajo de grado con ID " + id);
+            } else {
+                System.out.println("[MEMENTO] No había un estado previo guardado para restaurar.");
+            }
+
+            throw e;
+        }
+    }
+
+
+    /**
+     * Método auxiliar para actualizar documentos
+     */
+    private void actualizarDocumentos(DegreeWorkDTO dto, DegreeWork existente) {
+
+        // FORMATO A
+        if (dto.getFormatosA() != null && !dto.getFormatosA().isEmpty()) {
+            DocumentDTO formatoADto = dto.getFormatosA().get(0);
+            Document formatoExistente = existente.getUltimoDocumentoPorTipo(EnumTipoDocumento.FORMATO_A);
+
+            if (formatoExistente == null) {
+                // Si no hay formato A, se crea
+                Document nuevoFormatoA = new Document();
+                nuevoFormatoA.setTipo(EnumTipoDocumento.FORMATO_A);
+                nuevoFormatoA.setRutaArchivo(formatoADto.getRutaArchivo());
+                nuevoFormatoA.setEstado(formatoADto.getEstado());
+                existente.manejarRevision(nuevoFormatoA);
+            } else {
+                // Si ya existe, se actualiza la ruta y el estado
+                formatoExistente.setRutaArchivo(formatoADto.getRutaArchivo());
+                formatoExistente.setEstado(formatoADto.getEstado());
+                formatoExistente.setFechaActual(LocalDate.now());
+                existente.manejarRevision(formatoExistente);
+            }
+        }
+
+        // VALIDAR ANTEPROYECTO SOLO SI FORMATO A ESTÁ ACEPTADO
+        if (dto.getAnteproyectos() != null && !dto.getAnteproyectos().isEmpty()) {
+            Document formatoA = existente.getUltimoDocumentoPorTipo(EnumTipoDocumento.FORMATO_A);
+
+            if (formatoA == null || formatoA.getEstado() != EnumEstadoDocument.ACEPTADO) {
+                throw new IllegalStateException("No se puede subir un anteproyecto hasta que el Formato A haya sido ACEPTADO.");
+            }
+
+            // Si está permitido, se agrega o actualiza
+            DocumentDTO anteproyectoDto = dto.getAnteproyectos().get(0);
+            Document anteproyectoExistente = existente.getUltimoDocumentoPorTipo(EnumTipoDocumento.ANTEPROYECTO);
+
+            if (anteproyectoExistente == null) {
+                Document nuevoAnteproyecto = new Document();
+                nuevoAnteproyecto.setTipo(EnumTipoDocumento.ANTEPROYECTO);
+                nuevoAnteproyecto.setRutaArchivo(anteproyectoDto.getRutaArchivo());
+                nuevoAnteproyecto.setEstado(anteproyectoDto.getEstado());
+                existente.manejarRevision(nuevoAnteproyecto);
+            } else {
+                anteproyectoExistente.setRutaArchivo(anteproyectoDto.getRutaArchivo());
+                anteproyectoExistente.setEstado(anteproyectoDto.getEstado());
+                anteproyectoExistente.setFechaActual(LocalDate.now());
+                existente.manejarRevision(anteproyectoExistente);
+            }
+        }
+
+        // CARTA DE ACEPTACIÓN
+        if (dto.getCartasAceptacion() != null && !dto.getCartasAceptacion().isEmpty()) {
+            DocumentDTO cartaDto = dto.getCartasAceptacion().get(0);
+            Document carta = new Document();
+            carta.setRutaArchivo(cartaDto.getRutaArchivo());
+            carta.setTipo(EnumTipoDocumento.CARTA_ACEPTACION);
+            carta.setEstado(cartaDto.getEstado());
+        }
+    }
+
 
 
     /**
@@ -123,96 +328,17 @@ public class DegreeWorkService {
     }
 
     /**
-     * Listar trabajos por docente (director o codirector)
+     * Listar trabajos por docente (director)
      */
     public List<DegreeWork> listarDegreeWorksPorDocente(String teacherEmail) {
         return repository.listByTeacher(teacherEmail);
     }
 
     /**
-     * Actualizar un trabajo de grado (usando emails)
+     * Listar trabajos por estudiante
      */
-    @Transactional
-    public DegreeWork actualizarDegreeWork(Long id, DegreeWorkDTO dto) {
-        DegreeWork existente = repository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("No se encontró el trabajo de grado con ID " + id));
-
-        // --- Actualizar datos básicos ---
-        existente.setTitulo(dto.getTitulo());
-        existente.setObjetivoGeneral(dto.getObjetivoGeneral());
-        existente.setCorrecciones(dto.getCorrecciones());
-        existente.setEstado(dto.getEstado());
-        existente.setFechaActual(dto.getFechaActual());
-        existente.setModalidad(dto.getModalidad());
-
-        if (dto.getObjetivosEspecificos() != null) {
-            existente.setObjetivosEspecificos(new ArrayList<>(dto.getObjetivosEspecificos()));
-        }
-
-        // --- Actualizar director ---
-        if (dto.getDirectorEmail() != null) {
-            User nuevoDirector = userService.obtenerPorEmail(dto.getDirectorEmail());
-            if (nuevoDirector == null) {
-                throw new IllegalArgumentException("No se encontró el director con correo: " + dto.getDirectorEmail());
-            }
-            existente.setDirectorProyecto(nuevoDirector);
-        }
-
-        // --- Actualizar estudiantes ---
-        if (dto.getEstudiantesEmails() != null && !dto.getEstudiantesEmails().isEmpty()) {
-            List<User> estudiantes = dto.getEstudiantesEmails().stream()
-                    .map(userService::obtenerPorEmail)
-                    .collect(Collectors.toList());
-            existente.setEstudiantes(estudiantes);
-        }
-
-        // --- Actualizar codirectores ---
-        if (dto.getCodirectoresEmails() != null && !dto.getCodirectoresEmails().isEmpty()) {
-            List<User> codirectores = dto.getCodirectoresEmails().stream()
-                    .map(userService::obtenerPorEmail)
-                    .collect(Collectors.toList());
-            existente.setCodirectoresProyecto(codirectores);
-        }
-
-        // --- Actualizar documentos ---
-        actualizarDocumentos(existente.getFormatosA(), dto.getFormatosA());
-        actualizarDocumentos(existente.getCartasAceptacion(), dto.getCartasAceptacion());
-        actualizarDocumentos(existente.getAnteproyectos(), dto.getAnteproyectos());
-
-        DegreeWork saved = repository.save(existente);
-
-        //Enviar evento a RabbitMQ
-        DegreeWorkCreatedEvent event = new DegreeWorkCreatedEvent(
-                saved.getTitulo(),
-                saved.getModalidad().name(),
-                saved.getDirectorProyecto().getEmail(),
-                saved.getEstudiantes().stream().map(User::getEmail).collect(Collectors.toList()),
-                saved.getCodirectoresProyecto().stream().map(User::getEmail).collect(Collectors.toList()),
-                saved.getFechaActual(),
-                saved.getEstado().name(),
-                dto.getFormatosA(),
-                dto.getAnteproyectos(),
-                dto.getCartasAceptacion()
-        );
-        degreeWorkProducer.sendDegreeWorkCreated(event);
-
-        return saved;
-    }
-
-    /**
-     * Método auxiliar para actualizar documentos
-     */
-    private void actualizarDocumentos(List<Document> existentes, List<DocumentDTO> nuevos) {
-        if (nuevos != null) {
-            existentes.clear();
-            for (DocumentDTO docDto : nuevos) {
-                Document doc = new Document();
-                doc.setTipo(docDto.getTipo());
-                doc.setEstado(docDto.getEstado());
-                doc.setRutaArchivo(docDto.getRutaArchivo());
-                existentes.add(doc);
-            }
-        }
+    public List<DegreeWork> listarDegreeWorksPorEstudiante(String studentEmail) {
+        return repository.listByStudent(studentEmail);
     }
 
     /**
