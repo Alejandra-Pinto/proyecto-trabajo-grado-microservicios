@@ -153,10 +153,17 @@ public abstract class User {
         return email;
     }
     public void setEmail(String email) {
-        if (email == null || !EMAIL_PATTERN.matcher(email).matches()) {
+        if (email == null || email.trim().isEmpty()) {
             throw new IllegalArgumentException("El correo electrónico no es válido.");
         }
-        this.email = email.trim().toLowerCase();
+        
+        // PRIMERO hacer trim y lowercase, LUEGO validar
+        String cleanedEmail = email.trim().toLowerCase();
+        
+        if (!EMAIL_PATTERN.matcher(cleanedEmail).matches()) {
+            throw new IllegalArgumentException("El correo electrónico no es válido.");
+        }
+        this.email = cleanedEmail;  // usar el email limpio
     }
 
     public String getPassword() {
