@@ -69,10 +69,7 @@ public class HomeController {
             btnFormatoEstudiante.setVisible(true);
             btnAnteproyectoEstudiante.setVisible(true);
 
-        } else if ("COORDINATOR".equalsIgnoreCase(rol)) {
-            btnEvaluarPropuestas.setVisible(true);
-            btnEvaluarAnteproyectos.setVisible(true);
-        } else if ("DEPARTMENT_HEAD".equalsIgnoreCase(rol)) {
+        } else if ("COORDINATOR".equalsIgnoreCase(rol) || "DEPARTMENT_HEAD".equalsIgnoreCase(rol)) {
             btnEvaluarPropuestas.setVisible(true);
             btnEvaluarAnteproyectos.setVisible(true);
         }
@@ -129,11 +126,11 @@ public class HomeController {
         navigation.showManagementStudentDraft(usuario);
     }
 
-    //COORDINADOR
+    //COORDINADOR Y JEFE DE DEPARTAMENTO
     @FXML
     private void onBtnEvaluarPropuestasClicked() {
-        if (!"COORDINATOR".equalsIgnoreCase(usuario.getRole())) {
-            mostrarAlerta("Acceso denegado", "Solo los coordinadores pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
+        if (!"COORDINATOR".equalsIgnoreCase(usuario.getRole()) && !"DEPARTMENT_HEAD".equalsIgnoreCase(usuario.getRole())) {
+            mostrarAlerta("Acceso denegado", "Solo los coordinadores y jefes de departamento pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
             return;
         }
         navigation.showManagementCoordinatorFormatA(usuario);
@@ -141,23 +138,27 @@ public class HomeController {
 
     @FXML
     private void onBtnEvaluarAnteproyectosClicked() {
-        if (!"COORDINATOR".equalsIgnoreCase(usuario.getRole())) {
-            mostrarAlerta("Acceso denegado", "Solo los coordinadores pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
+        System.out.println("=== DEBUG: onBtnEvaluarAnteproyectosClicked ===");
+        System.out.println("Usuario: " + (usuario != null ? usuario.getEmail() : "null"));
+        System.out.println("Rol: " + (usuario != null ? usuario.getRole() : "null"));
+        
+        if (!"COORDINATOR".equalsIgnoreCase(usuario.getRole()) && !"DEPARTMENT_HEAD".equalsIgnoreCase(usuario.getRole())) {
+            System.out.println("DEBUG: Acceso denegado - rol no permitido");
+            mostrarAlerta("Acceso denegado", "Solo los coordinadores y jefes de departamento pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
             return;
         }
-        navigation.showManagementCoordinatorFormatA();
-    }
-
-    //JEFE DE DEPARTAMENTO
-    @FXML
-    private void onBtnAnteproyectosJefeClicked() {
-        if (!"DEPARTMENT_HEAD".equalsIgnoreCase(usuario.getRole())) {
-            mostrarAlerta("Acceso denegado", "Solo los jefes de departamento pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
-            return;
+        
+        // Navegar a la vista correspondiente según el rol
+        if ("COORDINATOR".equalsIgnoreCase(usuario.getRole())) {
+            System.out.println("DEBUG: Navegando a ManagementCoordinatorFormatA");
+            navigation.showManagementCoordinatorFormatA();
+        } else if ("DEPARTMENT_HEAD".equalsIgnoreCase(usuario.getRole())) {
+            System.out.println("DEBUG: Navegando a PublishedDepartmentHeadDraft");
+            navigation.showPublishedDepartmentHeadDraft(usuario);
+        } else {
+            System.out.println("DEBUG: Rol no manejado: " + usuario.getRole());
         }
-        navigation.showPublishedDepartmentHeadDraft(usuario);
     }
-
 
     //Métodos Auxiliares
     private void configurarBotones() {

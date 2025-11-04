@@ -18,9 +18,10 @@ import java.util.List;
 @Controller
 public class ManagementAdminController {
 
-    @FXML private TableView<User> tblCoordinadores;
+    @FXML private TableView<User> tblUsuarios;
     @FXML private TableColumn<User, String> colCorreo;
     @FXML private TableColumn<User, String> colNombre;
+    @FXML private TableColumn<User, String> colRol;
     @FXML private TableColumn<User, String> colEstado;
     @FXML private TableColumn<User, Void> colAcciones;
     @FXML private Button btnGuardarCambios;
@@ -29,7 +30,7 @@ public class ManagementAdminController {
     private final ApiGatewayService apiService;
     private final NavigationController navigation;
     private User usuarioActual;
-    private ObservableList<User> coordinadores;
+    private ObservableList<User> usuarios;
 
     public ManagementAdminController(ApiGatewayService apiService, NavigationController navigation) {
         this.apiService = apiService;
@@ -40,22 +41,27 @@ public class ManagementAdminController {
     private void initialize() {
         usuarioActual = SessionManager.getCurrentUser();
         configurarTabla();
-        cargarCoordinadores();
+        cargarUsuarios();
     }
 
     private void configurarTabla() {
-        //Columna Correo
+        // Columna Correo
         colCorreo.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
             data.getValue().getEmail() != null ? data.getValue().getEmail() : ""
         ));
 
-        //Columna Nombre
+        // Columna Nombre
         colNombre.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
             (data.getValue().getFirstName() != null ? data.getValue().getFirstName() : "") + " " +
             (data.getValue().getLastName() != null ? data.getValue().getLastName() : "")
         ));
 
-        //Columna Estado con ComboBox
+        // NUEVA Columna Rol
+        colRol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
+            obtenerRolDisplay(data.getValue().getRole())
+        ));
+
+        // Columna Estado con ComboBox
         colEstado.setCellFactory(new Callback<TableColumn<User, String>, TableCell<User, String>>() {
             @Override
             public TableCell<User, String> call(TableColumn<User, String> param) {
@@ -65,9 +71,9 @@ public class ManagementAdminController {
                     {
                         combo.getItems().addAll("PENDIENTE", "ACEPTADO", "RECHAZADO");
                         combo.setOnAction(e -> {
-                            User coordinador = getTableView().getItems().get(getIndex());
-                            if (coordinador != null) {
-                                coordinador.setStatus(combo.getValue());
+                            User usuario = getTableView().getItems().get(getIndex());
+                            if (usuario != null) {
+                                usuario.setStatus(combo.getValue());
                             }
                         });
                     }
@@ -78,8 +84,8 @@ public class ManagementAdminController {
                         if (empty || getTableRow() == null || getTableRow().getItem() == null) {
                             setGraphic(null);
                         } else {
-                            User coordinador = getTableRow().getItem();
-                            combo.setValue(coordinador.getStatus() != null ? coordinador.getStatus() : "PENDIENTE");
+                            User usuario = getTableRow().getItem();
+                            combo.setValue(usuario.getStatus() != null ? usuario.getStatus() : "PENDIENTE");
                             setGraphic(combo);
                         }
                     }
@@ -87,7 +93,7 @@ public class ManagementAdminController {
             }
         });
 
-        //Columna de acciones
+        // Columna de acciones
         colAcciones.setCellFactory(new Callback<TableColumn<User, Void>, TableCell<User, Void>>() {
             @Override
             public TableCell<User, Void> call(TableColumn<User, Void> param) {
@@ -97,9 +103,9 @@ public class ManagementAdminController {
                     {
                         btnEliminar.setStyle("-fx-background-color: #dc3545; -fx-text-fill: white;");
                         btnEliminar.setOnAction(event -> {
-                            User coordinador = getTableView().getItems().get(getIndex());
-                            if (coordinador != null) {
-                                eliminarCoordinador(coordinador);
+                            User usuario = getTableView().getItems().get(getIndex());
+                            if (usuario != null) {
+                                eliminarUsuario(usuario);
                             }
                         });
                     }
@@ -118,32 +124,68 @@ public class ManagementAdminController {
         });
     }
 
-    private void cargarCoordinadores() {
+    // Método para obtener el nombre display del rol
+    private String obtenerRolDisplay(String rol) {
+        if (rol == null) return "Sin rol";
+        switch (rol.toUpperCase()) {
+            case "COORDINATOR":
+                return "Coordinador";
+            case "DEPARTMENT_HEAD":
+                return "Jefe de Departamento";
+            case "PROFESSOR":
+                return "Docente";
+            case "STUDENT":
+                return "Estudiante";
+            case "ADMIN":
+                return "Administrador";
+            default:
+                return rol;
+        }
+    }
+
+    private void cargarUsuarios() {
         try {
-            //Obtener coordinadores desde microservicio
-            ResponseEntity<User[]> response = apiService.get(
+            // Cargar coordinadores
+            ResponseEntity<User[]> responseCoordinadores = apiService.get(
                 "api/usuarios", 
                 "/rol/COORDINATOR", 
                 User[].class
             );
 
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                List<User> coordinadoresList = Arrays.asList(response.getBody());
-                coordinadores = FXCollections.observableArrayList(coordinadoresList);
-                tblCoordinadores.setItems(coordinadores);
-                System.out.println("Coordinadores cargados: " + coordinadoresList.size());
+            // Cargar jefes de departamento
+            ResponseEntity<User[]> responseJefesDepartamento = apiService.get(
+                "api/usuarios", 
+                "/rol/DEPARTMENT_HEAD", 
+                User[].class
+            );
+
+            usuarios = FXCollections.observableArrayList();
+
+            // Agregar coordinadores a la lista
+            if (responseCoordinadores.getStatusCode().is2xxSuccessful() && responseCoordinadores.getBody() != null) {
+                usuarios.addAll(Arrays.asList(responseCoordinadores.getBody()));
+                System.out.println("Coordinadores cargados: " + responseCoordinadores.getBody().length);
             }
+
+            // Agregar jefes de departamento a la lista
+            if (responseJefesDepartamento.getStatusCode().is2xxSuccessful() && responseJefesDepartamento.getBody() != null) {
+                usuarios.addAll(Arrays.asList(responseJefesDepartamento.getBody()));
+                System.out.println("Jefes de Departamento cargados: " + responseJefesDepartamento.getBody().length);
+            }
+
+            tblUsuarios.setItems(usuarios);
+            System.out.println("Total de usuarios cargados: " + usuarios.size());
 
         } catch (Exception e) {
             e.printStackTrace();
-            mostrarAlerta("Error", "Error cargando coordinadores: " + e.getMessage(), Alert.AlertType.ERROR);
+            mostrarAlerta("Error", "Error cargando usuarios: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
     @FXML
     private void onGuardarCambios() {
-        if (coordinadores == null || coordinadores.isEmpty()) {
-            mostrarAlerta("Información", "No hay coordinadores para actualizar.", Alert.AlertType.INFORMATION);
+        if (usuarios == null || usuarios.isEmpty()) {
+            mostrarAlerta("Información", "No hay usuarios para actualizar.", Alert.AlertType.INFORMATION);
             return;
         }
 
@@ -151,62 +193,86 @@ public class ManagementAdminController {
             boolean huboCambios = false;
             int cambiosExitosos = 0;
 
-            for (User coordinador : coordinadores) {
-                //Actualizar cada coordinador en el microservicio
-                ResponseEntity<User> response = apiService.put(
-                    "api/usuarios", 
-                    "/" + coordinador.getEmail() + "/estado", 
-                    coordinador, 
-                    User.class
-                );
+            for (User usuario : usuarios) {
+                // Solo procesar usuarios cuyo estado haya cambiado
+                String estadoActual = usuario.getStatus();
+                
+                if ("ACEPTADO".equals(estadoActual)) {
+                    // Usar el endpoint correcto para aprobar
+                    ResponseEntity<String> response = apiService.put(
+                        "api/admin", 
+                        "/approve/" + usuario.getEmail(), 
+                        null,
+                        String.class
+                    );
 
-                if (response.getStatusCode().is2xxSuccessful()) {
-                    cambiosExitosos++;
-                    huboCambios = true;
+                    if (response.getStatusCode().is2xxSuccessful()) {
+                        cambiosExitosos++;
+                        huboCambios = true;
+                        System.out.println("Usuario aprobado: " + usuario.getEmail() + " - Rol: " + usuario.getRole());
+                    }
+                    
+                } else if ("RECHAZADO".equals(estadoActual)) {
+                    // Usar el endpoint correcto para rechazar
+                    ResponseEntity<String> response = apiService.put(
+                        "api/admin", 
+                        "/reject/" + usuario.getEmail(), 
+                        null,
+                        String.class
+                    );
+
+                    if (response.getStatusCode().is2xxSuccessful()) {
+                        cambiosExitosos++;
+                        huboCambios = true;
+                        System.out.println("Usuario rechazado: " + usuario.getEmail() + " - Rol: " + usuario.getRole());
+                    }
                 }
+                // Los que están en "PENDIENTE" no se procesan
             }
 
             if (huboCambios) {
                 mostrarAlerta("Éxito", 
-                    cambiosExitosos + " coordinador(es) actualizado(s) correctamente.", 
+                    cambiosExitosos + " usuario(s) actualizado(s) correctamente.", 
                     Alert.AlertType.INFORMATION);
-                //Recargar datos para verificar cambios
-                cargarCoordinadores();
+                // Recargar datos para verificar cambios
+                cargarUsuarios();
             } else {
                 mostrarAlerta("Aviso", "No se realizaron cambios en los estados.", Alert.AlertType.WARNING);
             }
 
         } catch (Exception e) {
             e.printStackTrace();
-            mostrarAlerta("Error", "Error actualizando coordinadores: " + e.getMessage(), Alert.AlertType.ERROR);
+            mostrarAlerta("Error", "Error actualizando usuarios: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
-    private void eliminarCoordinador(User coordinador) {
+    private void eliminarUsuario(User usuario) {
         Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
         confirmacion.setTitle("Confirmar eliminación");
-        confirmacion.setHeaderText("¿Está seguro de eliminar al coordinador?");
-        confirmacion.setContentText("Coordinador: " + coordinador.getEmail());
+        confirmacion.setHeaderText("¿Está seguro de eliminar al usuario?");
+        confirmacion.setContentText("Usuario: " + usuario.getEmail() + "\nRol: " + obtenerRolDisplay(usuario.getRole()));
 
         confirmacion.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 try {
-                    //Eliminar coordinador del microservicio
-                    ResponseEntity<Void> deleteResponse = apiService.delete(
-                        "api/usuarios", 
-                        "/" + coordinador.getEmail()
+                    // Cambiar el estado a RECHAZADO
+                    ResponseEntity<String> deleteResponse = apiService.put(
+                        "api/admin", 
+                        "/reject/" + usuario.getEmail(), 
+                        null, 
+                        String.class
                     );
 
                     if (deleteResponse.getStatusCode().is2xxSuccessful()) {
-                        mostrarAlerta("Éxito", "Coordinador eliminado correctamente.", Alert.AlertType.INFORMATION);
-                        cargarCoordinadores(); // Recargar tabla
+                        mostrarAlerta("Éxito", "Usuario rechazado/eliminado correctamente.", Alert.AlertType.INFORMATION);
+                        cargarUsuarios(); // Recargar tabla
                     } else {
-                        mostrarAlerta("Error", "No se pudo eliminar el coordinador.", Alert.AlertType.ERROR);
+                        mostrarAlerta("Error", "No se pudo rechazar el usuario.", Alert.AlertType.ERROR);
                     }
 
                 } catch (Exception e) {
                     e.printStackTrace();
-                    mostrarAlerta("Error", "Error eliminando coordinador: " + e.getMessage(), Alert.AlertType.ERROR);
+                    mostrarAlerta("Error", "Error rechazando usuario: " + e.getMessage(), Alert.AlertType.ERROR);
                 }
             }
         });
@@ -234,8 +300,8 @@ public class ManagementAdminController {
 
     @FXML
     private void onBtnActualizarClicked() {
-        cargarCoordinadores();
-        mostrarAlerta("Actualizado", "Lista de coordinadores actualizada", Alert.AlertType.INFORMATION);
+        cargarUsuarios();
+        mostrarAlerta("Actualizado", "Lista de usuarios actualizada", Alert.AlertType.INFORMATION);
     }
 
     private void mostrarAlerta(String titulo, String mensaje, Alert.AlertType tipo) {

@@ -158,20 +158,40 @@ public class ManagementTeacherDraftController {
         }
 
         try {
-            // Primero necesitamos obtener el degreework existente
             if (formatoActual == null) {
-                mostrarAlerta("Error", "No se encontró un proyecto asociado. Debe tener un Formato A aprobado primero.", Alert.AlertType.ERROR);
+                mostrarAlerta("Error", "No se encontró un proyecto asociado.", Alert.AlertType.ERROR);
                 return;
             }
 
-            // Crear DTO para actualizar el anteproyecto
+            // VERSIÓN ROBUSTA - maneja todos los casos posibles
             DegreeWorkDTO dto = new DegreeWorkDTO();
             dto.setId(formatoActual.getId());
-            
-            // Actualizar estado a ANTEPROYECTO
             dto.setEstado("ANTEPROYECTO");
+            
+            // Manejar modalidad de forma segura
+            String modalidadStr;
+            if (formatoActual.getModalidad() != null) {
+                // Si el objeto Modalidad existe, obtener su nombre
+                modalidadStr = formatoActual.getModalidad().name();
+            } else {
+                // Si es null, usar valor por defecto
+                modalidadStr = "INVESTIGACION";
+            }
+            dto.setModalidad(modalidadStr);
+            
+            // Título
+            dto.setTitulo(formatoActual.getTituloProyecto() != null ? 
+                formatoActual.getTituloProyecto() : "Proyecto de Grado");
+                
+            // Objetivo general  
+            dto.setObjetivoGeneral(formatoActual.getObjetivoGeneral() != null ? 
+                formatoActual.getObjetivoGeneral() : "Desarrollar el proyecto de grado según los lineamientos establecidos");
+                
+            // Fecha actual
+            dto.setFechaActual(java.time.LocalDate.now());
 
-            // Enviar al microservicio para actualizar
+            System.out.println("DEBUG: Enviando DTO - Modalidad: " + dto.getModalidad() + ", Título: " + dto.getTitulo());
+
             ResponseEntity<DegreeWork> response = apiService.put(
                 "api/degreeworks", 
                 "/" + formatoActual.getId(), 
@@ -179,7 +199,7 @@ public class ManagementTeacherDraftController {
                 DegreeWork.class
             );
 
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            if (response.getStatusCode().is2xxSuccessful()) {
                 mostrarAlerta("Éxito", "Anteproyecto enviado correctamente para revisión", Alert.AlertType.INFORMATION);
                 navigation.showHomeWithUser(usuarioActual);
             } else {
