@@ -4,7 +4,6 @@ import co.unicauca.degreework.access.*;
 import co.unicauca.degreework.domain.entities.*;
 import co.unicauca.degreework.domain.entities.builder.DegreeWorkBuilder;
 import co.unicauca.degreework.domain.entities.builder.DegreeWorkDirector;
-import co.unicauca.degreework.domain.entities.enums.EnumEstadoDegreeWork;
 import co.unicauca.degreework.domain.entities.enums.EnumEstadoDocument;
 import co.unicauca.degreework.domain.entities.enums.EnumTipoDocumento;
 import co.unicauca.degreework.domain.entities.memento.DegreeWorkCaretaker;
@@ -12,6 +11,7 @@ import co.unicauca.degreework.domain.entities.memento.DegreeWorkMemento;
 import co.unicauca.degreework.domain.entities.memento.DegreeWorkOriginator;
 import co.unicauca.degreework.infra.dto.DegreeWorkCreatedEvent;
 import co.unicauca.degreework.infra.dto.DegreeWorkDTO;
+import co.unicauca.degreework.infra.dto.DegreeWorkUpdateDTO;
 import co.unicauca.degreework.infra.dto.DocumentDTO;
 import co.unicauca.degreework.infra.dto.NotificationEventDTO;
 import co.unicauca.degreework.infra.messaging.DegreeWorkProducer;
@@ -349,15 +349,57 @@ public class DegreeWorkService {
     }
 
     /**
-     * Guardar correcciones
-     */
-    public DegreeWork guardarCorrecciones(Long id, String correcciones) {
-        DegreeWork degreeWork = obtenerPorId(id);
-        if (degreeWork == null) {
-            throw new IllegalArgumentException("No se encontró el trabajo de grado con ID " + id);
+     * Actualizar correcciones y estado desde el microservicio de evaluaciones
+    */
+    @Transactional
+    public void actualizarDesdeEvaluacion(DegreeWorkUpdateDTO dto) {
+        if (dto == null || dto.getDegreeWorkId() == null) {
+            throw new IllegalArgumentException("El DTO recibido desde Evaluaciones es inválido.");
         }
 
-        degreeWork.setCorrecciones(correcciones);
-        return repository.save(degreeWork);
+        Long id = dto.getDegreeWorkId().longValue();
+        DegreeWork degreeWork = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró el trabajo de grado con ID " + id));
+
+        // --- Obtener el último documento subido (de cualquier tipo) ---
+        Document ultimoDoc = null;
+        if (degreeWork.getCartasAceptacion() != null && !degreeWork.getCartasAceptacion().isEmpty()) {
+            ultimoDoc = degreeWork.getCartasAceptacion().get(degreeWork.getCartasAceptacion().size() - 1);
+        } else if (degreeWork.getAnteproyectos() != null && !degreeWork.getAnteproyectos().isEmpty()) {
+            ultimoDoc = degreeWork.getAnteproyectos().get(degreeWork.getAnteproyectos().size() - 1);
+        } else if (degreeWork.getFormatosA() != null && !degreeWork.getFormatosA().isEmpty()) {
+            ultimoDoc = degreeWork.getFormatosA().get(degreeWork.getFormatosA().size() - 1);
+        }
+
+        if (ultimoDoc == null) {
+            throw new IllegalStateException("No se encontró ningún documento asociado al trabajo de grado.");
+        }
+
+        // --- Actualizar el estado del último documento ---
+        try {
+            EnumEstadoDocument nuevoEstado = EnumEstadoDocument.valueOf(dto.getEstado().toUpperCase());
+            ultimoDoc.setEstado(nuevoEstado);
+            ultimoDoc.setFechaActual(LocalDate.now());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("El estado recibido no es válido: " + dto.getEstado());
+        }
+
+        // --- Actualizar las correcciones ---
+        degreeWork.setCorrecciones(dto.getCorrecciones());
+
+        // --- Si el estado no fue aceptado, incrementar contador ---
+        if (!"ACEPTADO".equalsIgnoreCase(dto.getEstado())) {
+            degreeWork.setNoAprobadoCount(degreeWork.getNoAprobadoCount() + 1);
+            System.out.println("El documento fue rechazado o no aprobado. Se incrementa contador a: "
+                    + degreeWork.getNoAprobadoCount());
+        } else {
+            System.out.println("Documento aceptado. No se incrementa contador.");
+        }
+
+        // --- Guardar cambios ---
+        repository.save(degreeWork);
+
+        System.out.println("[Evaluaciones] Estado del último documento y correcciones actualizados para DegreeWork ID " + id);
     }
+
 }
