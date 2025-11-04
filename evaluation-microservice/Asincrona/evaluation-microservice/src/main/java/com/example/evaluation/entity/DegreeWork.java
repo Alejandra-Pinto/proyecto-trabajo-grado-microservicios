@@ -15,6 +15,7 @@ import com.example.evaluation.entity.enums.*;
 public class DegreeWork {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     /**
@@ -22,11 +23,7 @@ public class DegreeWork {
      * (solo en modalidad de investigación).
      */
     @ManyToMany
-    @JoinTable(
-        name = "degreework_estudiantes",
-        joinColumns = @JoinColumn(name = "degree_work_id"),
-        inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
+    @JoinTable(name = "degreework_estudiantes", joinColumns = @JoinColumn(name = "degree_work_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
     private List<User> estudiantes = new ArrayList<>();
 
     /**
@@ -39,11 +36,7 @@ public class DegreeWork {
      * Puede tener cero, uno o dos codirectores.
      */
     @ManyToMany
-    @JoinTable(
-        name = "degreework_codirectores",
-        joinColumns = @JoinColumn(name = "degree_work_id"),
-        inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
+    @JoinTable(name = "degreework_codirectores", joinColumns = @JoinColumn(name = "degree_work_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
     private List<User> codirectoresProyecto = new ArrayList<>();
 
     private String titulo;
@@ -80,6 +73,7 @@ public class DegreeWork {
     public void incrementNoAprobadoCount() {
         this.noAprobadoCount++;
     }
+
     public Long getId() {
         return id;
     }

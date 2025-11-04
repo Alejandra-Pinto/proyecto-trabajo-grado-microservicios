@@ -20,7 +20,7 @@ public class EvaluationPublisher {
         this.rabbitTemplate = rabbitTemplate;
     }
 
-    // ✅ Solo publica el DTO con estado + correcciones
+    // Solo publica el DTO con estado + correcciones
     public void publicarActualizacionDegreeWork(DegreeWorkUpdateDTO updateDTO) {
         try {
             System.out.println("[EvaluationPublisher] Enviando correcciones del DegreeWork...");
@@ -32,9 +32,9 @@ public class EvaluationPublisher {
 
             rabbitTemplate.convertAndSend(exchange, routingKeyDegreeWork, updateDTO);
 
-            System.out.println("✅ [EvaluationPublisher] Correcciones publicadas correctamente en la cola.\n");
+            System.out.println(" [EvaluationPublisher] Correcciones publicadas correctamente en la cola.\n");
         } catch (Exception e) {
-            System.err.println("❌ [EvaluationPublisher] Error al publicar correcciones: " + e.getMessage());
+            System.err.println(" [EvaluationPublisher] Error al publicar correcciones: " + e.getMessage());
             e.printStackTrace();
         }
     }

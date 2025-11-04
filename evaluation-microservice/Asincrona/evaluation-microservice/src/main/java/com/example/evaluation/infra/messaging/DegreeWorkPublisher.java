@@ -22,7 +22,7 @@ public class DegreeWorkPublisher {
 
     public void publicarAsignacionEvaluadores(DegreeWorkAssignmentDTO asignacion) {
         try {
-            System.out.println("📤 [DegreeWorkPublisher] Enviando asignación a DEGREEWORK SERVICE...");
+            System.out.println(" [DegreeWorkPublisher] Enviando asignación a DEGREEWORK SERVICE...");
             System.out.println("   Exchange: " + exchange);
             System.out.println("   RoutingKey: " + routingKey);
             System.out.println("   Queue destino: degreework.queue");
@@ -36,9 +36,9 @@ public class DegreeWorkPublisher {
 
             rabbitTemplate.convertAndSend(exchange, routingKey, asignacion);
 
-            System.out.println("✅ [DegreeWorkPublisher] Asignación publicada correctamente en degreework.queue\n");
+            System.out.println(" [DegreeWorkPublisher] Asignación publicada correctamente en degreework.queue\n");
         } catch (Exception e) {
-            System.err.println("❌ [DegreeWorkPublisher] Error al publicar asignación: " + e.getMessage());
+            System.err.println(" [DegreeWorkPublisher] Error al publicar asignación: " + e.getMessage());
             e.printStackTrace();
         }
     }

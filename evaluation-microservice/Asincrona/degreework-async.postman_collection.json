@@ -1,82 +1,61 @@
 {
   "info": {
-    "_postman_id": "a3b2d1e4-9f8c-4b0a-9f1b-123456789abc",
-    "name": "Evaluation Microservice - Completa (Correcciones + Asignación)",
-    "description": "Colección completa para probar el microservicio de evaluación: creación de evaluaciones con correcciones, envío de correcciones a la cola y endpoints de asignación de evaluadores.",
+    "_postman_id": "1f6e0e77-6b47-49aa-9d8a-7b5c4c0a9abc",
+    "name": "Evaluation Microservice - Async (Evaluations + DegreeWork)",
+    "description": "Colección para probar evaluation-microservice: crear evaluaciones (con/ sin correcciones), publicar correcciones a la cola, listar por evaluador, y asignar evaluadores a trabajos de grado (vía correos). Basada en los endpoints y DataLoader enviados.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8083" }
+  ],
   "item": [
     {
       "name": "📄 Evaluaciones",
       "item": [
         {
-          "name": "Crear Evaluación - Director (Aprobado, sin correcciones)",
+          "name": "Crear Evaluación - Director (APROBADO, sin correcciones)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"documentId\": 2,\n  \"evaluadorCorreo\": \"carlos.garcia@unicauca.edu.co\",\n  \"resultado\": \"APROBADO\",\n  \"tipo\": \"ANTEPROYECTO\",\n  \"correcciones\": \"Ninguna observación. Excelente estructura y redacción del anteproyecto.\"\n}"
+              "raw": "{\n  \"documentId\": 2,\n  \"evaluadorCorreo\": \"carlos.garcia@unicauca.edu.co\",\n  \"resultado\": \"APROBADO\",\n  \"tipo\": \"ANTEPROYECTO\",\n  \"correcciones\": \"Ninguna observación. Excelente estructura y redacción.\"\n}"
             },
-            "url": {
-              "raw": "http://localhost:8083/api/evaluations",
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "8083",
-              "path": ["api", "evaluations"]
-            },
-            "description": "Crea una evaluación aprobada por el director Dr. Carlos García (sin correcciones relevantes)."
+            "url": { "raw": "{{baseUrl}}/api/evaluations", "host": ["{{baseUrl}}"], "path": ["api", "evaluations"] },
+            "description": "Crea una evaluación aprobada por el director (sin correcciones)."
           }
         },
         {
-          "name": "Crear Evaluación - Codirector 1 (Con correcciones)",
+          "name": "Crear Evaluación - Codirectora (APROBADO_CON_CORRECCIONES)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"documentId\": 2,\n  \"evaluadorCorreo\": \"laura.torres@unicauca.edu.co\",\n  \"resultado\": \"APROBADO_CON_CORRECCIONES\",\n  \"tipo\": \"ANTEPROYECTO\",\n  \"correcciones\": \"Revisar la coherencia entre los objetivos específicos y la metodología. Corregir referencias bibliográficas según norma APA 7.\"\n}"
+              "raw": "{\n  \"documentId\": 2,\n  \"evaluadorCorreo\": \"laura.torres@unicauca.edu.co\",\n  \"resultado\": \"APROBADO_CON_CORRECCIONES\",\n  \"tipo\": \"ANTEPROYECTO\",\n  \"correcciones\": \"Alinear objetivos específicos con metodología y ajustar referencias en APA 7.\"\n}"
             },
-            "url": {
-              "raw": "http://localhost:8083/api/evaluations",
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "8083",
-              "path": ["api", "evaluations"]
-            },
-            "description": "Crea una evaluación con correcciones por la codirectora MSc. Laura Torres."
+            "url": { "raw": "{{baseUrl}}/api/evaluations", "host": ["{{baseUrl}}"], "path": ["api", "evaluations"] },
+            "description": "Crea una evaluación con correcciones por la codirectora."
           }
         },
         {
-          "name": "Crear Evaluación - Codirector 2 (No aprobado con correcciones)",
+          "name": "Crear Evaluación - Codirector (NO_APROBADO + correcciones)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"documentId\": 1,\n  \"evaluadorCorreo\": \"mateo.rojas@unicauca.edu.co\",\n  \"resultado\": \"NO_APROBADO\",\n  \"tipo\": \"FORMATO_A\",\n  \"correcciones\": \"El planteamiento del problema no está claramente definido. Reescribir el marco teórico y mejorar el diseño experimental.\"\n}"
+              "raw": "{\n  \"documentId\": 1,\n  \"evaluadorCorreo\": \"mateo.rojas@unicauca.edu.co\",\n  \"resultado\": \"NO_APROBADO\",\n  \"tipo\": \"FORMATO_A\",\n  \"correcciones\": \"Redefinir problema, reescribir marco teórico y mejorar diseño experimental.\"\n}"
             },
-            "url": {
-              "raw": "http://localhost:8083/api/evaluations",
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "8083",
-              "path": ["api", "evaluations"]
-            },
-            "description": "Evaluación no aprobada con correcciones por Ing. Mateo Rojas."
+            "url": { "raw": "{{baseUrl}}/api/evaluations", "host": ["{{baseUrl}}"], "path": ["api", "evaluations"] },
+            "description": "Evaluación no aprobada con correcciones por el codirector."
           }
         },
         {
           "name": "Listar Todas las Evaluaciones",
           "request": {
             "method": "GET",
-            "url": {
-              "raw": "http://localhost:8083/api/evaluations",
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "8083",
-              "path": ["api", "evaluations"]
-            },
+            "url": { "raw": "{{baseUrl}}/api/evaluations", "host": ["{{baseUrl}}"], "path": ["api", "evaluations"] },
             "description": "Obtiene todas las evaluaciones registradas."
           }
         },
@@ -85,124 +64,19 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "http://localhost:8083/api/evaluations/evaluador/carlos.garcia@unicauca.edu.co",
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "8083",
+              "raw": "{{baseUrl}}/api/evaluations/evaluador/carlos.garcia@unicauca.edu.co",
+              "host": ["{{baseUrl}}"],
               "path": ["api", "evaluations", "evaluador", "carlos.garcia@unicauca.edu.co"]
             },
-            "description": "Filtra las evaluaciones por correo del evaluador (Dr. Carlos García)."
+            "description": "Filtra las evaluaciones por correo del evaluador (director)."
           }
         },
         {
-          "name": "Eliminar Evaluación por ID",
+          "name": "Eliminar Evaluación por ID (ej: 1)",
           "request": {
             "method": "DELETE",
-            "url": {
-              "raw": "http://localhost:8083/api/evaluations/1",
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "8083",
-              "path": ["api", "evaluations", "1"]
-            },
-            "description": "Elimina una evaluación por su ID interno."
-          }
-        }
-      ]
-    },
-    {
-      "name": "🎓 Trabajos de Grado (DegreeWorks)",
-      "item": [
-        {
-          "name": "Listar Todos los Trabajos de Grado",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "http://localhost:8083/api/degreeworks",
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "8083",
-              "path": ["api", "degreeworks"]
-            },
-            "description": "Obtiene todos los trabajos de grado registrados en el sistema."
-          }
-        },
-        {
-          "name": "Listar Solo Anteproyectos",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "http://localhost:8083/api/degreeworks/anteproyectos",
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "8083",
-              "path": ["api", "degreeworks", "anteproyectos"]
-            },
-            "description": "Obtiene únicamente los trabajos de grado en estado ANTEPROYECTO."
-          }
-        },
-        {
-          "name": "Obtener Trabajo de Grado por Correo del Estudiante - Dana",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "http://localhost:8083/api/degreeworks/correo/dana.romero@unicauca.edu.co",
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "8083",
-              "path": ["api", "degreeworks", "correo", "dana.romero@unicauca.edu.co"]
-            },
-            "description": "Obtiene el trabajo de grado asociado al estudiante Dana Romero."
-          }
-        },
-        {
-          "name": "Obtener Trabajo de Grado por Correo del Estudiante - Juan",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "http://localhost:8083/api/degreeworks/correo/juan.perez@unicauca.edu.co",
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "8083",
-              "path": ["api", "degreeworks", "correo", "juan.perez@unicauca.edu.co"]
-            },
-            "description": "Obtiene el trabajo de grado asociado al estudiante Juan Pérez."
-          }
-        },
-        {
-          "name": "Asignar Evaluadores a un Trabajo de Grado (por correos) - Variante 1",
-          "request": {
-            "method": "POST",
-            "url": {
-              "raw": "http://localhost:8083/api/degreeworks/1/asignar-evaluadores?correoEvaluador1=laura.torres@unicauca.edu.co&correoEvaluador2=mateo.rojas@unicauca.edu.co",
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "8083",
-              "path": ["api", "degreeworks", "1", "asignar-evaluadores"],
-              "query": [
-                { "key": "correoEvaluador1", "value": "laura.torres@unicauca.edu.co" },
-                { "key": "correoEvaluador2", "value": "mateo.rojas@unicauca.edu.co" }
-              ]
-            },
-            "description": "Asigna evaluadores al trabajo de grado ID=1 usando los correos proporcionados (codirectores)."
-          }
-        },
-        {
-          "name": "Asignar Evaluadores a un Trabajo de Grado (por correos) - Variante 2 (director + codirector)",
-          "request": {
-            "method": "POST",
-            "url": {
-              "raw": "http://localhost:8083/api/degreeworks/1/asignar-evaluadores?correoEvaluador1=carlos.garcia@unicauca.edu.co&correoEvaluador2=laura.torres@unicauca.edu.co",
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "8083",
-              "path": ["api", "degreeworks", "1", "asignar-evaluadores"],
-              "query": [
-                { "key": "correoEvaluador1", "value": "carlos.garcia@unicauca.edu.co" },
-                { "key": "correoEvaluador2", "value": "laura.torres@unicauca.edu.co" }
-              ]
-            },
-            "description": "Asigna evaluadores al trabajo de grado ID=1 incluyendo al director como evaluador1."
+            "url": { "raw": "{{baseUrl}}/api/evaluations/1", "host": ["{{baseUrl}}"], "path": ["api", "evaluations", "1"] },
+            "description": "Elimina una evaluación por ID."
           }
         },
         {
@@ -212,16 +86,95 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"degreeWorkId\": 1,\n  \"estado\": \"ANTEPROYECTO\",\n  \"correcciones\": \"Corregir la redacción de los objetivos específicos y actualizar la sección de antecedentes.\"\n}"
+              "raw": "{\n  \"degreeWorkId\": 1,\n  \"estado\": \"ANTEPROYECTO\",\n  \"correcciones\": \"Corregir redacción de objetivos y actualizar antecedentes.\"\n}"
             },
             "url": {
-              "raw": "http://localhost:8083/api/evaluations/correcciones",
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "8083",
+              "raw": "{{baseUrl}}/api/evaluations/correcciones",
+              "host": ["{{baseUrl}}"],
               "path": ["api", "evaluations", "correcciones"]
             },
-            "description": "Envía manualmente un DegreeWorkUpdateDTO hacia DegreeWork vía RabbitMQ (endpoint directo en este microservicio)."
+            "description": "Publica manualmente un DegreeWorkUpdateDTO a la cola con estado + correcciones."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎓 DegreeWorks (vista local en evaluation-ms)",
+      "item": [
+        {
+          "name": "Listar TODOS los DegreeWorks",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/degreeworks", "host": ["{{baseUrl}}"], "path": ["api", "degreeworks"] },
+            "description": "Lista todos los TG cacheados en evaluation-ms (según tu repositorio local)."
+          }
+        },
+        {
+          "name": "Listar SOLO Anteproyectos",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/degreeworks/anteproyectos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "degreeworks", "anteproyectos"]
+            },
+            "description": "Obtiene únicamente los TG en estado ANTEPROYECTO."
+          }
+        },
+        {
+          "name": "Obtener TG por correo del estudiante (Dana)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/degreeworks/correo/dana.romero@unicauca.edu.co",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "degreeworks", "correo", "dana.romero@unicauca.edu.co"]
+            },
+            "description": "Busca el TG por correo del estudiante (Dana)."
+          }
+        },
+        {
+          "name": "Obtener TG por correo del estudiante (Juan)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/degreeworks/correo/juan.perez@unicauca.edu.co",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "degreeworks", "correo", "juan.perez@unicauca.edu.co"]
+            },
+            "description": "Busca el TG por correo del estudiante (Juan)."
+          }
+        },
+        {
+          "name": "Asignar Evaluadores por correo (Laura + Mateo) al TG 1",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/degreeworks/1/asignar-evaluadores?correoEvaluador1=laura.torres@unicauca.edu.co&correoEvaluador2=mateo.rojas@unicauca.edu.co",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "degreeworks", "1", "asignar-evaluadores"],
+              "query": [
+                { "key": "correoEvaluador1", "value": "laura.torres@unicauca.edu.co" },
+                { "key": "correoEvaluador2", "value": "mateo.rojas@unicauca.edu.co" }
+              ]
+            },
+            "description": "Golpea el endpoint del EvaluationController → DegreeWorkService (publica evento a degreework.queue)."
+          }
+        },
+        {
+          "name": "Asignar Evaluadores por correo (Carlos + Laura) al TG 1",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/degreeworks/1/asignar-evaluadores?correoEvaluador1=carlos.garcia@unicauca.edu.co&correoEvaluador2=laura.torres@unicauca.edu.co",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "degreeworks", "1", "asignar-evaluadores"],
+              "query": [
+                { "key": "correoEvaluador1", "value": "carlos.garcia@unicauca.edu.co" },
+                { "key": "correoEvaluador2", "value": "laura.torres@unicauca.edu.co" }
+              ]
+            },
+            "description": "Variante usando al director como evaluador1."
           }
         }
       ]

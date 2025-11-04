@@ -52,7 +52,8 @@ public class EvaluacionService {
 
         // Buscar DegreeWork que contiene el documento
         DegreeWork degreeWork = degreeWorkRepository.findByDocumentId(documentId)
-                .orElseThrow(() -> new RuntimeException("No se encontró el trabajo de grado asociado al documento ID: " + documentId));
+                .orElseThrow(() -> new RuntimeException(
+                        "No se encontró el trabajo de grado asociado al documento ID: " + documentId));
 
         // Crear evaluación
         Evaluation evaluacion = new Evaluation();
@@ -74,10 +75,10 @@ public class EvaluacionService {
 
         // Crear DTO para enviar por RabbitMQ
         DegreeWorkUpdateDTO updateDTO = DegreeWorkUpdateDTO.builder()
-            .degreeWorkId(degreeWork.getId().intValue()) 
-            .estado(estadoEnum.name())
-            .correcciones(correcciones)
-            .build();
+                .degreeWorkId(degreeWork.getId())
+                .estado(estadoEnum.name())
+                .correcciones(correcciones)
+                .build();
 
         evaluationPublisher.publicarActualizacionDegreeWork(updateDTO);
 
