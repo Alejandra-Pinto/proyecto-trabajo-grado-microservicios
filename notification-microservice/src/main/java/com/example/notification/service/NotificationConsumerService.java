@@ -22,10 +22,10 @@ public class NotificationConsumerService {
         this.emailSimulator = emailSimulator;
     }
 
+    // Escucha mensajes que llegan a la cola de notificaciones
     @RabbitListener(queues = "${app.rabbitmq.queue}")
-
     public void receiveEvent(NotificationEventDTO event) {
-        logger.info("Evento recibido: {}", event.getEventType());
+        logger.info("Evento recibido de tipo: {}", event.getEventType());
 
         switch (event.getEventType()) {
             case "TRABAJO_GRADO_REGISTRADO" -> handleDegreeWorkRegistered(event);
