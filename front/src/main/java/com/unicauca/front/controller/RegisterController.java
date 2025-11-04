@@ -94,6 +94,12 @@ public class RegisterController {
                 user.setStatus("PENDIENTE"); // Jefes de departamento requieren aprobación
             }
 
+            System.out.println("=== DEBUG: Intentando registrar usuario ===");
+            System.out.println("Nombre: " + user.getFirstName());
+            System.out.println("Email: " + user.getEmail());
+            System.out.println("Rol: " + user.getRole());
+            System.out.println("Estado: " + user.getStatus());
+
             //Cambio: Enviar registro al microservicio de usuarios
             ResponseEntity<User> response = apiService.post("api/usuarios", "/register", user, User.class);
 
@@ -113,12 +119,19 @@ public class RegisterController {
                 navigation.showLogin();
                 
             } else {
+                System.out.println("=== DEBUG: Error en respuesta del servidor ===");
+                System.out.println("Status Code: " + response.getStatusCode());
                 mostrarAlerta("Error de registro", 
                     "No se pudo registrar el usuario. Verifique si el correo ya está en uso.", 
                     Alert.AlertType.ERROR);
             }
 
         } catch (Exception e) {
+            System.out.println("=== DEBUG: Excepción durante el registro ===");
+            System.out.println("Tipo de error: " + e.getClass().getName());
+            System.out.println("Mensaje: " + e.getMessage());
+            e.printStackTrace();
+            
             mostrarAlerta("Error de conexión", 
                 "No se pudo conectar con el servidor: " + e.getMessage(), 
                 Alert.AlertType.ERROR);

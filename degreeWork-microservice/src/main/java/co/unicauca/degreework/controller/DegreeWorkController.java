@@ -91,7 +91,7 @@ public class DegreeWorkController {
     /**
      * Listar trabajos por estado
      */
-    @GetMapping("/{estado}")
+    @GetMapping("/listar/{estado}")
     public ResponseEntity<List<DegreeWork>> listarPorEstado(@PathVariable EnumEstadoDegreeWork estado) {
         List<DegreeWork> trabajos = service.listarAnteproyectos(estado);
         return ResponseEntity.ok(trabajos);

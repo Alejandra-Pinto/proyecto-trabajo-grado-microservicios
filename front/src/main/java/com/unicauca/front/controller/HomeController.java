@@ -160,6 +160,11 @@ public class HomeController {
         }
     }
 
+    @FXML
+    private void onBtnNotificationsClicked() {
+        navigation.showNotificationPanel();
+    }
+
     //Métodos Auxiliares
     private void configurarBotones() {
         btnRol.setVisible(true);

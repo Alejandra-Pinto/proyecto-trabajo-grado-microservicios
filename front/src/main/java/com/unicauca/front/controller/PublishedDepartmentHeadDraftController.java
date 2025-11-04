@@ -161,28 +161,29 @@ public class PublishedDepartmentHeadDraftController {
         }
 
         try {
-            // Obtener todos los anteproyectos desde microservicio
+            // Obtener SOLO los anteproyectos usando el endpoint por estado
             ResponseEntity<DegreeWork[]> response = apiService.get(
                 "api/degreeworks", 
-                "", 
+                "/listar/ANTEPROYECTO",  // Cambia esto para obtener solo anteproyectos
                 DegreeWork[].class
             );
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                DegreeWork[] todosLosProyectos = response.getBody();
+                DegreeWork[] anteproyectos = response.getBody();
                 
-                // Filtrar solo proyectos que tienen anteproyectos
-                List<DegreeWork> proyectosConAnteproyectos = Arrays.stream(todosLosProyectos)
-                    .filter(proyecto -> proyecto.getAnteproyectos() != null && 
-                                       !proyecto.getAnteproyectos().isEmpty())
-                    .collect(Collectors.toList());
-                
-                todosLosAnteproyectos = FXCollections.observableArrayList(proyectosConAnteproyectos);
+                todosLosAnteproyectos = FXCollections.observableArrayList(anteproyectos);
                 
                 // Aplicar filtro inicial
                 aplicarFiltro("Todos");
                 
-                System.out.println("Anteproyectos cargados: " + proyectosConAnteproyectos.size());
+                System.out.println("Anteproyectos cargados: " + anteproyectos.length);
+                
+                // DEBUG: Mostrar información de los anteproyectos cargados
+                for (DegreeWork dw : anteproyectos) {
+                    System.out.println("Anteproyecto: " + dw.getTituloProyecto() + 
+                                    " - Estado: " + (dw.getEstado() != null ? dw.getEstado().toString() : "null") +
+                                    " - Anteproyectos: " + (dw.getAnteproyectos() != null ? dw.getAnteproyectos().size() : 0));
+                }
             }
 
         } catch (Exception e) {

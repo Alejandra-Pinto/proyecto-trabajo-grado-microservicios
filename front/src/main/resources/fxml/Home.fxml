@@ -157,6 +157,11 @@
                               <Font name="System Bold" size="20.0" />
                            </font>
                         </Label>
+                        <Button fx:id="btnNotifications" layoutX="916.0" layoutY="28.0" mnemonicParsing="false" style="-fx-background-color: #ae2f2f;" text="NOTIFICACIONES" textFill="WHITE">
+                           <font>
+                              <Font name="System Bold" size="15.0" />
+                           </font>
+                        </Button>
                      </children>
                   </AnchorPane>
               </items>

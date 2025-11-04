@@ -13,6 +13,7 @@ import com.unicauca.front.controller.ManagementStudentDraftController;
 import com.unicauca.front.controller.ManagementStudentFormatAController;
 import com.unicauca.front.controller.ManagementTeacherDraftController;
 import com.unicauca.front.controller.ManagementTeacherFormatAController;
+import com.unicauca.front.controller.NotificationController;
 import com.unicauca.front.controller.PersonalInformationController;
 import com.unicauca.front.controller.PublishedDepartmentHeadDraftController;
 import com.unicauca.front.controller.PublishedTeacherFormatAController;
@@ -25,6 +26,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 @Component
@@ -358,6 +360,33 @@ public void showPublishedDepartmentHeadDraft(User usuario) {
       throw new RuntimeException("Error cargando PublishedDepartmentHeadDraft", e);
    }
 }
+
+   public void showNotificationPanel() {
+      try {
+         FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/NotificationPanel.fxml"));
+         loader.setControllerFactory(applicationContext::getBean); 
+         Parent root = loader.load();
+         
+         Stage stage = new Stage();
+         stage.setTitle("Notificaciones - FIET");
+         stage.setScene(new Scene(root));
+         stage.initModality(Modality.APPLICATION_MODAL);
+         stage.setOnHidden(e -> {
+               NotificationController controller = loader.getController();
+               controller.detenerActualizacion();
+         });
+         stage.showAndWait();
+         
+      } catch (Exception e) {
+         e.printStackTrace();
+         // Usa tu método mostrarAlerta existente o este alternativo:
+         Alert alert = new Alert(Alert.AlertType.ERROR);
+         alert.setTitle("Error");
+         alert.setHeaderText(null);
+         alert.setContentText("No se pudo cargar el panel de notificaciones");
+         alert.showAndWait();
+      }
+   }
 
    public void showStatistics() {
     loadFXML("/fxml/Statistics.fxml", "Estadísticas de Formatos");
