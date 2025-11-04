@@ -1,9 +1,13 @@
 package com.example.evaluation.controller;
 
 import com.example.evaluation.entity.Evaluation;
+import com.example.evaluation.infra.dto.DegreeWorkUpdateDTO;
 import com.example.evaluation.infra.dto.EvaluationRequestDTO;
 import com.example.evaluation.infra.dto.EvaluationResponseDTO;
+import com.example.evaluation.infra.messaging.EvaluationPublisher;
 import com.example.evaluation.service.EvaluacionService;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,10 +17,13 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/evaluations")
 public class EvaluationController {
 
+    private final EvaluationPublisher evaluationPublisher;
+
     private final EvaluacionService evaluacionService;
 
-    public EvaluationController(EvaluacionService evaluacionService) {
+    public EvaluationController(EvaluacionService evaluacionService, EvaluationPublisher evaluationPublisher) {
         this.evaluacionService = evaluacionService;
+        this.evaluationPublisher = evaluationPublisher;
     }
 
     // ✅ Crear evaluación
@@ -81,5 +88,11 @@ public class EvaluationController {
     @DeleteMapping("/{id}")
     public void eliminarEvaluacion(@PathVariable Long id) {
         evaluacionService.eliminarEvaluacion(id);
+    }
+
+    @PostMapping("/correcciones")
+    public ResponseEntity<String> enviarCorrecciones(@RequestBody DegreeWorkUpdateDTO dto) {
+        evaluationPublisher.publicarActualizacionDegreeWork(dto);
+        return ResponseEntity.ok("Correcciones enviadas correctamente a la cola.");
     }
 }
