@@ -103,21 +103,6 @@ public class DegreeWorkController {
     }
 
     /**
-     * Agregar o actualizar las correcciones de un trabajo
-     */
-    @PutMapping("/{id}/correcciones")
-    public ResponseEntity<DegreeWork> guardarCorrecciones(
-            @PathVariable Long id,
-            @RequestBody String correcciones) {
-        try {
-            DegreeWork actualizado = service.guardarCorrecciones(id, correcciones);
-            return ResponseEntity.ok(actualizado);
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    /**
      * Eliminar un trabajo de grado
      */
     @DeleteMapping("/{id}")

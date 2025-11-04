@@ -28,4 +28,5 @@ public class UserCreatedListener {
                 .build();
         userRepository.save(user);
     }
+    
 }
