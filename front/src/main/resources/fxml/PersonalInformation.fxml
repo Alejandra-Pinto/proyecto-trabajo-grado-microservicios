@@ -183,6 +183,12 @@
 
                               <Label style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Rol:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
                               <Label fx:id="lblRol" style="-fx-font-size: 16px; -fx-text-fill: #444;" text="-" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+
+                              <Label style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Teléfono:" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                              <Label fx:id="lblTelefono" style="-fx-font-size: 16px; -fx-text-fill: #444;" text="-" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+
+                              <Label style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Estado:" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                              <Label fx:id="lblEstado" style="-fx-font-size: 16px; -fx-text-fill: #444;" text="-" GridPane.columnIndex="1" GridPane.rowIndex="5" />
                               <columnConstraints>
                                  <ColumnConstraints />
                                  <ColumnConstraints />

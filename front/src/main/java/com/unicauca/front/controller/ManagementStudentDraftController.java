@@ -55,8 +55,8 @@ public class ManagementStudentDraftController {
 
     private void configurarInterfaz() {
         // Deshabilitar el botón de anteproyecto (ya estamos en esa vista)
-        btnAnteproyecto.setDisable(true);
-        btnAnteproyecto.setStyle("-fx-background-color: #2c3e50; -fx-text-fill: white;");
+        //btnAnteproyecto.setDisable(true);
+        //btnAnteproyecto.setStyle("-fx-background-color: #2c3e50; -fx-text-fill: white;");
     }
 
     public void configurarConUsuario(User usuario) {
@@ -237,6 +237,15 @@ public class ManagementStudentDraftController {
     private void onBtnFormatoPropuestaClicked() {
         if (usuarioActual != null && "STUDENT".equalsIgnoreCase(usuarioActual.getRole())) {
             navigation.showManagementStudentFormatA(usuarioActual);
+        } else {
+            mostrarAlerta("Acceso denegado", "Solo los estudiantes pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
+        }
+    }
+
+        @FXML
+    private void onBtnAnteproyectoClicked() {
+        if (usuarioActual != null && "STUDENT".equalsIgnoreCase(usuarioActual.getRole())) {
+            navigation.showManagementStudentDraft(usuarioActual);
         } else {
             mostrarAlerta("Acceso denegado", "Solo los estudiantes pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
         }

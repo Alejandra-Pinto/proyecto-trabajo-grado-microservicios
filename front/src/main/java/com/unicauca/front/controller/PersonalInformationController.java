@@ -83,6 +83,8 @@ public class PersonalInformationController {
                 return "Docente";
             case "COORDINATOR":
                 return "Coordinador";
+            case "DEPARTMENT_HEAD": // NUEVO CASO
+                return "Jefe de Departamento";
             case "ADMIN":
                 return "Administrador";
             default:
@@ -114,6 +116,10 @@ public class PersonalInformationController {
                 btnAnteproyectoEstudiante.setVisible(true);
                 break;
             case "COORDINATOR":
+                btnEvaluarPropuestas.setVisible(true);
+                btnEvaluarAnteproyectos.setVisible(true);
+                break;
+            case "DEPARTMENT_HEAD":
                 btnEvaluarPropuestas.setVisible(true);
                 btnEvaluarAnteproyectos.setVisible(true);
                 break;
@@ -188,16 +194,18 @@ public class PersonalInformationController {
 
     @FXML
     private void onBtnEvaluarPropuestasClicked() {
-        if (usuarioActual != null && "COORDINATOR".equalsIgnoreCase(usuarioActual.getRole())) {
+        if (usuarioActual != null && 
+            ("COORDINATOR".equalsIgnoreCase(usuarioActual.getRole()) || 
+            "DEPARTMENT_HEAD".equalsIgnoreCase(usuarioActual.getRole()))) {
             navigation.showManagementCoordinatorFormatA();
         } else {
-            mostrarAlerta("Acceso denegado", "Solo los coordinadores pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
+            mostrarAlerta("Acceso denegado", "Solo coordinadores y jefes de departamento pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
         }
     }
 
     @FXML
     private void onBtnEvaluarAnteproyectosClicked() {
-        if (usuarioActual != null && "COORDINATOR".equalsIgnoreCase(usuarioActual.getRole())) {
+        if (usuarioActual != null && "DEPARTMENT_HEAD".equalsIgnoreCase(usuarioActual.getRole())) {
             navigation.showManagementCoordinatorFormatA();
         } else {
             mostrarAlerta("Acceso denegado", "Solo los coordinadores pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);

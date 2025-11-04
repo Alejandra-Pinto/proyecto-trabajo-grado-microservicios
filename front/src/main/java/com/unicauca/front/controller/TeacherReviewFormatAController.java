@@ -139,7 +139,7 @@ public class TeacherReviewFormatAController {
     @FXML
     private void onBtnUsuarioClicked() {
         if (usuarioActual != null) {
-            navigation.showPersonalInformation();
+            navigation.showPersonalInformation(usuarioActual);
         }
     }
 

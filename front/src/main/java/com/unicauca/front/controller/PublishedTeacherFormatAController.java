@@ -296,7 +296,7 @@ public class PublishedTeacherFormatAController {
     @FXML
     private void onBtnRolClicked() {
         if (usuarioActual != null) {
-            navigation.showPersonalInformation();
+            navigation.showPersonalInformation(usuarioActual);
         }
     }
 

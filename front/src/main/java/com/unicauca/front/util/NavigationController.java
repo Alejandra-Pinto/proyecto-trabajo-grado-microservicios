@@ -236,7 +236,12 @@ public class NavigationController {
    }
 
    public void showPersonalInformation() {
-      this.loadFXML("/fxml/PersonalInformation.fxml", "Información Personal");
+      User usuarioActual = SessionManager.getCurrentUser();
+      if (usuarioActual != null) {
+         showPersonalInformation(usuarioActual);
+      } else {
+         this.loadFXML("/fxml/PersonalInformation.fxml", "Información Personal");
+      }
    }
 
    public void showPersonalInformation(User usuario) {

@@ -45,7 +45,7 @@
                      </font>
                   </ToggleButton>
 
-                  <ToggleButton fx:id="btnAnteproyecto" layoutY="202.0" mnemonicParsing="false" prefHeight="101.0" prefWidth="470.0" text="Anteproyecto">
+                  <ToggleButton fx:id="btnAnteproyecto" layoutY="202.0" mnemonicParsing="false" onAction="#onBtnAnteproyectoClicked" prefHeight="101.0" prefWidth="470.0" text="Anteproyecto">
                      <graphic>
                         <ImageView fitHeight="51.0" fitWidth="51.0" preserveRatio="true">
                            <image>

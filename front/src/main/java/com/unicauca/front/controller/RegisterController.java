@@ -33,6 +33,8 @@ public class RegisterController {
     @FXML
     private RadioButton rbCoordinador;
     @FXML
+    private RadioButton rbJefeDepartamento; // NUEVO RADIO BUTTON
+    @FXML
     private Button btn_register;
     @FXML
     private Hyperlink hpl_login;
@@ -87,6 +89,9 @@ public class RegisterController {
             } else if (rbCoordinador.isSelected()) {
                 user.setRole("COORDINATOR");
                 user.setStatus("PENDIENTE"); // Coordinadores requieren aprobación
+            } else if (rbJefeDepartamento.isSelected()) {
+                user.setRole("DEPARTMENT_HEAD");
+                user.setStatus("PENDIENTE"); // Jefes de departamento requieren aprobación
             }
 
             //Cambio: Enviar registro al microservicio de usuarios
@@ -96,8 +101,9 @@ public class RegisterController {
                 User usuarioRegistrado = response.getBody();
                 
                 String mensajeExito = "Usuario registrado correctamente";
-                if ("COORDINATOR".equals(usuarioRegistrado.getRole())) {
-                    mensajeExito += "\nSu solicitud como coordinador está en revisión";
+                if ("COORDINATOR".equals(usuarioRegistrado.getRole()) || 
+                    "DEPARTMENT_HEAD".equals(usuarioRegistrado.getRole())) {
+                    mensajeExito += "\nSu solicitud está en revisión y requiere aprobación";
                 }
                 
                 mostrarAlerta("Registro exitoso", mensajeExito, Alert.AlertType.CONFIRMATION);
@@ -167,5 +173,6 @@ public class RegisterController {
         rbEstudiante.setToggleGroup(groupRoles);
         rbDocente.setToggleGroup(groupRoles);
         rbCoordinador.setToggleGroup(groupRoles);
+        rbJefeDepartamento.setToggleGroup(groupRoles); // NUEVO RADIO BUTTON AL GRUPO
     }
 }

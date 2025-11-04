@@ -168,8 +168,26 @@ public class ManagementStudentFormatAController {
     }
 
     @FXML
+    private void onBtnFormatoEstudianteClicked() {
+        if (!"STUDENT".equalsIgnoreCase(usuarioActual.getRole())) {
+            mostrarAlerta("Acceso denegado", "Solo los estudiantes pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
+            return;
+        }
+        navigation.showManagementStudentFormatA(usuarioActual);
+    }
+
+    @FXML
+    private void onBtnAnteproyectoEstudianteClicked() {
+        if (!"STUDENT".equalsIgnoreCase(usuarioActual.getRole())) {
+            mostrarAlerta("Acceso denegado", "Solo los estudiantes pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
+            return;
+        }
+        navigation.showManagementStudentDraft(usuarioActual);
+    }
+
+    @FXML
     private void onBtnUsuarioClicked() {
-        navigation.showPersonalInformation();
+        navigation.showPersonalInformation(usuarioActual);
     }
 
     @FXML

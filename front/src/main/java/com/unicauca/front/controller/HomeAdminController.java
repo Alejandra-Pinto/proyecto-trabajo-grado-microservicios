@@ -48,7 +48,7 @@ public class HomeAdminController {
     @FXML
     private void onBtnUsuarioClicked() {
         if (usuarioActual != null) {
-            navigation.showPersonalInformation();
+            navigation.showPersonalInformation(usuarioActual);
         }
     }
 
