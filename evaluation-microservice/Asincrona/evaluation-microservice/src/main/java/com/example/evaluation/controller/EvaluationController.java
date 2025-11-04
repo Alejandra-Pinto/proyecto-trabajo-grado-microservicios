@@ -24,9 +24,10 @@ public class EvaluationController {
     public EvaluationResponseDTO crearEvaluacion(@RequestBody EvaluationRequestDTO dto) {
         Evaluation evaluacion = evaluacionService.crearEvaluacion(
                 dto.getDocumentId(),
-                dto.getEvaluadorCorreo(), // ← ahora usamos el correo
+                dto.getEvaluadorCorreo(),
                 dto.getResultado(),
-                dto.getTipo());
+                dto.getTipo(),
+                dto.getCorrecciones());
 
         EvaluationResponseDTO response = new EvaluationResponseDTO();
         response.setId(evaluacion.getId());
@@ -37,10 +38,7 @@ public class EvaluationController {
         response.setEvaluadorNombre(evaluacion.getEvaluador().getNombre());
         response.setEvaluadorRol(evaluacion.getEvaluador().getRol());
         response.setEvaluadorCorreo(evaluacion.getEvaluador().getCorreo());
-
-        if (evaluacion.getDocument().getDegreeWork() != null) {
-            response.setCorrecciones(evaluacion.getDocument().getDegreeWork().getCorrecciones());
-        }
+        response.setCorrecciones(dto.getCorrecciones()); // 🔹 correcciones del DTO enviado
 
         return response;
     }
@@ -58,10 +56,6 @@ public class EvaluationController {
             dto.setEvaluadorNombre(e.getEvaluador().getNombre());
             dto.setEvaluadorRol(e.getEvaluador().getRol());
             dto.setEvaluadorCorreo(e.getEvaluador().getCorreo());
-
-            if (e.getDocument().getDegreeWork() != null) {
-                dto.setCorrecciones(e.getDocument().getDegreeWork().getCorrecciones());
-            }
             return dto;
         }).collect(Collectors.toList());
     }
@@ -69,9 +63,7 @@ public class EvaluationController {
     // ✅ Obtener evaluación por correo del evaluador
     @GetMapping("/evaluador/{correo}")
     public List<EvaluationResponseDTO> obtenerEvaluacionesPorCorreo(@PathVariable String correo) {
-        List<Evaluation> evaluaciones = evaluacionService.obtenerPorCorreoEvaluador(correo);
-
-        return evaluaciones.stream().map(e -> {
+        return evaluacionService.obtenerPorCorreoEvaluador(correo).stream().map(e -> {
             EvaluationResponseDTO dto = new EvaluationResponseDTO();
             dto.setId(e.getId());
             dto.setDocumentId(e.getDocument().getId());
@@ -81,14 +73,11 @@ public class EvaluationController {
             dto.setEvaluadorNombre(e.getEvaluador().getNombre());
             dto.setEvaluadorRol(e.getEvaluador().getRol());
             dto.setEvaluadorCorreo(e.getEvaluador().getCorreo());
-            if (e.getDocument().getDegreeWork() != null) {
-                dto.setCorrecciones(e.getDocument().getDegreeWork().getCorrecciones());
-            }
             return dto;
         }).collect(Collectors.toList());
     }
 
-    // ✅ Eliminar evaluación (si sigue siendo por id interno)
+    // ✅ Eliminar evaluación
     @DeleteMapping("/{id}")
     public void eliminarEvaluacion(@PathVariable Long id) {
         evaluacionService.eliminarEvaluacion(id);

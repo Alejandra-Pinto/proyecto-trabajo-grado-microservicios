@@ -4,8 +4,9 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import com.example.evaluation.entity.Evaluador;
 import com.example.evaluation.entity.Evaluation;
 
 public interface EvaluationRepository extends JpaRepository<Evaluation, Long> {
-    List<Evaluation> findByEvaluadorCorreo(String correo);
+    List<Evaluation> findByEvaluador(Evaluador evaluador);
 }

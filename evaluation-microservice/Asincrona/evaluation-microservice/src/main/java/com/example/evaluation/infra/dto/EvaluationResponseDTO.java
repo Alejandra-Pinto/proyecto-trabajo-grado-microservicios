@@ -12,7 +12,7 @@ public class EvaluationResponseDTO {
     private String evaluadorNombre;
     private String evaluadorRol;
     private String evaluadorCorreo;
-    private String correcciones; // ⚠ viene desde DegreeWork
+    private String correcciones;
 
     // Getters y Setters
     public Long getId() {

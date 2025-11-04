@@ -2,8 +2,9 @@ package com.example.evaluation.service;
 
 import com.example.evaluation.entity.Document;
 import com.example.evaluation.entity.Evaluation;
+import com.example.evaluation.entity.enums.EnumEstadoDegreeWork;
+import com.example.evaluation.infra.dto.DegreeWorkUpdateDTO;
 import com.example.evaluation.infra.messaging.EvaluationPublisher;
-import com.example.evaluation.entity.Evaluador;
 import com.example.evaluation.repository.DocumentRepository;
 import com.example.evaluation.repository.EvaluationRepository;
 import com.example.evaluation.repository.EvaluadorRepository;
@@ -24,15 +25,22 @@ public class EvaluacionService {
 
     @Autowired
     private EvaluadorRepository evaluadorRepository;
+
     @Autowired
     private EvaluationPublisher evaluationPublisher;
 
-    // ✅ Crear evaluación (ahora usando correo del evaluador)
-    public Evaluation crearEvaluacion(Long documentId, String evaluadorCorreo, String resultado, String tipo) {
+    // ✅ Crear evaluación y enviar correcciones a la cola
+    public Evaluation crearEvaluacion(
+            Long documentId,
+            String evaluadorCorreo,
+            String resultado,
+            String tipo,
+            String correcciones) {
+
         Document document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new RuntimeException("❌ Documento no encontrado con ID: " + documentId));
 
-        Evaluador evaluador = evaluadorRepository.findByCorreo(evaluadorCorreo)
+        var evaluador = evaluadorRepository.findByCorreo(evaluadorCorreo)
                 .orElseThrow(() -> new RuntimeException("❌ Evaluador no encontrado con correo: " + evaluadorCorreo));
 
         Evaluation evaluacion = new Evaluation();
@@ -44,14 +52,20 @@ public class EvaluacionService {
 
         Evaluation saved = evaluationRepository.save(evaluacion);
 
-        // 🟢 Enviar evento al exchange
-        com.example.evaluation.infra.dto.EvaluationRequestDTO dto = new com.example.evaluation.infra.dto.EvaluationRequestDTO();
-        dto.setDocumentId(documentId);
-        dto.setEvaluadorCorreo(evaluadorCorreo);
-        dto.setResultado(resultado);
-        dto.setTipo(tipo);
+        EnumEstadoDegreeWork estadoEnum = switch (tipo.toUpperCase()) {
+            case "FORMATO_A" -> EnumEstadoDegreeWork.FORMATO_A;
+            case "ANTEPROYECTO" -> EnumEstadoDegreeWork.ANTEPROYECTO;
+            case "MONOGRAFIA" -> EnumEstadoDegreeWork.MONOGRAFIA;
+            default -> throw new RuntimeException("❌ Tipo de evaluación desconocido: " + tipo);
+        };
 
-        evaluationPublisher.publicarEvaluacion(dto);
+        DegreeWorkUpdateDTO updateDTO = DegreeWorkUpdateDTO.builder()
+                .degreeWorkId(document.getDegreeWork().getId())
+                .estado(estadoEnum.name())
+                .correcciones(correcciones)
+                .build();
+
+        evaluationPublisher.publicarActualizacionDegreeWork(updateDTO);
 
         return saved;
     }
@@ -61,21 +75,17 @@ public class EvaluacionService {
         return evaluationRepository.findAll();
     }
 
-    // ✅ Buscar todas las evaluaciones realizadas por un evaluador (por correo)
-    public List<Evaluation> obtenerPorCorreoEvaluador(String correoEvaluador) {
-        return evaluationRepository.findByEvaluadorCorreo(correoEvaluador);
+    // ✅ Buscar evaluaciones por correo del evaluador
+    public List<Evaluation> obtenerPorCorreoEvaluador(String correo) {
+        var evaluador = evaluadorRepository.findByCorreo(correo)
+                .orElseThrow(() -> new RuntimeException("❌ Evaluador no encontrado con correo: " + correo));
+        return evaluationRepository.findByEvaluador(evaluador);
     }
 
-    // ✅ Buscar evaluación por ID (opcional, aún útil para admin o pruebas)
-    public Evaluation obtenerPorId(Long id) {
-        return evaluationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Evaluación no encontrada con ID: " + id));
-    }
-
-    // ✅ Eliminar evaluación por ID
+    // ✅ Eliminar evaluación
     public void eliminarEvaluacion(Long id) {
         if (!evaluationRepository.existsById(id)) {
-            throw new RuntimeException("La evaluación no existe");
+            throw new RuntimeException("❌ Evaluación no encontrada con ID: " + id);
         }
         evaluationRepository.deleteById(id);
     }
