@@ -4,6 +4,7 @@ import co.unicauca.degreework.domain.entities.DegreeWork;
 import co.unicauca.degreework.domain.entities.builder.DegreeWorkBuilder;
 import co.unicauca.degreework.domain.entities.builder.ProfessionalPracticeBuilder;
 import co.unicauca.degreework.domain.entities.builder.ResearchDegreeWorkBuilder;
+import co.unicauca.degreework.domain.entities.enums.EnumEstadoDegreeWork;
 import co.unicauca.degreework.infra.dto.DegreeWorkDTO;
 import co.unicauca.degreework.service.DegreeWorkService;
 import org.springframework.http.ResponseEntity;
@@ -88,6 +89,15 @@ public class DegreeWorkController {
     }
 
     /**
+     * Listar trabajos por estado
+     */
+    @GetMapping("/{estado}")
+    public ResponseEntity<List<DegreeWork>> listarPorEstado(@PathVariable EnumEstadoDegreeWork estado) {
+        List<DegreeWork> trabajos = service.listarAnteproyectos(estado);
+        return ResponseEntity.ok(trabajos);
+    }
+
+    /**
      * Actualizar información de un trabajo de grado
      */
     @PutMapping("/{id}")
@@ -96,21 +106,6 @@ public class DegreeWorkController {
             @RequestBody DegreeWorkDTO dto) {
         try {
             DegreeWork actualizado = service.actualizarDegreeWork(id, dto);
-            return ResponseEntity.ok(actualizado);
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    /**
-     * Agregar o actualizar las correcciones de un trabajo
-     */
-    @PutMapping("/{id}/correcciones")
-    public ResponseEntity<DegreeWork> guardarCorrecciones(
-            @PathVariable Long id,
-            @RequestBody String correcciones) {
-        try {
-            DegreeWork actualizado = service.guardarCorrecciones(id, correcciones);
             return ResponseEntity.ok(actualizado);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.notFound().build();
