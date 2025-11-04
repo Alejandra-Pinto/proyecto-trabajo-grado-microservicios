@@ -4,7 +4,7 @@ import java.time.LocalDate;
 
 public class Document {
     private Long id;
-    private EnumEstadoDocument tipo;
+    private EnumTipoDocumento tipo;
     private String rutaArchivo;
     private LocalDate fechaActual;
     private EnumEstadoDocument estado;
@@ -12,7 +12,7 @@ public class Document {
     // Constructores
     public Document() {}
 
-    public Document(EnumEstadoDocument tipo, String rutaArchivo, EnumEstadoDocument estado) {
+    public Document(EnumTipoDocumento tipo, String rutaArchivo, EnumEstadoDocument estado) {
         this.tipo = tipo;
         this.rutaArchivo = rutaArchivo;
         this.fechaActual = LocalDate.now();
@@ -23,8 +23,8 @@ public class Document {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public EnumEstadoDocument getTipo() { return tipo; }
-    public void setTipo(EnumEstadoDocument tipo) { this.tipo = tipo; }
+    public EnumTipoDocumento getTipo() { return tipo; }
+    public void setTipo(EnumTipoDocumento tipo) { this.tipo = tipo; }
 
     public String getRutaArchivo() { return rutaArchivo; }
     public void setRutaArchivo(String rutaArchivo) { this.rutaArchivo = rutaArchivo; }
