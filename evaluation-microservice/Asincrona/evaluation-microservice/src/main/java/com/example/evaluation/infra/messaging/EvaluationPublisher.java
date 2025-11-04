@@ -3,39 +3,38 @@ package com.example.evaluation.infra.messaging;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import com.example.evaluation.infra.dto.EvaluationRequestDTO;
+import com.example.evaluation.infra.dto.DegreeWorkUpdateDTO;
 
 @Component
 public class EvaluationPublisher {
 
     private final RabbitTemplate rabbitTemplate;
 
-    @Value("${app.rabbitmq.exchange}")
+    @Value("${app.rabbitmq.evaluation.exchange}")
     private String exchange;
 
-    @Value("${app.rabbitmq.user.routingkey}")
-    private String routingKey;
+    @Value("${app.rabbitmq.degreework.routingkey}")
+    private String routingKeyDegreeWork;
 
     public EvaluationPublisher(RabbitTemplate rabbitTemplate) {
         this.rabbitTemplate = rabbitTemplate;
     }
 
-    public void publicarEvaluacion(EvaluationRequestDTO evaluacion) {
+    // ✅ Solo publica el DTO con estado + correcciones
+    public void publicarActualizacionDegreeWork(DegreeWorkUpdateDTO updateDTO) {
         try {
-            System.out.println("📤 [EvaluationPublisher] Enviando evaluación a USER SERVICE...");
+            System.out.println("[EvaluationPublisher] Enviando correcciones del DegreeWork...");
             System.out.println("   Exchange: " + exchange);
-            System.out.println("   RoutingKey: " + routingKey);
-            System.out.println("   Queue destino: user.queue");
-            System.out.println("   Evaluador: " + evaluacion.getEvaluadorCorreo());
-            System.out.println("   Documento ID: " + evaluacion.getDocumentId());
-            System.out.println("   Resultado: " + evaluacion.getResultado());
-            System.out.println("   Tipo: " + evaluacion.getTipo());
+            System.out.println("   RoutingKey: " + routingKeyDegreeWork);
+            System.out.println("   DegreeWork ID: " + updateDTO.getDegreeWorkId());
+            System.out.println("   Estado: " + updateDTO.getEstado());
+            System.out.println("   Correcciones: " + updateDTO.getCorrecciones());
 
-            rabbitTemplate.convertAndSend(exchange, routingKey, evaluacion);
+            rabbitTemplate.convertAndSend(exchange, routingKeyDegreeWork, updateDTO);
 
-            System.out.println("✅ [EvaluationPublisher] Evaluación publicada correctamente en user.queue\n");
+            System.out.println("✅ [EvaluationPublisher] Correcciones publicadas correctamente en la cola.\n");
         } catch (Exception e) {
-            System.err.println("❌ [EvaluationPublisher] Error al publicar evaluación: " + e.getMessage());
+            System.err.println("❌ [EvaluationPublisher] Error al publicar correcciones: " + e.getMessage());
             e.printStackTrace();
         }
     }
