@@ -9,7 +9,7 @@ public class NotificationFactory {
             throw new IllegalArgumentException("El tipo de evento no puede ser nulo");
         }
 
-        // Podrías agrupar tipos de evento relacionados con email
+        
         if (eventType.contains("SUBIDO") || eventType.contains("EVALUADO")) {
             return new EmailNotificationSender(emailSimulator);
         }

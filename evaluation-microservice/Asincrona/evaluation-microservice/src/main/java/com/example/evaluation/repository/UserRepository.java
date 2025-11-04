@@ -1,6 +1,6 @@
-package co.unicauca.degreework.access;
+package com.example.evaluation.repository;
 
-import co.unicauca.degreework.domain.entities.User;
+import com.example.evaluation.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

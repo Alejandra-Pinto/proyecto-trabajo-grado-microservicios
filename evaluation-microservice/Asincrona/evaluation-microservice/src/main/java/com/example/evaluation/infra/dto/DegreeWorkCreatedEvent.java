@@ -11,6 +11,7 @@ import java.util.List;
 public class DegreeWorkCreatedEvent implements Serializable {
 
     // Información general
+    private Long id;
     private String titulo;
     private String modalidad;
     private String directorEmail;
@@ -27,11 +28,12 @@ public class DegreeWorkCreatedEvent implements Serializable {
     public DegreeWorkCreatedEvent() {
     }
 
-    public DegreeWorkCreatedEvent(String titulo, String modalidad, String directorEmail,
+    public DegreeWorkCreatedEvent(Long id, String titulo, String modalidad, String directorEmail,
                                   List<String> estudiantesEmails, List<String> codirectoresEmails,
                                   LocalDate fechaActual, String estado,
                                   List<DocumentDTO> formatosA, List<DocumentDTO> anteproyectos,
                                   List<DocumentDTO> cartasAceptacion) {
+        this.id = id;                           
         this.titulo = titulo;
         this.modalidad = modalidad;
         this.directorEmail = directorEmail;
@@ -45,6 +47,9 @@ public class DegreeWorkCreatedEvent implements Serializable {
     }
 
     // Getters y setters
+    public Long getId() { return id; }
+    public void setiD(Long id) { this.id = id; }
+
     public String getTitulo() { return titulo; }
     public void setTitulo(String titulo) { this.titulo = titulo; }
 

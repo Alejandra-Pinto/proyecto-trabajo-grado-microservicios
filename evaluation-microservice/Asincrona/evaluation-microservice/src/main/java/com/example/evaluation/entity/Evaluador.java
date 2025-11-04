@@ -13,7 +13,7 @@ public class Evaluador {
 
     private String nombre;
 
-    private String rol; // "Profesor", "Coordinador", "Director", "Codirector"
+    private String rol; // "Profesor", "Coordinador"
 
     @Column(unique = true, nullable = false)
     private String correo;
