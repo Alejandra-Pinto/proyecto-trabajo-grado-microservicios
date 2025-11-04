@@ -55,33 +55,33 @@ public class LoginController {
 
             ResponseEntity<User> response = apiService.post(basePath, "/login", loginRequest, User.class);
 
-
-            //ResponseEntity<User> response = apiService.post("api/usuarios", "/login", loginRequest, User.class);
-
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 User usuarioLogueado = response.getBody();
                 System.out.println("ROL del usuario logueado: " + usuarioLogueado.getRole());
-                //Verifica estado del coordinador (si aplica)
-                if ("COORDINATOR".equalsIgnoreCase(usuarioLogueado.getRole())) {
+                System.out.println("ESTADO del usuario: " + usuarioLogueado.getStatus());
+                
+                // Verifica estado del coordinador O jefe de departamento (si aplica)
+                if ("COORDINATOR".equalsIgnoreCase(usuarioLogueado.getRole()) || 
+                    "DEPARTMENT_HEAD".equalsIgnoreCase(usuarioLogueado.getRole())) {
+                    
                     if ("PENDIENTE".equals(usuarioLogueado.getStatus())) {
                         mostrarAlerta("Solicitud en espera",
-                                "Su solicitud de registro como coordinador aún está en revisión.",
+                                "Su solicitud de registro aún está en revisión.",
                                 Alert.AlertType.INFORMATION);
                         return;
                     } else if ("RECHAZADO".equals(usuarioLogueado.getStatus())) {
                         mostrarAlerta("Solicitud rechazada",
-                                "Su solicitud de registro como coordinador fue rechazada.",
+                                "Su solicitud de registro fue rechazada.",
                                 Alert.AlertType.ERROR);
                         return;
                     }
                 }
+                
                 if("ADMIN".equalsIgnoreCase(usuarioLogueado.getRole())) {
-                    
-
                     navigation.showHomeAdmin(usuarioLogueado);
                 } else {
                     navigation.showHomeWithUser(usuarioLogueado);
-}
+                }
                 
             } else {
                 mostrarAlerta("Error de login", "Usuario o contraseña incorrectos.", Alert.AlertType.ERROR);
@@ -89,8 +89,8 @@ public class LoginController {
 
         } catch (Exception e) {
             mostrarAlerta("Error de conexión", 
-                         "No se pudo conectar con el servidor: " + e.getMessage(), 
-                         Alert.AlertType.ERROR);
+                        "No se pudo conectar con el servidor: " + e.getMessage(), 
+                        Alert.AlertType.ERROR);
         }
     }
 

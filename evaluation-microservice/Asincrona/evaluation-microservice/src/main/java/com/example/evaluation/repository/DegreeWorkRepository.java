@@ -21,4 +21,10 @@ public interface DegreeWorkRepository extends JpaRepository<DegreeWork, Integer>
             WHERE e.email = :correo
             """)
     Optional<DegreeWork> findByCorreoEstudiante(@Param("correo") String correo);
+
+    @Query("SELECT d FROM DegreeWork d JOIN d.formatosA f WHERE f.id = :documentId " +
+           "OR f.id IN (SELECT a.id FROM d.anteproyectos a WHERE a.id = :documentId) " +
+           "OR f.id IN (SELECT c.id FROM d.cartasAceptacion c WHERE c.id = :documentId)")
+    Optional<DegreeWork> findByDocumentId(@Param("documentId") Long documentId);
+
 }

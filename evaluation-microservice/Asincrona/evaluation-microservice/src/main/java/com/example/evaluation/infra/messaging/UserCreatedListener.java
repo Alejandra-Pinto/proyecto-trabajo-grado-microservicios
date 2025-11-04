@@ -1,8 +1,8 @@
-package co.unicauca.degreework.infra.messaging;
+package com.example.evaluation.infra.messaging;
 
-import co.unicauca.degreework.domain.entities.User;
-import co.unicauca.degreework.infra.dto.UserCreatedEvent;
-import co.unicauca.degreework.access.UserRepository;
+import com.example.evaluation.entity.User;
+import com.example.evaluation.infra.dto.UserCreatedEvent;
+import com.example.evaluation.repository.UserRepository;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
