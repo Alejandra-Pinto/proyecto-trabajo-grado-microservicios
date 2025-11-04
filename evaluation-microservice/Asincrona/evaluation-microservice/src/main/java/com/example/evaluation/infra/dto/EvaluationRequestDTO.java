@@ -6,6 +6,7 @@ public class EvaluationRequestDTO {
     private String evaluadorCorreo;
     private String resultado;
     private String tipo;
+    private String correcciones; // ✅ nuevo campo
 
     // Getters y Setters
     public Long getDocumentId() {
@@ -38,5 +39,13 @@ public class EvaluationRequestDTO {
 
     public void setTipo(String tipo) {
         this.tipo = tipo;
+    }
+
+    public String getCorrecciones() { // ✅ agregado
+        return correcciones;
+    }
+
+    public void setCorrecciones(String correcciones) { // ✅ agregado
+        this.correcciones = correcciones;
     }
 }

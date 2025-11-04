@@ -10,7 +10,7 @@ public class DegreeWorkPublisher {
 
     private final RabbitTemplate rabbitTemplate;
 
-    @Value("${app.rabbitmq.exchange}")
+    @Value("${app.rabbitmq.evaluation.exchange}")
     private String exchange;
 
     @Value("${app.rabbitmq.degreework.routingkey}")
