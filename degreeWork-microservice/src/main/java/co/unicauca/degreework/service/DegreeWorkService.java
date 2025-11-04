@@ -7,7 +7,9 @@ import co.unicauca.degreework.domain.entities.builder.DegreeWorkDirector;
 import co.unicauca.degreework.infra.dto.DegreeWorkCreatedEvent;
 import co.unicauca.degreework.infra.dto.DegreeWorkDTO;
 import co.unicauca.degreework.infra.dto.DocumentDTO;
+import co.unicauca.degreework.infra.dto.NotificationEventDTO;
 import co.unicauca.degreework.infra.messaging.DegreeWorkProducer;
+import co.unicauca.degreework.infra.messaging.NotificationProducer;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,12 +26,17 @@ public class DegreeWorkService {
     private final UserService userService;
     private final DocumentRepository documentRepository;
     private final DegreeWorkProducer degreeWorkProducer;
+    private final NotificationProducer notificationProducer;
 
-    public DegreeWorkService(DegreeWorkRepository repository, UserService userService, DocumentRepository documentRepository, DegreeWorkProducer degreeWorkProducer) {
+    public DegreeWorkService(DegreeWorkRepository repository, UserService userService,
+                            DocumentRepository documentRepository,
+                            DegreeWorkProducer degreeWorkProducer,
+                            NotificationProducer notificationProducer) {
         this.repository = repository;
         this.userService = userService;
         this.documentRepository = documentRepository;
         this.degreeWorkProducer = degreeWorkProducer;
+        this.notificationProducer = notificationProducer;
     }
 
     /**
@@ -87,25 +94,39 @@ public class DegreeWorkService {
 
         // --- Construir el trabajo final ---
         DegreeWork degreeWork = director.construirTrabajo();
-        DegreeWork saved = repository.save(degreeWork);
+         DegreeWork saved = repository.save(degreeWork);
 
-        //Enviar evento a RabbitMQ
+        // Evento original (para evaluation, etc.)
         DegreeWorkCreatedEvent event = new DegreeWorkCreatedEvent(
-                saved.getTitulo(),
-                saved.getModalidad().name(),
-                directorProyecto.getEmail(),
-                estudiantes.stream().map(User::getEmail).collect(Collectors.toList()),
-                codirectores.stream().map(User::getEmail).collect(Collectors.toList()),
-                saved.getFechaActual(),
-                saved.getEstado().name(),
-                dto.getFormatosA(),
-                dto.getAnteproyectos(),
-                dto.getCartasAceptacion()
+            saved.getTitulo(),
+            saved.getModalidad().name(),
+            directorProyecto.getEmail(),
+            estudiantes.stream().map(User::getEmail).collect(Collectors.toList()),
+            codirectores.stream().map(User::getEmail).collect(Collectors.toList()),
+            saved.getFechaActual(),
+            saved.getEstado().name(),
+            dto.getFormatosA(),
+            dto.getAnteproyectos(),
+            dto.getCartasAceptacion()
         );
         degreeWorkProducer.sendDegreeWorkCreated(event);
 
+        // NUEVO: enviar notificación al microservicio notification
+        NotificationEventDTO notificationEvent = new NotificationEventDTO(
+            "TRABAJO_GRADO_REGISTRADO",
+            saved.getTitulo(),
+            saved.getModalidad().name(),
+            estudiantes.isEmpty() ? null : estudiantes.get(0).getEmail(),
+            directorProyecto.getEmail(),
+            codirectores.size() > 0 ? codirectores.get(0).getEmail() : null,
+            codirectores.size() > 1 ? codirectores.get(1).getEmail() : null
+        );
+
+        notificationProducer.sendNotification(notificationEvent);
+
         return saved;
     }
+
 
 
     /**
