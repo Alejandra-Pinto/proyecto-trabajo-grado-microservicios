@@ -200,4 +200,65 @@ public class DegreeWork {
     public void setCorrecciones(String correcciones) {
         this.correcciones = correcciones;
     }
+
+    public void agregarAnteproyecto(Document anteproyecto) {
+        if (formatosA == null || formatosA.isEmpty()) {
+            throw new IllegalStateException("No se puede agregar un anteproyecto sin haber registrado un Formato A.");
+        }
+
+        // Obtener el último Formato A
+        Document ultimoFormatoA = formatosA.get(formatosA.size() - 1);
+
+        if (ultimoFormatoA.getEstado() != EnumEstadoDocument.ACEPTADO) {
+            throw new IllegalStateException("El último Formato A debe estar en estado ACEPTADO para poder agregar un anteproyecto.");
+        }
+
+        if (anteproyecto.getRutaArchivo() == null || anteproyecto.getRutaArchivo().isBlank()) {
+            throw new IllegalArgumentException("El anteproyecto debe tener una ruta de archivo válida.");
+        }
+
+        anteproyecto.setTipo(EnumTipoDocumento.ANTEPROYECTO);
+        anteproyecto.setEstado(EnumEstadoDocument.PRIMERA_REVISION);
+        anteproyecto.setFechaActual(LocalDate.now());
+        this.anteproyectos.add(anteproyecto);
+
+        // Actualizar estado del trabajo de grado
+        this.estado = EnumEstadoDegreeWork.ANTEPROYECTO;
+    }
+
+    public void manejarRevision(Document documento) {
+        if (documento == null) {
+            throw new IllegalArgumentException("El documento no puede ser nulo.");
+        }
+
+        if (documento.getEstado() == EnumEstadoDocument.ACEPTADO || documento.getEstado() == EnumEstadoDocument.RECHAZADO) {
+            throw new IllegalStateException("No se puede actualizar un documento ya aceptado o rechazado.");
+        }
+
+        // Si el documento fue no aceptado, incrementar contador
+        if (documento.getEstado() == EnumEstadoDocument.NO_ACEPTADO) {
+            incrementNoAprobadoCount();
+
+            switch (noAprobadoCount) {
+                case 1 -> documento.setEstado(EnumEstadoDocument.SEGUNDA_REVISION);
+                case 2 -> documento.setEstado(EnumEstadoDocument.TERCERA_REVISION);
+                case 3 -> {
+                    documento.setEstado(EnumEstadoDocument.RECHAZADO);
+                }
+                default -> documento.setEstado(EnumEstadoDocument.RECHAZADO);
+            }
+        }
+    }
+
+    public Document getUltimoDocumentoPorTipo(EnumTipoDocumento tipo) {
+        List<Document> lista = switch (tipo) {
+            case FORMATO_A -> this.getFormatosA();
+            case ANTEPROYECTO -> this.getAnteproyectos();
+            case CARTA_ACEPTACION -> this.getCartasAceptacion();
+            default -> throw new IllegalArgumentException("Tipo de documento no reconocido: " + tipo);
+        };
+        if (lista == null || lista.isEmpty()) return null;
+        return lista.get(lista.size() - 1);
+    }
+
 }
