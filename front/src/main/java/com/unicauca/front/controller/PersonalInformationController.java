@@ -141,6 +141,14 @@ public class PersonalInformationController {
         navigation.showLogin();
     }
 
+    // En PersonalInformationController.java
+    @FXML
+    private void onBtnRolClicked() {
+        // Navegar de regreso al home
+        if (usuarioActual != null) {
+            navigation.showHomeWithUser(usuarioActual);
+        }
+    }
     @FXML
     private void onBtnFormatoDocenteClicked() {
         if (usuarioActual != null && "PROFESSOR".equalsIgnoreCase(usuarioActual.getRole())) {
