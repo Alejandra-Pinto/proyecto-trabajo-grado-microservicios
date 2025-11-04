@@ -63,7 +63,32 @@ public class RabbitMQConfig {
     public Binding degreeworkBinding(Queue degreeworkQueue, DirectExchange degreeworkExchange) {
         return BindingBuilder.bind(degreeworkQueue).to(degreeworkExchange).with(degreeworkRoutingKey);
     }
+    
+    // === Cola de notificaciones ===
+    @Value("${app.rabbitmq.notification.exchange}")
+    private String notificationExchangeName;
 
+    @Value("${app.rabbitmq.notification.queue}")
+    private String notificationQueueName;
+
+    @Value("${app.rabbitmq.notification.routingkey}")
+    private String notificationRoutingKey;
+
+    // === Declaraciones para cola de notificaciones ===
+    @Bean
+    public Queue notificationQueue() {
+        return new Queue(notificationQueueName, true);
+    }
+
+    @Bean
+    public DirectExchange notificationExchange() {
+        return new DirectExchange(notificationExchangeName);
+    }
+
+    @Bean
+    public Binding notificationBinding(Queue notificationQueue, DirectExchange notificationExchange) {
+        return BindingBuilder.bind(notificationQueue).to(notificationExchange).with(notificationRoutingKey);
+    }
     // === Conversor JSON ===
     @Bean
     public MessageConverter jsonMessageConverter() {
