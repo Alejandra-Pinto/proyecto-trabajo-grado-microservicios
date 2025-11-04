@@ -97,10 +97,10 @@
                            </font></Label>
                         
                         <!-- ComboBox con opciones -->
-                        <ComboBox fx:id="comboClasificar" layoutX="224.0" layoutY="165.0" prefWidth="200.0" style="-fx-background-color: FFFFFF;" />
+                        <ComboBox fx:id="comboFiltro" layoutX="224.0" layoutY="165.0" prefWidth="200.0" style="-fx-background-color: FFFFFF;" />
                         
                         <!-- TableView para mostrar los formatos -->
-                        <TableView fx:id="tableFormatos" layoutX="230.0" layoutY="240.0" prefHeight="278.0" prefWidth="642.0">
+                        <TableView fx:id="tblFormatos" layoutX="230.0" layoutY="240.0" prefHeight="278.0" prefWidth="642.0">
 
                             <columns>
                                 <TableColumn fx:id="colTitulo" prefWidth="120.0" text="Título" />

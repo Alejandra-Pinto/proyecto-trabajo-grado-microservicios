@@ -7,9 +7,9 @@ import java.util.List;
 public class DegreeWork {
 
     private Long id;
-    private Student estudiante;
-    private Teacher directorProyecto;
-    private Teacher codirectorProyecto;
+    private List<User> estudiantes = new ArrayList<>();
+    private User directorProyecto;
+    private List<User> codirectoresProyecto = new ArrayList<>();
     private String tituloProyecto;
     private Modalidad modalidad;
     private LocalDate fechaActual;
@@ -28,26 +28,73 @@ public class DegreeWork {
     //Constructor vacío necesario para frameworks como JSON, Jackson
     public DegreeWork() {}
 
-    //Constructor con algunos campos básicos
+    //Constructor con algunos campos básicos - MANTENIENDO LA FIRMA ORIGINAL
     public DegreeWork(Student estudiante, Teacher directorProyecto, String tituloProyecto, Modalidad modalidad) {
-        this.estudiante = estudiante;
+        // Como Student y Teacher heredan de User, podemos usarlos directamente
+        if (estudiante != null) {
+            this.estudiantes.add(estudiante); // Student ES-UN User
+        }
+        
+        // Teacher también ES-UN User
         this.directorProyecto = directorProyecto;
+        
         this.tituloProyecto = tituloProyecto;
         this.modalidad = modalidad;
     }
 
-    //Getters y Setters
+    // Getters y Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public Student getEstudiante() { return estudiante; }
-    public void setEstudiante(Student estudiante) { this.estudiante = estudiante; }
+    // Getters y Setters actualizados
+    public List<User> getEstudiantes() { return estudiantes; }
+    public void setEstudiantes(List<User> estudiantes) { this.estudiantes = estudiantes; }
 
-    public Teacher getDirectorProyecto() { return directorProyecto; }
-    public void setDirectorProyecto(Teacher directorProyecto) { this.directorProyecto = directorProyecto; }
+    public User getDirectorProyecto() { return directorProyecto; }
+    public void setDirectorProyecto(User directorProyecto) { this.directorProyecto = directorProyecto; }
 
-    public Teacher getCodirectorProyecto() { return codirectorProyecto; }
-    public void setCodirectorProyecto(Teacher codirectorProyecto) { this.codirectorProyecto = codirectorProyecto; }
+    public List<User> getCodirectoresProyecto() { return codirectoresProyecto; }
+    public void setCodirectoresProyecto(List<User> codirectoresProyecto) { this.codirectoresProyecto = codirectoresProyecto; }
+
+    // Método helper para obtener el primer estudiante
+    public User getPrimerEstudiante() {
+        return estudiantes != null && !estudiantes.isEmpty() ? estudiantes.get(0) : null;
+    }
+    
+    // MÉTODO DE COMPATIBILIDAD - Para no romper código existente que use getEstudiante()
+    public User getEstudiante() {
+        return getPrimerEstudiante();
+    }
+    
+    // MÉTODO DE COMPATIBILIDAD - Para no romper código existente que use setEstudiante()
+    public void setEstudiante(User estudiante) {
+        if (this.estudiantes == null) {
+            this.estudiantes = new ArrayList<>();
+        } else {
+            this.estudiantes.clear();
+        }
+        if (estudiante != null) {
+            this.estudiantes.add(estudiante);
+        }
+    }
+    
+    // MÉTODO DE COMPATIBILIDAD - Para código que espera un codirector individual
+    public User getCodirectorProyecto() {
+        return codirectoresProyecto != null && !codirectoresProyecto.isEmpty() ? 
+               codirectoresProyecto.get(0) : null;
+    }
+    
+    // MÉTODO DE COMPATIBILIDAD - Para código que establece un codirector individual
+    public void setCodirectorProyecto(User codirector) {
+        if (this.codirectoresProyecto == null) {
+            this.codirectoresProyecto = new ArrayList<>();
+        } else {
+            this.codirectoresProyecto.clear();
+        }
+        if (codirector != null) {
+            this.codirectoresProyecto.add(codirector);
+        }
+    }
 
     public String getTituloProyecto() { return tituloProyecto; }
     public void setTituloProyecto(String tituloProyecto) { this.tituloProyecto = tituloProyecto; }
@@ -64,8 +111,6 @@ public class DegreeWork {
     public List<String> getObjetivosEspecificos() { return objetivosEspecificos; }
     public void setObjetivosEspecificos(List<String> objetivosEspecificos) { this.objetivosEspecificos = objetivosEspecificos; }
 
-    
-
     public EnumEstadoDegreeWork getEstado() { return estado; }
     public void setEstado(EnumEstadoDegreeWork estado) { this.estado = estado; }
 
@@ -75,8 +120,7 @@ public class DegreeWork {
     public int getNoAprobadoCount() { return noAprobadoCount; }
     public void setNoAprobadoCount(int noAprobadoCount) { this.noAprobadoCount = noAprobadoCount; }
 
-
-     // Getters y Setters para documentos
+    // Getters y Setters para documentos
     public List<Document> getFormatosA() { return formatosA; }
     public void setFormatosA(List<Document> formatosA) { this.formatosA = formatosA; }
 
@@ -85,7 +129,6 @@ public class DegreeWork {
 
     public List<Document> getCartasAceptacion() { return cartasAceptacion; }
     public void setCartasAceptacion(List<Document> cartasAceptacion) { this.cartasAceptacion = cartasAceptacion; }
-
     
     @Override
     public String toString() {
@@ -97,4 +140,3 @@ public class DegreeWork {
                 '}';
     }
 }
-

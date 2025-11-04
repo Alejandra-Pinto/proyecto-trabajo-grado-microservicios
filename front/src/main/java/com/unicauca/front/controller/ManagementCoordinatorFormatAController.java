@@ -180,18 +180,29 @@ private EnumEstadoDegreeWork convertirStringAEnumEstado(String estadoStr) {
 /**
  * Actualiza el estado del formato via API
  */
+/**
+ * Actualiza el estado del formato via API
+ */
 private void actualizarEstadoFormato(DegreeWork formato, EnumEstadoDegreeWork nuevoEstado) {
     try {
-        // Crear un objeto con los datos a actualizar
+        // Crear un Map simple con solo los campos necesarios
         Map<String, Object> updates = new HashMap<>();
         updates.put("estado", nuevoEstado.toString());
         updates.put("id", formato.getId());
         
-        // Si el formato tiene correcciones, incluirlas también
-        if (formato.getCorrecciones() != null) {
+        // Incluir correcciones si existen
+        if (formato.getCorrecciones() != null && !formato.getCorrecciones().isEmpty()) {
             updates.put("correcciones", formato.getCorrecciones());
+        } else {
+            updates.put("correcciones", ""); // Enviar string vacío si es null
         }
 
+        // DEBUG: Ver qué estamos enviando
+        System.out.println("Enviando actualización para formato ID: " + formato.getId());
+        System.out.println("Estado: " + nuevoEstado.toString());
+        System.out.println("Correcciones: " + (formato.getCorrecciones() != null ? formato.getCorrecciones() : "vacío"));
+
+        // Hacer la llamada PUT
         ResponseEntity<DegreeWork> response = apiService.put(
             "api/degreeworks", 
             "/" + formato.getId(), 
@@ -204,18 +215,23 @@ private void actualizarEstadoFormato(DegreeWork formato, EnumEstadoDegreeWork nu
             // Refrescar la tabla para mostrar cambios
             tblFormatos.refresh();
         } else {
+            System.out.println("Error en respuesta: " + response.getStatusCode());
             mostrarAlerta("Error", "No se pudo actualizar el estado del formato", Alert.AlertType.ERROR);
-            // Recargar los formatos para revertir cambios visuales
-            cargarFormatos();
         }
 
     } catch (Exception e) {
         System.out.println("Error al actualizar estado: " + e.getMessage());
-        mostrarAlerta("Error", "Error actualizando estado: " + e.getMessage(), Alert.AlertType.ERROR);
-        cargarFormatos(); // Recargar para revertir cambios
+        e.printStackTrace();
+        
+        // Usar Platform.runLater para evitar el error de JavaFX
+        javafx.application.Platform.runLater(() -> {
+            mostrarAlerta("Error", "Error actualizando estado: " + e.getMessage(), Alert.AlertType.ERROR);
+        });
+        
+        // Recargar los formatos para revertir cambios visuales
+        cargarFormatos();
     }
 }
-
     private void configurarFiltros() {
         comboFiltro.getItems().addAll(
             "Todos los formatos",

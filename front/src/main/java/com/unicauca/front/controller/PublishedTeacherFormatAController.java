@@ -149,44 +149,51 @@ public class PublishedTeacherFormatAController {
     }
 
     private void cargarFormatosDelDocente() {
-        if (usuarioActual == null) {
-            return;
-        }
-
-        try {
-            //Obtener formatos del docente desde microservicio
-            ResponseEntity<DegreeWork[]> response = apiService.get(
-                "api/degreeworks", 
-                "/docente/" + usuarioActual.getEmail(), 
-                DegreeWork[].class
-            );
-
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                DegreeWork[] formatosArray = response.getBody();
-                
-                //Filtrar para obtener solo el último formato por estudiante
-                Map<String, DegreeWork> ultimosPorEstudiante = Arrays.stream(formatosArray)
-                    .filter(f -> f.getEstudiante() != null && f.getEstudiante().getEmail() != null)
-                    .collect(Collectors.toMap(
-                        f -> f.getEstudiante().getEmail(),
-                        f -> f,
-                        (f1, f2) -> f1.getId() > f2.getId() ? f1 : f2
-                    ));
-
-                List<DegreeWork> ultimosFormatos = new ArrayList<>(ultimosPorEstudiante.values());
-                todosLosFormatos = FXCollections.observableArrayList(ultimosFormatos);
-                
-                //Aplicar filtro inicial
-                aplicarFiltro("Todos");
-                
-                System.out.println("Formatos del docente cargados: " + ultimosFormatos.size());
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            mostrarAlerta("Error", "Error cargando formatos: " + e.getMessage(), Alert.AlertType.ERROR);
-        }
+    if (usuarioActual == null) {
+        return;
     }
+
+    try {
+        System.out.println("DEBUG: Cargando formatos para docente: " + usuarioActual.getEmail());
+        
+        ResponseEntity<DegreeWork[]> response = apiService.get(
+            "api/degreeworks", 
+            "/docente/" + usuarioActual.getEmail(), 
+            DegreeWork[].class
+        );
+
+        System.out.println("DEBUG: Status: " + response.getStatusCode());
+        
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            DegreeWork[] formatosArray = response.getBody();
+            System.out.println("DEBUG: Formatos recibidos del backend: " + formatosArray.length);
+            
+            // DEBUG: Ver el contenido
+            for (DegreeWork dw : formatosArray) {
+                System.out.println("DEBUG - Formato: ID=" + dw.getId() + 
+                    ", Titulo=" + dw.getTituloProyecto() + 
+                    ", Estado=" + dw.getEstado() +
+                    ", Num Estudiantes=" + (dw.getEstudiantes() != null ? dw.getEstudiantes().size() : 0) +
+                    ", Estudiante(s): " + (dw.getEstudiantes() != null ? 
+                        dw.getEstudiantes().stream()
+                            .map(User::getEmail)
+                            .collect(Collectors.joining(", ")) : "Ninguno"));
+            }
+            
+            // USAR DIRECTAMENTE sin filtrar
+            todosLosFormatos = FXCollections.observableArrayList(formatosArray);
+            aplicarFiltro("Todos");
+            
+            System.out.println("DEBUG: Formatos finales en tabla: " + todosLosFormatos.size());
+        } else {
+            System.out.println("DEBUG: Respuesta no exitosa o body vacío");
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        mostrarAlerta("Error", "Error cargando formatos: " + e.getMessage(), Alert.AlertType.ERROR);
+    }
+}
 
     private void aplicarFiltro(String opcion) {
         if (opcion == null || todosLosFormatos == null) {
