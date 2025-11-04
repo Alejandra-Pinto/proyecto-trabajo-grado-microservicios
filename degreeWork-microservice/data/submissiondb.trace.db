@@ -22,3 +22,11 @@ The connection was not closed by the application and is garbage collected [90018
 	at org.h2.message.DbException.getJdbcSQLException(DbException.java:690)
 	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
 	... 16 more
+2025-11-03 23:26:19.208277-05:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Conversión de datos fallida, convirtiendo "'' (USERS: ""ID"" BIGINT NOT NULL)"
+Data conversion error converting "'' (USERS: ""ID"" BIGINT NOT NULL)"; SQL statement:
+INSERT INTO "PUBLIC"."USERS"("ID","EMAIL","FIRST_NAME","LAST_NAME","PROGRAM","ROLE","STATUS")VALUES(?,?,?,?,?,?,?) [22018-232]
+2025-11-03 23:26:19.213762-05:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Conversión de datos fallida, convirtiendo "'' (USERS: ""ID"" BIGINT NOT NULL)"
+Data conversion error converting "'' (USERS: ""ID"" BIGINT NOT NULL)"; SQL statement:
+INSERT INTO "PUBLIC"."USERS"("ID","EMAIL","FIRST_NAME","LAST_NAME","PROGRAM","ROLE","STATUS")VALUES(?,?,?,?,?,?,?) [22018-232]

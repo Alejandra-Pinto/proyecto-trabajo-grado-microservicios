@@ -4,6 +4,7 @@ import co.unicauca.degreework.access.*;
 import co.unicauca.degreework.domain.entities.*;
 import co.unicauca.degreework.domain.entities.builder.DegreeWorkBuilder;
 import co.unicauca.degreework.domain.entities.builder.DegreeWorkDirector;
+import co.unicauca.degreework.domain.entities.enums.EnumEstadoDegreeWork;
 import co.unicauca.degreework.domain.entities.enums.EnumEstadoDocument;
 import co.unicauca.degreework.domain.entities.enums.EnumTipoDocumento;
 import co.unicauca.degreework.domain.entities.memento.DegreeWorkCaretaker;
@@ -339,6 +340,13 @@ public class DegreeWorkService {
      */
     public List<DegreeWork> listarDegreeWorksPorEstudiante(String studentEmail) {
         return repository.listByStudent(studentEmail);
+    }
+
+    /**
+     * Listar anteproyectos
+     */
+    public List<DegreeWork> listarAnteproyectos(EnumEstadoDegreeWork estado) {
+        return repository.findByEstado(estado);
     }
 
     /**

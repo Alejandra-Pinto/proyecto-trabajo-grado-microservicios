@@ -4,6 +4,7 @@ import co.unicauca.degreework.domain.entities.DegreeWork;
 import co.unicauca.degreework.domain.entities.builder.DegreeWorkBuilder;
 import co.unicauca.degreework.domain.entities.builder.ProfessionalPracticeBuilder;
 import co.unicauca.degreework.domain.entities.builder.ResearchDegreeWorkBuilder;
+import co.unicauca.degreework.domain.entities.enums.EnumEstadoDegreeWork;
 import co.unicauca.degreework.infra.dto.DegreeWorkDTO;
 import co.unicauca.degreework.service.DegreeWorkService;
 import org.springframework.http.ResponseEntity;
@@ -84,6 +85,15 @@ public class DegreeWorkController {
     @GetMapping("/estudiante/{email}")
     public ResponseEntity<List<DegreeWork>> listarPorEstudiante(@PathVariable String email) {
         List<DegreeWork> trabajos = service.listarDegreeWorksPorEstudiante(email);
+        return ResponseEntity.ok(trabajos);
+    }
+
+    /**
+     * Listar trabajos por estado
+     */
+    @GetMapping("/{estado}")
+    public ResponseEntity<List<DegreeWork>> listarPorEstado(@PathVariable EnumEstadoDegreeWork estado) {
+        List<DegreeWork> trabajos = service.listarAnteproyectos(estado);
         return ResponseEntity.ok(trabajos);
     }
 
