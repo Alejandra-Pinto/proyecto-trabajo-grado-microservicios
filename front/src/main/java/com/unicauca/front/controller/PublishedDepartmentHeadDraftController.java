@@ -1,6 +1,7 @@
 package com.unicauca.front.controller;
 
 import com.unicauca.front.model.DegreeWork;
+import com.unicauca.front.model.Document;
 import com.unicauca.front.model.User;
 import com.unicauca.front.service.ApiGatewayService;
 import com.unicauca.front.util.NavigationController;
@@ -14,6 +15,7 @@ import javafx.util.Callback;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -62,14 +64,14 @@ public class PublishedDepartmentHeadDraftController {
     }
 
     private void configurarInterfaz() {
-        // Configurar ComboBox de filtros (mismos estados que formato A)
+        // Configurar ComboBox de filtros - ACTUALIZADO a estados de documento
         comboClasificar.getItems().addAll(
             "Todos",
             "Aceptado",
             "No aceptado", 
-            "Primera evaluación",
-            "Segunda evaluación",
-            "Tercera evaluación",
+            "Primera revisión",
+            "Segunda revisión",
+            "Tercera revisión",
             "Rechazado",
             "Fecha más reciente",
             "Fecha más antigua"
@@ -83,10 +85,14 @@ public class PublishedDepartmentHeadDraftController {
     }
 
     private void configurarColumnasTabla() {
-        // Título del anteproyecto
-        colTitulo.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
-            data.getValue().getTituloProyecto() != null ? data.getValue().getTituloProyecto() : ""
-        ));
+        // Título del anteproyecto - TEMPORAL para debugging
+        colTitulo.setCellValueFactory(data -> {
+            String titulo = data.getValue().getTituloProyecto();
+            if (titulo == null || titulo.isEmpty()) {
+                titulo = "ID: " + data.getValue().getId(); // Mostrar ID si no hay título
+            }
+            return new javafx.beans.property.SimpleStringProperty(titulo);
+        });
 
         // Email del docente (director)
         colEmailDocente.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
@@ -94,21 +100,50 @@ public class PublishedDepartmentHeadDraftController {
             data.getValue().getDirectorProyecto().getEmail() : "Sin docente"
         ));
 
-        // Email del estudiante
-        colEmailEstudiante.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
-            data.getValue().getEstudiante() != null && data.getValue().getEstudiante().getEmail() != null ? 
-            data.getValue().getEstudiante().getEmail() : "Sin estudiante"
-        ));
+        // Email del estudiante - TEMPORAL para debugging
+        colEmailEstudiante.setCellValueFactory(data -> {
+            String emailEstudiante = "Sin estudiantes";
+            if (data.getValue().getEstudiantes() != null && !data.getValue().getEstudiantes().isEmpty()) {
+                User primerEstudiante = data.getValue().getEstudiantes().get(0);
+                if (primerEstudiante != null && primerEstudiante.getEmail() != null) {
+                    emailEstudiante = primerEstudiante.getEmail();
+                }
+            }
+            return new javafx.beans.property.SimpleStringProperty(emailEstudiante);
+        });
 
-        // Fecha
-        colFechaActual.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
-            data.getValue().getFechaActual() != null ? data.getValue().getFechaActual().toString() : "N/A"
-        ));
+        // Fecha - del último anteproyecto o del DegreeWork
+        colFechaActual.setCellValueFactory(data -> {
+            String fecha = "N/A";
+            
+            // Primero intentar con el último anteproyecto
+            Document ultimoAnteproyecto = obtenerUltimoAnteproyecto(data.getValue());
+            if (ultimoAnteproyecto != null && ultimoAnteproyecto.getFechaActual() != null) {
+                fecha = ultimoAnteproyecto.getFechaActual().toString();
+            } 
+            // Si no hay anteproyecto, usar la fecha del DegreeWork
+            else if (data.getValue().getFechaActual() != null) {
+                fecha = data.getValue().getFechaActual().toString();
+            }
+            
+            return new javafx.beans.property.SimpleStringProperty(fecha);
+        });
 
-        // Estado (usa el estado del DegreeWork, igual que formato A)
-        colEstado.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
-            data.getValue().getEstado() != null ? data.getValue().getEstado().toString() : ""
-        ));
+        // Estado - del último anteproyecto
+        // Estado - Si no hay anteproyecto, mostrar el estado del DegreeWork
+        colEstado.setCellValueFactory(data -> {
+            Document ultimoAnteproyecto = obtenerUltimoAnteproyecto(data.getValue());
+            String estado = "Sin anteproyecto";
+            
+            if (ultimoAnteproyecto != null && ultimoAnteproyecto.getEstado() != null) {
+                estado = ultimoAnteproyecto.getEstado().toString();
+            } else if (data.getValue().getEstado() != null) {
+                // Si no hay documento anteproyecto, mostrar el estado del DegreeWork
+                estado = data.getValue().getEstado().toString();
+            }
+            
+            return new javafx.beans.property.SimpleStringProperty(estado);
+        });
 
         // Columna de acciones (botón "Evaluar")
         colAcciones.setCellFactory(new Callback<TableColumn<DegreeWork, Void>, TableCell<DegreeWork, Void>>() {
@@ -134,8 +169,17 @@ public class PublishedDepartmentHeadDraftController {
                             setGraphic(null);
                         } else {
                             DegreeWork anteproyecto = getTableRow().getItem();
-                            String estado = anteproyecto.getEstado() != null ? anteproyecto.getEstado().toString() : "";
-                            // Mostrar botón solo si el anteproyecto está en estado revisable
+                            Document ultimoAnteproyecto = obtenerUltimoAnteproyecto(anteproyecto);
+                            String estado;
+                            
+                            if (ultimoAnteproyecto != null) {
+                                estado = ultimoAnteproyecto.getEstado() != null ? ultimoAnteproyecto.getEstado().toString() : "";
+                            } else {
+                                // Si no hay documento, usar el estado del DegreeWork
+                                estado = anteproyecto.getEstado() != null ? anteproyecto.getEstado().toString() : "";
+                            }
+                            
+                            // Mostrar botón solo si está en estado revisable
                             if (esEstadoRevisable(estado)) {
                                 setGraphic(btnEvaluar);
                             } else {
@@ -148,49 +192,103 @@ public class PublishedDepartmentHeadDraftController {
         });
     }
 
+    // Método helper para obtener el último anteproyecto
+    private Document obtenerUltimoAnteproyecto(DegreeWork degreeWork) {
+        if (degreeWork == null || degreeWork.getAnteproyectos() == null || degreeWork.getAnteproyectos().isEmpty()) {
+            return null;
+        }
+        List<Document> anteproyectos = degreeWork.getAnteproyectos();
+        // Obtener el último anteproyecto (el más reciente)
+        return anteproyectos.get(anteproyectos.size() - 1);
+    }
+
+    // Método helper para obtener fecha para ordenamiento
+    private LocalDate obtenerFechaParaOrdenamiento(DegreeWork degreeWork) {
+        if (degreeWork == null) return null;
+        
+        // Primero intentar con el último anteproyecto
+        Document ultimoAnteproyecto = obtenerUltimoAnteproyecto(degreeWork);
+        if (ultimoAnteproyecto != null && ultimoAnteproyecto.getFechaActual() != null) {
+            return ultimoAnteproyecto.getFechaActual();
+        }
+        
+        // Si no hay anteproyecto, usar la fecha del DegreeWork
+        return degreeWork.getFechaActual();
+    }
+
     private boolean esEstadoRevisable(String estado) {
-        return "PRIMERA_EVALUACION".equals(estado) || 
-               "SEGUNDA_EVALUACION".equals(estado) || 
-               "TERCERA_EVALUACION".equals(estado) ||
+        return "PRIMERA_REVISION".equals(estado) || 
+               "SEGUNDA_REVISION".equals(estado) || 
+               "TERCERA_REVISION".equals(estado) ||
                "NO_ACEPTADO".equals(estado);
     }
 
     private void cargarAnteproyectos() {
-        if (usuarioActual == null) {
-            return;
-        }
-
-        try {
-            // Obtener SOLO los anteproyectos usando el endpoint por estado
-            ResponseEntity<DegreeWork[]> response = apiService.get(
-                "api/degreeworks", 
-                "/listar/ANTEPROYECTO",  // Cambia esto para obtener solo anteproyectos
-                DegreeWork[].class
-            );
-
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                DegreeWork[] anteproyectos = response.getBody();
-                
-                todosLosAnteproyectos = FXCollections.observableArrayList(anteproyectos);
-                
-                // Aplicar filtro inicial
-                aplicarFiltro("Todos");
-                
-                System.out.println("Anteproyectos cargados: " + anteproyectos.length);
-                
-                // DEBUG: Mostrar información de los anteproyectos cargados
-                for (DegreeWork dw : anteproyectos) {
-                    System.out.println("Anteproyecto: " + dw.getTituloProyecto() + 
-                                    " - Estado: " + (dw.getEstado() != null ? dw.getEstado().toString() : "null") +
-                                    " - Anteproyectos: " + (dw.getAnteproyectos() != null ? dw.getAnteproyectos().size() : 0));
-                }
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            mostrarAlerta("Error", "Error cargando anteproyectos: " + e.getMessage(), Alert.AlertType.ERROR);
-        }
+    if (usuarioActual == null) {
+        return;
     }
+
+    try {
+        System.out.println("DEBUG: Cargando anteproyectos para jefe de departamento: " + usuarioActual.getEmail());
+        
+        ResponseEntity<DegreeWork[]> response = apiService.get(
+            "api/degreeworks", 
+            "/listar/ANTEPROYECTO", 
+            DegreeWork[].class
+        );
+
+        System.out.println("DEBUG: Status: " + response.getStatusCode());
+        
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            DegreeWork[] anteproyectos = response.getBody();
+            System.out.println("DEBUG: Anteproyectos recibidos: " + anteproyectos.length);
+            
+            // DEBUG DETALLADO: Ver TODOS los campos del DegreeWork
+            for (int i = 0; i < anteproyectos.length; i++) {
+                DegreeWork dw = anteproyectos[i];
+                System.out.println("=== DEBUG DegreeWork " + i + " ===");
+                System.out.println("ID: " + dw.getId());
+                System.out.println("TituloProyecto: " + dw.getTituloProyecto());
+                System.out.println("Titulo (sin Proyecto): " + dw.getTitulo()); // Por si acaso
+                System.out.println("Director: " + (dw.getDirectorProyecto() != null ? 
+                    dw.getDirectorProyecto().getEmail() + " (Nombre: " + dw.getDirectorProyecto().getFirstName() + ")" : "null"));
+                System.out.println("Estudiantes size: " + (dw.getEstudiantes() != null ? dw.getEstudiantes().size() : "null"));
+                
+                if (dw.getEstudiantes() != null && !dw.getEstudiantes().isEmpty()) {
+                    for (int j = 0; j < dw.getEstudiantes().size(); j++) {
+                        User estudiante = dw.getEstudiantes().get(j);
+                        System.out.println("  Estudiante " + j + ": " + estudiante.getEmail() + " - " + estudiante.getFirstName());
+                    }
+                }
+                
+                System.out.println("Fecha Actual: " + dw.getFechaActual());
+                System.out.println("Estado DegreeWork: " + dw.getEstado());
+                System.out.println("FormatosA size: " + (dw.getFormatosA() != null ? dw.getFormatosA().size() : "null"));
+                System.out.println("Anteproyectos size: " + (dw.getAnteproyectos() != null ? dw.getAnteproyectos().size() : "null"));
+                
+                if (dw.getAnteproyectos() != null && !dw.getAnteproyectos().isEmpty()) {
+                    for (int k = 0; k < dw.getAnteproyectos().size(); k++) {
+                        Document doc = dw.getAnteproyectos().get(k);
+                        System.out.println("  Anteproyecto " + k + ": Estado=" + doc.getEstado() + ", Fecha=" + doc.getFechaActual());
+                    }
+                }
+                
+                System.out.println("=== FIN DEBUG ===");
+            }
+            
+            todosLosAnteproyectos = FXCollections.observableArrayList(anteproyectos);
+            aplicarFiltro("Todos");
+            
+            System.out.println("DEBUG: Anteproyectos finales en tabla: " + todosLosAnteproyectos.size());
+        } else {
+            System.out.println("DEBUG: Respuesta no exitosa o body vacío");
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        mostrarAlerta("Error", "Error cargando anteproyectos: " + e.getMessage(), Alert.AlertType.ERROR);
+    }
+}
 
     private void aplicarFiltro(String opcion) {
         if (opcion == null || todosLosAnteproyectos == null) {
@@ -207,7 +305,11 @@ public class PublishedDepartmentHeadDraftController {
             case "Aceptado":
                 tblAnteproyectos.getItems().setAll(
                     base.stream()
-                        .filter(f -> f.getEstado() != null && "ACEPTADO".equalsIgnoreCase(f.getEstado().toString()))
+                        .filter(f -> {
+                            Document anteproyecto = obtenerUltimoAnteproyecto(f);
+                            return anteproyecto != null && anteproyecto.getEstado() != null && 
+                                   "ACEPTADO".equalsIgnoreCase(anteproyecto.getEstado().toString());
+                        })
                         .collect(Collectors.toList())
                 );
                 break;
@@ -215,31 +317,47 @@ public class PublishedDepartmentHeadDraftController {
             case "No aceptado":
                 tblAnteproyectos.getItems().setAll(
                     base.stream()
-                        .filter(f -> f.getEstado() != null && "NO_ACEPTADO".equalsIgnoreCase(f.getEstado().toString()))
+                        .filter(f -> {
+                            Document anteproyecto = obtenerUltimoAnteproyecto(f);
+                            return anteproyecto != null && anteproyecto.getEstado() != null && 
+                                   "NO_ACEPTADO".equalsIgnoreCase(anteproyecto.getEstado().toString());
+                        })
                         .collect(Collectors.toList())
                 );
                 break;
 
-            case "Primera evaluación":
+            case "Primera revisión":
                 tblAnteproyectos.getItems().setAll(
                     base.stream()
-                        .filter(f -> f.getEstado() != null && "PRIMERA_EVALUACION".equalsIgnoreCase(f.getEstado().toString()))
+                        .filter(f -> {
+                            Document anteproyecto = obtenerUltimoAnteproyecto(f);
+                            return anteproyecto != null && anteproyecto.getEstado() != null && 
+                                   "PRIMERA_REVISION".equalsIgnoreCase(anteproyecto.getEstado().toString());
+                        })
                         .collect(Collectors.toList())
                 );
                 break;
 
-            case "Segunda evaluación":
+            case "Segunda revisión":
                 tblAnteproyectos.getItems().setAll(
                     base.stream()
-                        .filter(f -> f.getEstado() != null && "SEGUNDA_EVALUACION".equalsIgnoreCase(f.getEstado().toString()))
+                        .filter(f -> {
+                            Document anteproyecto = obtenerUltimoAnteproyecto(f);
+                            return anteproyecto != null && anteproyecto.getEstado() != null && 
+                                   "SEGUNDA_REVISION".equalsIgnoreCase(anteproyecto.getEstado().toString());
+                        })
                         .collect(Collectors.toList())
                 );
                 break;
 
-            case "Tercera evaluación":
+            case "Tercera revisión":
                 tblAnteproyectos.getItems().setAll(
                     base.stream()
-                        .filter(f -> f.getEstado() != null && "TERCERA_EVALUACION".equalsIgnoreCase(f.getEstado().toString()))
+                        .filter(f -> {
+                            Document anteproyecto = obtenerUltimoAnteproyecto(f);
+                            return anteproyecto != null && anteproyecto.getEstado() != null && 
+                                   "TERCERA_REVISION".equalsIgnoreCase(anteproyecto.getEstado().toString());
+                        })
                         .collect(Collectors.toList())
                 );
                 break;
@@ -247,7 +365,11 @@ public class PublishedDepartmentHeadDraftController {
             case "Rechazado":
                 tblAnteproyectos.getItems().setAll(
                     base.stream()
-                        .filter(f -> f.getEstado() != null && "RECHAZADO".equalsIgnoreCase(f.getEstado().toString()))
+                        .filter(f -> {
+                            Document anteproyecto = obtenerUltimoAnteproyecto(f);
+                            return anteproyecto != null && anteproyecto.getEstado() != null && 
+                                   "RECHAZADO".equalsIgnoreCase(anteproyecto.getEstado().toString());
+                        })
                         .collect(Collectors.toList())
                 );
                 break;
@@ -256,10 +378,13 @@ public class PublishedDepartmentHeadDraftController {
                 tblAnteproyectos.getItems().setAll(
                     base.stream()
                         .sorted((f1, f2) -> {
-                            if (f1.getFechaActual() == null && f2.getFechaActual() == null) return 0;
-                            if (f1.getFechaActual() == null) return 1;
-                            if (f2.getFechaActual() == null) return -1;
-                            return f2.getFechaActual().compareTo(f1.getFechaActual());
+                            LocalDate fecha1 = obtenerFechaParaOrdenamiento(f1);
+                            LocalDate fecha2 = obtenerFechaParaOrdenamiento(f2);
+                            
+                            if (fecha1 == null && fecha2 == null) return 0;
+                            if (fecha1 == null) return 1;
+                            if (fecha2 == null) return -1;
+                            return fecha2.compareTo(fecha1);
                         })
                         .collect(Collectors.toList())
                 );
@@ -269,10 +394,13 @@ public class PublishedDepartmentHeadDraftController {
                 tblAnteproyectos.getItems().setAll(
                     base.stream()
                         .sorted((f1, f2) -> {
-                            if (f1.getFechaActual() == null && f2.getFechaActual() == null) return 0;
-                            if (f1.getFechaActual() == null) return 1;
-                            if (f2.getFechaActual() == null) return -1;
-                            return f1.getFechaActual().compareTo(f2.getFechaActual());
+                            LocalDate fecha1 = obtenerFechaParaOrdenamiento(f1);
+                            LocalDate fecha2 = obtenerFechaParaOrdenamiento(f2);
+                            
+                            if (fecha1 == null && fecha2 == null) return 0;
+                            if (fecha1 == null) return 1;
+                            if (fecha2 == null) return -1;
+                            return fecha1.compareTo(fecha2);
                         })
                         .collect(Collectors.toList())
                 );
@@ -287,7 +415,6 @@ public class PublishedDepartmentHeadDraftController {
     private void evaluarAnteproyecto(DegreeWork anteproyecto) {
         if (anteproyecto != null) {
             // Navegar a la vista de evaluación del anteproyecto
-            // Aquí puedes implementar la navegación a la vista específica de evaluación
             mostrarAlerta("Evaluación", 
                 "Evaluando anteproyecto: " + anteproyecto.getTituloProyecto(), 
                 Alert.AlertType.INFORMATION);

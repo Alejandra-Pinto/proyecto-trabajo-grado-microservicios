@@ -10,7 +10,7 @@ public class DegreeWork {
     private List<User> estudiantes = new ArrayList<>();
     private User directorProyecto;
     private List<User> codirectoresProyecto = new ArrayList<>();
-    private String tituloProyecto;
+    private String titulo;
     private Modalidad modalidad;
     private LocalDate fechaActual;
     private String objetivoGeneral;
@@ -29,7 +29,7 @@ public class DegreeWork {
     public DegreeWork() {}
 
     //Constructor con algunos campos básicos - MANTENIENDO LA FIRMA ORIGINAL
-    public DegreeWork(Student estudiante, Teacher directorProyecto, String tituloProyecto, Modalidad modalidad) {
+    public DegreeWork(Student estudiante, Teacher directorProyecto, String titulo, Modalidad modalidad) {
         // Como Student y Teacher heredan de User, podemos usarlos directamente
         if (estudiante != null) {
             this.estudiantes.add(estudiante); // Student ES-UN User
@@ -38,7 +38,7 @@ public class DegreeWork {
         // Teacher también ES-UN User
         this.directorProyecto = directorProyecto;
         
-        this.tituloProyecto = tituloProyecto;
+        this.titulo = titulo;
         this.modalidad = modalidad;
     }
 
@@ -96,8 +96,8 @@ public class DegreeWork {
         }
     }
 
-    public String getTituloProyecto() { return tituloProyecto; }
-    public void setTituloProyecto(String tituloProyecto) { this.tituloProyecto = tituloProyecto; }
+    public String getTituloProyecto() { return titulo; }
+    public void setTituloProyecto(String titulo) { this.titulo = titulo; }
 
     public Modalidad getModalidad() { return modalidad; }
     public void setModalidad(Modalidad modalidad) { this.modalidad = modalidad; }
@@ -134,9 +134,26 @@ public class DegreeWork {
     public String toString() {
         return "DegreeWork{" +
                 "id=" + id +
-                ", tituloProyecto='" + tituloProyecto + '\'' +
+                ", titulo='" + titulo + '\'' +
                 ", modalidad=" + modalidad +
                 ", estado=" + estado +
                 '}';
     }
+
+    //métodos para compatibilidad si es necesario
+public String getTitulo() {
+    return getTituloProyecto(); // Para compatibilidad con posible nombre diferente
+}
+
+public List<User> getStudents() { // Por si el JSON usa "students" en lugar de "estudiantes"
+    return getEstudiantes();
+}
+
+public User getSupervisor() { // Por si usa "supervisor" en lugar de "directorProyecto"
+    return getDirectorProyecto();
+}
+
+public List<Document> getDrafts() { // Por si usa "drafts" en lugar de "anteproyectos"
+    return getAnteproyectos();
+}
 }
