@@ -141,7 +141,13 @@ public class ManagementEvaluadoresController {
                     }
                 });
                 
-                System.out.println("Usuarios disponibles cargados: " + usuarios.length);
+                System.out.println("Usuarios disponibles para ser evaluadores: " + usuarios.length);
+                
+                // DEBUG: Mostrar los usuarios disponibles
+                for (User usuario : usuarios) {
+                    System.out.println("Disponible: " + usuario.getFirstName() + " " + 
+                                    usuario.getLastName() + " - " + usuario.getEmail());
+                }
             }
         } catch (Exception e) {
             mostrarAlerta("Error", "Error cargando usuarios disponibles: " + e.getMessage(), Alert.AlertType.ERROR);
@@ -150,24 +156,35 @@ public class ManagementEvaluadoresController {
 
     private void cargarEvaluadoresAsignados() {
         try {
-            // Necesitamos un endpoint para obtener los evaluadores ya asignados
-            // Por ahora, usaremos el mismo endpoint pero filtramos en frontend
+            // Usar el nuevo endpoint para obtener evaluadores asignados
             ResponseEntity<User[]> response = apiService.get(
-                "api/usuarios", 
-                "/rol/TEACHER", // O el rol que corresponda
+                "api/admin", 
+                "/assigned-evaluators", 
                 User[].class
             );
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                // Filtrar usuarios que son evaluadores (aquí necesitarías un campo isEvaluator)
-                User[] usuarios = response.getBody();
-                listaEvaluadores = FXCollections.observableArrayList(usuarios);
+                User[] evaluadores = response.getBody();
+                listaEvaluadores = FXCollections.observableArrayList(evaluadores);
                 tblEvaluadores.setItems(listaEvaluadores);
+                System.out.println("Evaluadores asignados cargados: " + evaluadores.length);
+                
+                // DEBUG: Mostrar información de los evaluadores
+                for (User evaluador : evaluadores) {
+                    System.out.println("Evaluador: " + evaluador.getFirstName() + " " + 
+                                    evaluador.getLastName() + " - " + evaluador.getEmail());
+                }
+            } else {
+                listaEvaluadores = FXCollections.observableArrayList();
+                tblEvaluadores.setItems(listaEvaluadores);
+                System.out.println("No hay evaluadores asignados");
             }
+
         } catch (Exception e) {
-            // Por ahora, tabla vacía
+            System.out.println("Error cargando evaluadores asignados: " + e.getMessage());
             listaEvaluadores = FXCollections.observableArrayList();
             tblEvaluadores.setItems(listaEvaluadores);
+            mostrarAlerta("Error", "No se pudieron cargar los evaluadores asignados: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
