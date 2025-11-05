@@ -1,6 +1,7 @@
 package com.unicauca.front.model;
 
 public class User {
+    private Long id;
     private String firstName;
     private String lastName;
     private String phone;
@@ -24,6 +25,10 @@ public class User {
         this.status = status;
     }
 
+    // GETTER Y SETTER PARA ID
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    
     public String getFirstName() { return firstName; }
     public void setFirstName(String firstName) { this.firstName = firstName; }
 

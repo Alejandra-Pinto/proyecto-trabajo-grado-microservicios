@@ -14,6 +14,7 @@ public class HomeAdminController {
 
     @FXML private ToggleButton btnUsuario;
     @FXML private ToggleButton btnCoordinadores;
+    @FXML private ToggleButton btnEvaluadores;
 
     private final ApiGatewayService apiService;
     private final NavigationController navigation;
@@ -37,7 +38,6 @@ public class HomeAdminController {
             btnUsuario.setText("Admin: " + usuario.getFirstName());
         }
     }
-
 
     @FXML
     private void handleLogout() {
@@ -63,6 +63,16 @@ public class HomeAdminController {
         }
     }
 
+    @FXML
+    private void onBtnEvaluadoresClicked() {
+        System.out.println("onBtnEvaluadoresClicked ejecutado. Usuario: " + usuarioActual);
+        if (usuarioActual != null && "ADMIN".equalsIgnoreCase(usuarioActual.getRole())) {
+            System.out.println("Abriendo ManagementEvaluadores...");
+            navigation.showManagementEvaluadores();
+        } else {
+            mostrarAlerta("Acceso denegado", "Solo los administradores pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
+        }
+    }
 
     @FXML
     private void handleBackToHome() {

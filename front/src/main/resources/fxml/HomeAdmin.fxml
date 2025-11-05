@@ -18,8 +18,6 @@
     xmlns:fx="http://javafx.com/fxml/1"
     fx:controller="com.unicauca.front.controller.HomeAdminController">
 
-
-
    <children>
       <Pane prefHeight="804.0" prefWidth="1552.0" style="-fx-background-color: #0F3EA4;">
          <children>
@@ -51,6 +49,18 @@
                               <ImageView fitHeight="51.0" fitWidth="51.0" preserveRatio="true">
                                  <image>
                                     <Image url="@images/acceso.png" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                           <font>
+                              <Font size="16.0" />
+                           </font>
+                        </ToggleButton>
+                        <ToggleButton fx:id="btnEvaluadores" onAction="#onBtnEvaluadoresClicked" layoutY="202.0"  mnemonicParsing="false" prefHeight="101.0" prefWidth="468.0" text="Asignar Evaluadores">
+                           <graphic>
+                              <ImageView fitHeight="51.0" fitWidth="51.0" preserveRatio="true">
+                                 <image>
+                                    <Image url="@images/evaluar.png" />
                                  </image>
                               </ImageView>
                            </graphic>
@@ -100,7 +110,7 @@
                </image>
             </ImageView>
             
-                        <Button layoutX="1370.0" layoutY="40.0" onAction="#handleLogout" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14; -fx-border-color: white; -fx-border-width: 1; -fx-border-radius: 5;" text="Cerrar Sesión" />
+            <Button layoutX="1370.0" layoutY="40.0" onAction="#handleLogout" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14; -fx-border-color: white; -fx-border-width: 1; -fx-border-radius: 5;" text="Cerrar Sesión" />
          </children>
       </Pane>
    </children>
