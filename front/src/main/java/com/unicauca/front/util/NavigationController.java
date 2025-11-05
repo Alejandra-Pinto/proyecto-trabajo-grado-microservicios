@@ -406,4 +406,26 @@ public void showPublishedDepartmentHeadDraft(User usuario) {
          throw new RuntimeException("Error cargando: " + fxmlPath, var7);
       }
    }
+
+   // Agrega este método en tu NavigationController
+   public void showManagementEvaluadores() {
+      try {
+         System.out.println("DEBUG: Navegando a ManagementEvaluadores");
+         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/ManagementEvaluadores.fxml"));
+         loader.setControllerFactory(applicationContext::getBean);
+         Parent root = loader.load();
+         
+         Scene scene = new Scene(root);
+         primaryStage.setScene(scene);
+         primaryStage.setTitle("Gestión de Evaluadores");
+         primaryStage.show();
+      } catch (Exception e) {
+         e.printStackTrace();
+         Alert alert = new Alert(Alert.AlertType.ERROR);
+         alert.setTitle("Error");
+         alert.setHeaderText("No se pudo cargar la gestión de evaluadores");
+         alert.setContentText(e.getMessage());
+         alert.showAndWait();
+      }
+   }
 }

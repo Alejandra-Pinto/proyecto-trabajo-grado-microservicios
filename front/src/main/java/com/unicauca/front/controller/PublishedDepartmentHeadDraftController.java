@@ -11,6 +11,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
 import javafx.util.Callback;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -85,6 +86,14 @@ public class PublishedDepartmentHeadDraftController {
     }
 
     private void configurarColumnasTabla() {
+         // Configurar anchos de columnas
+        colTitulo.setPrefWidth(200);        // Título más ancho
+        colEmailDocente.setPrefWidth(180);  // Email docente
+        colEmailEstudiante.setPrefWidth(180); // Email estudiante  
+        colFechaActual.setPrefWidth(120);   // Fecha
+        colEstado.setPrefWidth(150);        // Estado
+        colAcciones.setPrefWidth(300);      // Acciones MÁS ANCHA para los ComboBox
+
         // Título del anteproyecto - TEMPORAL para debugging
         colTitulo.setCellValueFactory(data -> {
             String titulo = data.getValue().getTituloProyecto();
@@ -146,20 +155,66 @@ public class PublishedDepartmentHeadDraftController {
         });
 
         // Columna de acciones (botón "Evaluar")
+        // Cambia la columna de acciones para incluir ComboBox de evaluadores
+        // Cambia la columna de acciones para incluir ComboBox de evaluadores
         colAcciones.setCellFactory(new Callback<TableColumn<DegreeWork, Void>, TableCell<DegreeWork, Void>>() {
             @Override
             public TableCell<DegreeWork, Void> call(final TableColumn<DegreeWork, Void> param) {
                 return new TableCell<DegreeWork, Void>() {
-                    private final Button btnEvaluar = new Button("Evaluar");
-
+                    private final ComboBox<String> comboEvaluador1 = new ComboBox<>();
+                    private final ComboBox<String> comboEvaluador2 = new ComboBox<>();
+                    private final HBox hbox = new HBox(5);
+                    private final Label lblAsignar = new Label("Asignar:");
+                    
                     {
-                        btnEvaluar.setStyle("-fx-background-color: #111F63; -fx-text-fill: white; -fx-padding: 5;");
-                        btnEvaluar.setOnAction(event -> {
-                            DegreeWork anteproyecto = getTableView().getItems().get(getIndex());
-                            if (anteproyecto != null) {
-                                evaluarAnteproyecto(anteproyecto);
+                        // Configurar ComboBox más compactos
+                        comboEvaluador1.setPromptText("Eval1");
+                        comboEvaluador2.setPromptText("Eval2");
+                        comboEvaluador1.setPrefWidth(120);
+                        comboEvaluador2.setPrefWidth(120);
+                        comboEvaluador1.setMaxWidth(120);
+                        comboEvaluador2.setMaxWidth(120);
+                        
+                        // Estilo más compacto
+                        lblAsignar.setStyle("-fx-font-size: 10px; -fx-padding: 0 5 0 0;");
+                        hbox.setStyle("-fx-alignment: center-left; -fx-padding: 2;");
+                        
+                        hbox.getChildren().addAll(lblAsignar, comboEvaluador1, comboEvaluador2);
+                        
+                        // Cargar evaluadores
+                        itemProperty().addListener((obs, oldVal, newVal) -> {
+                            if (newVal == null) {
+                                comboEvaluador1.getItems().clear();
+                                comboEvaluador2.getItems().clear();
+                            } else {
+                                cargarEvaluadores();
                             }
                         });
+                    }
+                    
+                    private void cargarEvaluadores() {
+                        try {
+                            ResponseEntity<User[]> response = apiService.get(
+                                "api/admin", 
+                                "/evaluators", 
+                                User[].class
+                            );
+                            
+                            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                                User[] evaluadores = response.getBody();
+                                List<String> nombres = Arrays.stream(evaluadores)
+                                    .map(user -> user.getFirstName().charAt(0) + ". " + user.getLastName())
+                                    .collect(Collectors.toList());
+                                
+                                ObservableList<String> evaluadoresList = FXCollections.observableArrayList(nombres);
+                                comboEvaluador1.setItems(evaluadoresList);
+                                comboEvaluador2.setItems(evaluadoresList);
+                            }
+                        } catch (Exception e) {
+                            System.out.println("Error cargando evaluadores: " + e.getMessage());
+                            comboEvaluador1.setItems(FXCollections.observableArrayList("Error"));
+                            comboEvaluador2.setItems(FXCollections.observableArrayList("Error"));
+                        }
                     }
 
                     @Override
@@ -169,22 +224,8 @@ public class PublishedDepartmentHeadDraftController {
                             setGraphic(null);
                         } else {
                             DegreeWork anteproyecto = getTableRow().getItem();
-                            Document ultimoAnteproyecto = obtenerUltimoAnteproyecto(anteproyecto);
-                            String estado;
-                            
-                            if (ultimoAnteproyecto != null) {
-                                estado = ultimoAnteproyecto.getEstado() != null ? ultimoAnteproyecto.getEstado().toString() : "";
-                            } else {
-                                // Si no hay documento, usar el estado del DegreeWork
-                                estado = anteproyecto.getEstado() != null ? anteproyecto.getEstado().toString() : "";
-                            }
-                            
-                            // Mostrar botón solo si está en estado revisable
-                            if (esEstadoRevisable(estado)) {
-                                setGraphic(btnEvaluar);
-                            } else {
-                                setGraphic(null);
-                            }
+                            // MOSTRAR SIEMPRE los ComboBox (o ajusta según tu lógica de estados)
+                            setGraphic(hbox);
                         }
                     }
                 };

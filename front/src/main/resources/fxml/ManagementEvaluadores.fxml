@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane id="AnchorPane"
+    prefHeight="804.0"
+    prefWidth="1552.0"
+    xmlns="http://javafx.com/javafx/21"
+    xmlns:fx="http://javafx.com/fxml/1"
+    fx:controller="com.unicauca.front.controller.ManagementEvaluadoresController">
+
+   <children>
+      <Pane prefHeight="804.0" prefWidth="1552.0" style="-fx-background-color: #0F3EA4;">
+         <children>
+
+            <SplitPane dividerPositions="0.2709030100334448" layoutY="113.0" prefHeight="690.0" prefWidth="1552.0">
+              <items>
+                <!-- Panel izquierdo - Dashboard -->
+                <AnchorPane prefHeight="454.0" prefWidth="210.0" style="-fx-background-color: fafafa;">
+                     <children>
+                        <ImageView fitHeight="202.0" fitWidth="468.0" layoutX="-3.0" layoutY="523.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@images/bandera.png" />
+                           </image>
+                        </ImageView>
+                        <ToggleButton fx:id="btnRol" mnemonicParsing="false" onAction="#onBtnRolClicked" prefHeight="101.0" prefWidth="468.0" text="Administrador" textFill="#111f63">
+                           <graphic>
+                              <ImageView fitHeight="51.0" fitWidth="51.0" preserveRatio="true">
+                                 <image>
+                                    <Image url="@images/gente2.png" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                           <font>
+                              <Font name="System Bold" size="16.0" />
+                           </font>
+                        </ToggleButton>
+                        <ToggleButton fx:id="btnCoordinadores" onAction="#onBtnCoordinadoresClicked" layoutY="101.0"  mnemonicParsing="false" prefHeight="101.0" prefWidth="468.0" text="Gestión de Usuarios">
+                           <graphic>
+                              <ImageView fitHeight="51.0" fitWidth="51.0" preserveRatio="true">
+                                 <image>
+                                    <Image url="@images/acceso.png" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                           <font>
+                              <Font size="16.0" />
+                           </font>
+                        </ToggleButton>
+                        <ToggleButton fx:id="btnEvaluadores" onAction="#onBtnEvaluadoresClicked" layoutY="202.0"  mnemonicParsing="false" prefHeight="101.0" prefWidth="468.0" text="Asignar Evaluadores" disable="true" style="-fx-background-color: #2c3e50; -fx-text-fill: white;">
+                           <graphic>
+                              <ImageView fitHeight="51.0" fitWidth="51.0" preserveRatio="true">
+                                 <image>
+                                    <Image url="@images/evaluar.png" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                           <font>
+                              <Font size="16.0" />
+                           </font>
+                        </ToggleButton>
+                     </children>
+                  </AnchorPane>
+
+                <!-- Panel derecho - Contenido de Gestión de Evaluadores -->
+                <AnchorPane prefHeight="760.0" prefWidth="1140.0" style="-fx-background-color: white;">
+                     <children>
+                        <!-- Encabezado del contenido -->
+                        <Label layoutX="50.0" layoutY="30.0" text="Gestión de Evaluadores" style="-fx-text-fill: #0F3EA4; -fx-font-weight: bold; -fx-font-size: 24;">
+                           <font>
+                              <Font name="System Bold" size="24.0" />
+                           </font>
+                        </Label>
+                        
+                        <!-- Contenido principal -->
+                        <VBox layoutX="50.0" layoutY="80.0" spacing="20" prefWidth="1040" prefHeight="600">
+                           <padding>
+                              <Insets top="20" right="20" bottom="20" left="20"/>
+                           </padding>
+
+                           <!-- Panel de asignación -->
+                           <VBox spacing="15" style="-fx-border-color: #cccccc; -fx-border-width: 1; -fx-padding: 20; -fx-background-color: #f9f9f9;">
+                              <Label text="Asignar Evaluador" style="-fx-text-fill: #0F3EA4; -fx-font-weight: bold; -fx-font-size: 18;"/>
+                              
+                              <HBox spacing="15" alignment="CENTER_LEFT">
+                                 <Label text="Usuario:" prefWidth="100" style="-fx-font-weight: bold;"/>
+                                 <ComboBox fx:id="comboUsuarios" prefWidth="400" promptText="Seleccionar usuario"/>
+                                 <Button fx:id="btnAsignarEvaluador" text="Asignar como Evaluador" 
+                                         style="-fx-background-color: #0F3EA4; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15;"/>
+                              </HBox>
+                              
+                              <Label text="Nota: Solo se muestran usuarios que no son estudiantes y que aún no tienen el rol de evaluador." 
+                                     style="-fx-text-fill: #666666; -fx-font-size: 12; -fx-font-style: italic;"/>
+                           </VBox>
+
+                           <!-- Lista de evaluadores actuales -->
+                           <VBox spacing="15" style="-fx-border-color: #cccccc; -fx-border-width: 1; -fx-padding: 20; -fx-background-color: #f9f9f9;">
+                              <Label text="Evaluadores Asignados" style="-fx-text-fill: #0F3EA4; -fx-font-weight: bold; -fx-font-size: 18;"/>
+                              
+                              <TableView fx:id="tblEvaluadores" prefHeight="250">
+                                 <columns>
+                                    <TableColumn fx:id="colNombre" prefWidth="250" text="Nombre"/>
+                                    <TableColumn fx:id="colEmail" prefWidth="300" text="Email"/>
+                                    <TableColumn fx:id="colRolBase" prefWidth="200" text="Rol Base"/>
+                                    <TableColumn fx:id="colEstado" prefWidth="150" text="Estado"/>
+                                 </columns>
+                              </TableView>
+                              
+                              <HBox spacing="10" alignment="CENTER_RIGHT">
+                                 <Button fx:id="btnActualizar" text="Actualizar Lista" 
+                                         style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15;"/>
+                                 <Button fx:id="btnVolver" text="Volver al Inicio" 
+                                         style="-fx-background-color: #666666; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15;"/>
+                              </HBox>
+                           </VBox>
+                        </VBox>
+                     </children>
+                  </AnchorPane>
+              </items>
+            </SplitPane>
+            
+            <!-- Encabezado superior -->
+            <ImageView fitHeight="85.0" fitWidth="160.0" layoutX="60.0" layoutY="20.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@images/logo.png" />
+               </image>
+            </ImageView>
+            
+            <Button layoutX="1370.0" layoutY="40.0" onAction="#handleLogout" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14; -fx-border-color: white; -fx-border-width: 1; -fx-border-radius: 5;" text="Cerrar Sesión" />
+         </children>
+      </Pane>
+   </children>
+</AnchorPane>
