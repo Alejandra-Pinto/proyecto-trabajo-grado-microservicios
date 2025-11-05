@@ -1,11 +1,15 @@
 package com.unicauca.front.controller;
 
 import com.unicauca.front.model.DegreeWork;
+import com.unicauca.front.model.Document;
 import com.unicauca.front.model.EnumEstadoDegreeWork;
+import com.unicauca.front.model.EnumEstadoDocument;
 import com.unicauca.front.model.User;
 import com.unicauca.front.service.ApiGatewayService;
 import com.unicauca.front.util.NavigationController;
 import com.unicauca.front.util.SessionManager;
+
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -14,6 +18,7 @@ import javafx.util.Callback;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 
+import java.lang.annotation.Documented;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -48,7 +53,7 @@ public class ManagementCoordinatorFormatAController {
         usuarioActual = SessionManager.getCurrentUser();
         configurarTabla();
         configurarFiltros();
-        cargarFormatos();
+        cargarFormatos(true);
     }
 
 private void configurarTabla() {
@@ -81,17 +86,17 @@ private void configurarTabla() {
                 private final ComboBox<String> combo = new ComboBox<>();
 
                 {
-                    combo.getItems().addAll("PENDIENTE", "ACEPTADO", "RECHAZADO", 
-                                           "PRIMERA_EVALUACION", "SEGUNDA_EVALUACION", "TERCERA_EVALUACION");
+                    combo.getItems().addAll("NO_ACEPTADO", "ACEPTADO", "RECHAZADO", 
+                                           "PRIMERA_REVISION", "SEGUNDA_REVISION", "TERCERA_REVISION");
                     combo.setOnAction(e -> {
                         DegreeWork formato = getTableView().getItems().get(getIndex());
                         if (formato != null) {
                             // CORRECCIÓN: Convertir String a Enum antes de asignar
                             String estadoSeleccionado = combo.getValue();
-                            EnumEstadoDegreeWork estadoEnum = convertirStringAEnumEstado(estadoSeleccionado);
+                            EnumEstadoDocument estadoEnum = convertirStringAEnumEstadoD(estadoSeleccionado);
                             if (estadoEnum != null) {
-                                formato.setEstado(estadoEnum);
-                                // Opcional: Actualizar via API inmediatamente
+                                Document ultimoFormatoA = formato.getFormatosA().get(formato.getFormatosA().size() - 1);
+                                ultimoFormatoA.setEstado(estadoEnum);
                                 actualizarEstadoFormato(formato, estadoEnum);
                             }
                         }
@@ -105,12 +110,20 @@ private void configurarTabla() {
                         setGraphic(null);
                     } else {
                         DegreeWork formato = getTableRow().getItem();
-                        String estadoActual = formato.getEstado() != null ? 
-                                            formato.getEstado().toString() : "PENDIENTE";
+
+                        String estadoActual = "PENDIENTE";
+                        if (formato.getFormatosA() != null && !formato.getFormatosA().isEmpty()) {
+                            Document ultimoFormatoA = formato.getFormatosA().get(formato.getFormatosA().size() - 1);
+                            if (ultimoFormatoA.getEstado() != null) {
+                                estadoActual = ultimoFormatoA.getEstado().toString();
+                            }
+                        }
+
                         combo.setValue(estadoActual);
                         setGraphic(combo);
                     }
                 }
+
             };
         }
     });
@@ -176,62 +189,65 @@ private EnumEstadoDegreeWork convertirStringAEnumEstado(String estadoStr) {
         return null;
     }
 }
+private EnumEstadoDocument convertirStringAEnumEstadoD(String estadoStr) {
+    if (estadoStr == null) return null;
+    
+    try {
+        return EnumEstadoDocument.valueOf(estadoStr);
+    } catch (IllegalArgumentException e) {
+        System.out.println("Error: Estado no válido - " + estadoStr);
+        Platform.runLater(() -> {
+            mostrarAlerta("Error", "Estado no válido: " + estadoStr, Alert.AlertType.ERROR);
+        });
+        return null;
+    }
+}
 
 /**
- * Actualiza el estado del formato via API
+ * Actualiza el estado del último Formato A (Document) dentro del DegreeWork
+ * y envía la actualización al microservicio de degreeworks.
  */
-/**
- * Actualiza el estado del formato via API
- */
-private void actualizarEstadoFormato(DegreeWork formato, EnumEstadoDegreeWork nuevoEstado) {
+private void actualizarEstadoFormato(DegreeWork formato, EnumEstadoDocument nuevoEstado) {
     try {
-        // Crear un Map simple con solo los campos necesarios
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("estado", nuevoEstado.toString());
-        updates.put("id", formato.getId());
-        
-        // Incluir correcciones si existen
-        if (formato.getCorrecciones() != null && !formato.getCorrecciones().isEmpty()) {
-            updates.put("correcciones", formato.getCorrecciones());
-        } else {
-            updates.put("correcciones", ""); // Enviar string vacío si es null
+        if (formato.getFormatosA() == null || formato.getFormatosA().isEmpty()) {
+            mostrarAlerta("Error", "Este trabajo de grado no tiene formatos A registrados.", Alert.AlertType.ERROR);
+            return;
         }
 
-        // DEBUG: Ver qué estamos enviando
-        System.out.println("Enviando actualización para formato ID: " + formato.getId());
-        System.out.println("Estado: " + nuevoEstado.toString());
-        System.out.println("Correcciones: " + (formato.getCorrecciones() != null ? formato.getCorrecciones() : "vacío"));
+        // ✅ Tomar el último formato A
+        Document ultimoFormatoA = formato.getFormatosA().get(formato.getFormatosA().size() - 1);
+        ultimoFormatoA.setEstado(nuevoEstado);
 
-        // Hacer la llamada PUT
+        System.out.println("🟦 Actualizando estado del último Formato A:");
+        System.out.println(" - DegreeWork ID: " + formato.getId());
+        System.out.println(" - Documento ID: " + ultimoFormatoA.getId());
+        System.out.println(" - Nuevo estado: " + nuevoEstado);
+
+        // ✅ Enviar el DegreeWork completo al backend
         ResponseEntity<DegreeWork> response = apiService.put(
-            "api/degreeworks", 
-            "/" + formato.getId(), 
-            updates,
+            "api/degreeworks",
+            "/" + formato.getId(),
+            formato,  // enviamos el objeto completo
             DegreeWork.class
         );
 
         if (response.getStatusCode().is2xxSuccessful()) {
-            System.out.println("Estado actualizado correctamente para formato ID: " + formato.getId());
-            // Refrescar la tabla para mostrar cambios
-            tblFormatos.refresh();
+            System.out.println("✅ Estado del Formato A actualizado correctamente en DegreeWork ID: " + formato.getId());
+            Platform.runLater(() -> {
+                mostrarAlerta("Éxito", "Estado del Formato A actualizado correctamente a " + nuevoEstado, Alert.AlertType.INFORMATION);
+                tblFormatos.refresh();
+            });
         } else {
-            System.out.println("Error en respuesta: " + response.getStatusCode());
-            mostrarAlerta("Error", "No se pudo actualizar el estado del formato", Alert.AlertType.ERROR);
+            System.out.println("❌ Error al actualizar Formato A: " + response.getStatusCode());
+            mostrarAlerta("Error", "No se pudo actualizar el Formato A en el trabajo de grado.", Alert.AlertType.ERROR);
         }
 
     } catch (Exception e) {
-        System.out.println("Error al actualizar estado: " + e.getMessage());
         e.printStackTrace();
-        
-        // Usar Platform.runLater para evitar el error de JavaFX
-        javafx.application.Platform.runLater(() -> {
-            mostrarAlerta("Error", "Error actualizando estado: " + e.getMessage(), Alert.AlertType.ERROR);
-        });
-        
-        // Recargar los formatos para revertir cambios visuales
-        cargarFormatos();
+        mostrarAlerta("Error", "Error actualizando el estado del Formato A: " + e.getMessage(), Alert.AlertType.ERROR);
     }
 }
+
     private void configurarFiltros() {
         comboFiltro.getItems().addAll(
             "Todos los formatos",
@@ -321,7 +337,7 @@ private void actualizarEstadoFormato(DegreeWork formato, EnumEstadoDegreeWork nu
         }
     }
 
-    private void cargarFormatos() {
+    private void cargarFormatos(boolean mostrarAlerta) {
         try {
             ResponseEntity<DegreeWork[]> response = apiService.get(
                 "api/degreeworks", 
@@ -335,16 +351,21 @@ private void actualizarEstadoFormato(DegreeWork formato, EnumEstadoDegreeWork nu
                 tblFormatos.setItems(formatos);
                 
                 System.out.println("Formatos cargados: " + formatos.size());
-                mostrarAlerta("Éxito", "Se cargaron " + formatos.size() + " formatos", Alert.AlertType.INFORMATION);
-            } else {
+                if (mostrarAlerta) {
+                    mostrarAlerta("Éxito", "Se cargaron " + formatos.size() + " formatos", Alert.AlertType.INFORMATION);
+                }
+            } else if (mostrarAlerta) {
                 mostrarAlerta("Error", "No se pudieron cargar los formatos", Alert.AlertType.ERROR);
             }
 
         } catch (Exception e) {
             e.printStackTrace();
-            mostrarAlerta("Error", "Error cargando formatos: " + e.getMessage(), Alert.AlertType.ERROR);
+            if (mostrarAlerta) {
+                mostrarAlerta("Error", "Error cargando formatos: " + e.getMessage(), Alert.AlertType.ERROR);
+            }
         }
     }
+
 
     @FXML
     private void onGuardarCambios() {
@@ -379,7 +400,7 @@ private void actualizarEstadoFormato(DegreeWork formato, EnumEstadoDegreeWork nu
                 mostrarAlerta("Éxito", 
                     cambiosExitosos + " formato(s) actualizado(s) correctamente.", 
                     Alert.AlertType.INFORMATION);
-                cargarFormatos(); // Recargar para ver cambios
+                cargarFormatos(false); // Recargar para ver cambios
             } else {
                 mostrarAlerta("Aviso", "No se realizaron cambios en los formatos.", Alert.AlertType.WARNING);
             }
@@ -455,17 +476,20 @@ private void verDetallesFormato(DegreeWork formato) {
 
     @FXML
     private void onBtnActualizarClicked() {
-        cargarFormatos();
+        cargarFormatos(false);
         mostrarAlerta("Actualizado", "Lista de formatos actualizada", Alert.AlertType.INFORMATION);
     }
 
     private void mostrarAlerta(String titulo, String mensaje, Alert.AlertType tipo) {
-        Alert alerta = new Alert(tipo);
-        alerta.setTitle(titulo);
-        alerta.setHeaderText(null);
-        alerta.setContentText(mensaje);
-        alerta.showAndWait();
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle(titulo);
+            alert.setHeaderText(null);
+            alert.setContentText(mensaje);
+            alert.showAndWait();
+        });
     }
+
 
     public void configurarConUsuario(User usuario) {
         this.usuarioActual = usuario;
