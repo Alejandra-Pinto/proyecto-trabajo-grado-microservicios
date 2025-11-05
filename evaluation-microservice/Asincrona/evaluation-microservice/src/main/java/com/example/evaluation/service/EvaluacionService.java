@@ -3,7 +3,7 @@ package com.example.evaluation.service;
 import com.example.evaluation.entity.Document;
 import com.example.evaluation.entity.DegreeWork;
 import com.example.evaluation.entity.Evaluation;
-import com.example.evaluation.entity.enums.EnumEstadoDegreeWork;
+import com.example.evaluation.entity.enums.EnumEstadoDocument;
 import com.example.evaluation.infra.dto.DegreeWorkUpdateDTO;
 import com.example.evaluation.infra.messaging.EvaluationPublisher;
 import com.example.evaluation.repository.DegreeWorkRepository;
@@ -64,21 +64,17 @@ public class EvaluacionService {
 
         Evaluation saved = evaluationRepository.save(evaluacion);
 
-        // Mapear tipo de evaluación a estado del trabajo
-        EnumEstadoDegreeWork estadoEnum = switch (tipo.toUpperCase()) {
-            case "FORMATO_A" -> EnumEstadoDegreeWork.FORMATO_A;
-            case "ANTEPROYECTO" -> EnumEstadoDegreeWork.ANTEPROYECTO;
-            case "MONOGRAFIA" -> EnumEstadoDegreeWork.MONOGRAFIA;
-            default -> throw new RuntimeException("Tipo de evaluación desconocido: " + tipo);
-        };
+        // ✅ Obtener el estado actual del documento
+        EnumEstadoDocument estadoDocumento = document.getEstado();
 
-        // Crear DTO para enviar por RabbitMQ
+        // ✅ Crear DTO para enviar por RabbitMQ
         DegreeWorkUpdateDTO updateDTO = DegreeWorkUpdateDTO.builder()
-            .degreeWorkId(degreeWork.getId().intValue()) 
-            .estado(estadoEnum.name())
+            .degreeWorkId(degreeWork.getId().intValue())
+            .estado(estadoDocumento.name()) // <-- se envía el estado del documento, no del DegreeWork
             .correcciones(correcciones)
             .build();
 
+        // ✅ Publicar actualización
         evaluationPublisher.publicarActualizacionDegreeWork(updateDTO);
 
         return saved;
