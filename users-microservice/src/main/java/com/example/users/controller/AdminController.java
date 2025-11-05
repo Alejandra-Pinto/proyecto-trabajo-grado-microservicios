@@ -56,5 +56,11 @@ public class AdminController {
     public ResponseEntity<String> assignEvaluator(@RequestBody EvaluatorAssignmentDTO dto) {
         return ResponseEntity.ok(adminService.assignEvaluator(dto));
     }
+
+    // Obtener evaluadores asignados
+    @GetMapping("/assigned-evaluators")
+    public ResponseEntity<List<User>> listAssignedEvaluators() {
+        return ResponseEntity.ok(adminService.listAssignedEvaluators());
+    }
 }
 

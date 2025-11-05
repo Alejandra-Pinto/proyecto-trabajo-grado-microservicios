@@ -110,4 +110,14 @@ public class AdminService implements IAdminService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Lista todos los usuarios que ya son evaluadores
+     */
+    public List<User> listAssignedEvaluators() {
+        return userRepository.findAll()
+                .stream()
+                .filter(User::isEvaluator) // solo quienes ya son evaluadores
+                .collect(Collectors.toList());
+    }
+
 }

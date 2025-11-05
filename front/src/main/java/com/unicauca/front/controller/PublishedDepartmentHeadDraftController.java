@@ -154,83 +154,156 @@ public class PublishedDepartmentHeadDraftController {
             return new javafx.beans.property.SimpleStringProperty(estado);
         });
 
-        // Columna de acciones (botón "Evaluar")
-        // Cambia la columna de acciones para incluir ComboBox de evaluadores
-        // Cambia la columna de acciones para incluir ComboBox de evaluadores
-        colAcciones.setCellFactory(new Callback<TableColumn<DegreeWork, Void>, TableCell<DegreeWork, Void>>() {
-            @Override
-            public TableCell<DegreeWork, Void> call(final TableColumn<DegreeWork, Void> param) {
-                return new TableCell<DegreeWork, Void>() {
-                    private final ComboBox<String> comboEvaluador1 = new ComboBox<>();
-                    private final ComboBox<String> comboEvaluador2 = new ComboBox<>();
-                    private final HBox hbox = new HBox(5);
-                    private final Label lblAsignar = new Label("Asignar:");
-                    
-                    {
-                        // Configurar ComboBox más compactos
-                        comboEvaluador1.setPromptText("Eval1");
-                        comboEvaluador2.setPromptText("Eval2");
-                        comboEvaluador1.setPrefWidth(120);
-                        comboEvaluador2.setPrefWidth(120);
-                        comboEvaluador1.setMaxWidth(120);
-                        comboEvaluador2.setMaxWidth(120);
-                        
-                        // Estilo más compacto
-                        lblAsignar.setStyle("-fx-font-size: 10px; -fx-padding: 0 5 0 0;");
-                        hbox.setStyle("-fx-alignment: center-left; -fx-padding: 2;");
-                        
-                        hbox.getChildren().addAll(lblAsignar, comboEvaluador1, comboEvaluador2);
-                        
-                        // Cargar evaluadores
-                        itemProperty().addListener((obs, oldVal, newVal) -> {
-                            if (newVal == null) {
-                                comboEvaluador1.getItems().clear();
-                                comboEvaluador2.getItems().clear();
-                            } else {
-                                cargarEvaluadores();
-                            }
-                        });
+        // Columna de acciones (ComboBox de evaluadores)
+colAcciones.setCellFactory(new Callback<TableColumn<DegreeWork, Void>, TableCell<DegreeWork, Void>>() {
+    @Override
+    public TableCell<DegreeWork, Void> call(final TableColumn<DegreeWork, Void> param) {
+        return new TableCell<DegreeWork, Void>() {
+            private final ComboBox<String> comboEvaluador1 = new ComboBox<>();
+            private final ComboBox<String> comboEvaluador2 = new ComboBox<>();
+            private final HBox hbox = new HBox(5);
+            private final Label lblAsignar = new Label("Asignar:");
+            private ObservableList<String> todosLosEvaluadores = FXCollections.observableArrayList();
+            private boolean evaluadoresCargados = false;
+            
+            {
+                // Configurar ComboBox más compactos
+                comboEvaluador1.setPromptText("Eval1");
+                comboEvaluador2.setPromptText("Eval2");
+                comboEvaluador1.setPrefWidth(120);
+                comboEvaluador2.setPrefWidth(120);
+                comboEvaluador1.setMaxWidth(120);
+                comboEvaluador2.setMaxWidth(120);
+                
+                // Estilo más compacto
+                lblAsignar.setStyle("-fx-font-size: 10px; -fx-padding: 0 5 0 0;");
+                hbox.setStyle("-fx-alignment: center-left; -fx-padding: 2;");
+                
+                hbox.getChildren().addAll(lblAsignar, comboEvaluador1, comboEvaluador2);
+                
+                // Listeners para sincronizar los ComboBox
+                comboEvaluador1.valueProperty().addListener((obs, oldVal, newVal) -> {
+                    if (newVal != null) {
+                        actualizarOpcionesComboBox2();
                     }
-                    
-                    private void cargarEvaluadores() {
-                        try {
-                            ResponseEntity<User[]> response = apiService.get(
-                                "api/admin", 
-                                "/evaluators", 
-                                User[].class
-                            );
-                            
-                            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                                User[] evaluadores = response.getBody();
-                                List<String> nombres = Arrays.stream(evaluadores)
-                                    .map(user -> user.getFirstName().charAt(0) + ". " + user.getLastName())
-                                    .collect(Collectors.toList());
-                                
-                                ObservableList<String> evaluadoresList = FXCollections.observableArrayList(nombres);
-                                comboEvaluador1.setItems(evaluadoresList);
-                                comboEvaluador2.setItems(evaluadoresList);
-                            }
-                        } catch (Exception e) {
-                            System.out.println("Error cargando evaluadores: " + e.getMessage());
-                            comboEvaluador1.setItems(FXCollections.observableArrayList("Error"));
-                            comboEvaluador2.setItems(FXCollections.observableArrayList("Error"));
-                        }
+                });
+                
+                comboEvaluador2.valueProperty().addListener((obs, oldVal, newVal) -> {
+                    if (newVal != null) {
+                        actualizarOpcionesComboBox1();
                     }
-
-                    @Override
-                    protected void updateItem(Void item, boolean empty) {
-                        super.updateItem(item, empty);
-                        if (empty || getTableRow() == null || getTableRow().getItem() == null) {
-                            setGraphic(null);
-                        } else {
-                            DegreeWork anteproyecto = getTableRow().getItem();
-                            // MOSTRAR SIEMPRE los ComboBox (o ajusta según tu lógica de estados)
-                            setGraphic(hbox);
-                        }
-                    }
-                };
+                });
             }
-        });
+            
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                    setGraphic(null);
+                    evaluadoresCargados = false;
+                } else {
+                    DegreeWork anteproyecto = getTableRow().getItem();
+                    
+                    // Cargar evaluadores solo la primera vez que se muestra la celda
+                    if (!evaluadoresCargados) {
+                        cargarEvaluadores();
+                        evaluadoresCargados = true;
+                    }
+                    
+                    setGraphic(hbox);
+                }
+            }
+            
+            private void cargarEvaluadores() {
+                try {
+                    System.out.println("DEBUG: Intentando cargar evaluadores asignados...");
+                    
+                    ResponseEntity<User[]> response = apiService.get(
+                        "api/admin", 
+                        "/assigned-evaluators", 
+                        User[].class
+                    );
+                    
+                    System.out.println("DEBUG: Status code: " + response.getStatusCode());
+                    System.out.println("DEBUG: ¿Tiene body?: " + (response.getBody() != null));
+                    
+                    if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                        User[] evaluadores = response.getBody();
+                        System.out.println("DEBUG: Evaluadores recibidos: " + evaluadores.length);
+                        
+                        // DEBUG: Mostrar información de cada evaluador
+                        for (User evaluador : evaluadores) {
+                            System.out.println("DEBUG - Evaluador: " + evaluador.getFirstName() + " " + 
+                                            evaluador.getLastName() + " - Email: " + evaluador.getEmail() +
+                                            " - ID: " + evaluador.getId());
+                        }
+                        
+                        // Crear lista de nombres completos para mejor identificación
+                        List<String> nombres = Arrays.stream(evaluadores)
+                            .map(user -> user.getFirstName() + " " + user.getLastName() + " (" + user.getEmail() + ")")
+                            .collect(Collectors.toList());
+                        
+                        todosLosEvaluadores = FXCollections.observableArrayList(nombres);
+                        
+                        // Inicializar ambos ComboBox con todas las opciones
+                        comboEvaluador1.setItems(todosLosEvaluadores);
+                        comboEvaluador2.setItems(todosLosEvaluadores);
+                        
+                        System.out.println("DEBUG: ComboBox actualizados con " + nombres.size() + " evaluadores");
+                    } else {
+                        System.out.println("DEBUG: No se pudieron cargar los evaluadores");
+                        comboEvaluador1.setItems(FXCollections.observableArrayList("No hay evaluadores"));
+                        comboEvaluador2.setItems(FXCollections.observableArrayList("No hay evaluadores"));
+                    }
+                } catch (Exception e) {
+                    System.out.println("ERROR cargando evaluadores: " + e.getMessage());
+                    e.printStackTrace();
+                    comboEvaluador1.setItems(FXCollections.observableArrayList("Error: " + e.getMessage()));
+                    comboEvaluador2.setItems(FXCollections.observableArrayList("Error: " + e.getMessage()));
+                }
+            }
+            
+            private void actualizarOpcionesComboBox2() {
+                String seleccionado1 = comboEvaluador1.getValue();
+                if (seleccionado1 != null) {
+                    // Filtrar opciones para combo2: todas excepto la seleccionada en combo1
+                    ObservableList<String> opcionesCombo2 = todosLosEvaluadores.filtered(
+                        evaluador -> !evaluador.equals(seleccionado1)
+                    );
+                    comboEvaluador2.setItems(opcionesCombo2);
+                    
+                    // Si combo2 tenía seleccionado el mismo que ahora seleccionó combo1, limpiarlo
+                    if (seleccionado1.equals(comboEvaluador2.getValue())) {
+                        comboEvaluador2.setValue(null);
+                    }
+                } else {
+                    // Si no hay selección en combo1, mostrar todas las opciones en combo2
+                    comboEvaluador2.setItems(todosLosEvaluadores);
+                }
+            }
+            
+            private void actualizarOpcionesComboBox1() {
+                String seleccionado2 = comboEvaluador2.getValue();
+                if (seleccionado2 != null) {
+                    // Filtrar opciones para combo1: todas excepto la seleccionada en combo2
+                    ObservableList<String> opcionesCombo1 = todosLosEvaluadores.filtered(
+                        evaluador -> !evaluador.equals(seleccionado2)
+                    );
+                    comboEvaluador1.setItems(opcionesCombo1);
+                    
+                    // Si combo1 tenía seleccionado el mismo que ahora seleccionó combo2, limpiarlo
+                    if (seleccionado2.equals(comboEvaluador1.getValue())) {
+                        comboEvaluador1.setValue(null);
+                    }
+                } else {
+                    // Si no hay selección en combo2, mostrar todas las opciones en combo1
+                    comboEvaluador1.setItems(todosLosEvaluadores);
+                }
+            }
+        };
+    }
+});
+        
     }
 
     // Método helper para obtener el último anteproyecto
