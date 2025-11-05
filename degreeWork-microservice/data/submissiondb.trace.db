@@ -62,3 +62,7 @@ The connection was not closed by the application and is garbage collected [90018
 	at org.h2.message.DbException.getJdbcSQLException(DbException.java:690)
 	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
 	... 16 more
+2025-11-04 23:05:47.467206-05:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Error de Sintaxis en sentencia SQL "[*]DEGREEWORK_ESTUDIANTES"; se esperaba "DELETE, DROP"
+Syntax error in SQL statement "[*]DEGREEWORK_ESTUDIANTES"; expected "DELETE, DROP"; SQL statement:
+DEGREEWORK_ESTUDIANTES [42001-232]

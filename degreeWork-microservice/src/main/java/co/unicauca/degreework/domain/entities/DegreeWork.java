@@ -231,20 +231,26 @@ public class DegreeWork {
             throw new IllegalArgumentException("El documento no puede ser nulo.");
         }
 
-        if (documento.getEstado() == EnumEstadoDocument.ACEPTADO || documento.getEstado() == EnumEstadoDocument.RECHAZADO) {
-            throw new IllegalStateException("No se puede actualizar un documento ya aceptado o rechazado.");
+        // Si es un documento nuevo (sin ID o sin estado previo), se asume en primera revisión
+        if (documento.getId() == null || documento.getEstado() == null) {
+            documento.setEstado(EnumEstadoDocument.PRIMERA_REVISION);
+            return;
         }
 
-        // Si el documento fue no aceptado, incrementar contador
+        // Bloquear solo si ya está en estado final
+        if (documento.getEstado() == EnumEstadoDocument.ACEPTADO ||
+            documento.getEstado() == EnumEstadoDocument.RECHAZADO) {
+            return;
+        }
+
+        // Manejo de revisiones no aceptadas
         if (documento.getEstado() == EnumEstadoDocument.NO_ACEPTADO) {
             incrementNoAprobadoCount();
 
             switch (noAprobadoCount) {
                 case 1 -> documento.setEstado(EnumEstadoDocument.SEGUNDA_REVISION);
                 case 2 -> documento.setEstado(EnumEstadoDocument.TERCERA_REVISION);
-                case 3 -> {
-                    documento.setEstado(EnumEstadoDocument.RECHAZADO);
-                }
+                case 3 -> documento.setEstado(EnumEstadoDocument.RECHAZADO);
                 default -> documento.setEstado(EnumEstadoDocument.RECHAZADO);
             }
         }
