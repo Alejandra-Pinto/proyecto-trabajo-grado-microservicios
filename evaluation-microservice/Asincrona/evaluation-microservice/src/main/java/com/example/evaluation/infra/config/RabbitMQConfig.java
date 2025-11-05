@@ -27,10 +27,26 @@ public class RabbitMQConfig {
     @Value("${app.rabbitmq.degreework.routingkey}")
     private String degreeWorkRoutingKey;
 
+    // Colas y routing keys para notificaciones (nuevas)
+    @Value("${app.rabbitmq.notification.exchange}")
+    private String notificationExchange;
+
+    @Value("${app.rabbitmq.notification.queue}")
+    private String notificationQueue;
+
+    @Value("${app.rabbitmq.notification.routingkey}")
+    private String notificationRoutingKey;
+
     // ===== Exchange principal (DirectExchange) =====
     @Bean
     public DirectExchange mainExchange() {
         return new DirectExchange(mainExchange);
+    }
+
+    // ===== Exchange para notificaciones (DirectExchange) =====
+    @Bean
+    public DirectExchange notificationExchange() {
+        return new DirectExchange(notificationExchange);
     }
 
     // ===== Cola para USER SERVICE (Evaluaciones) =====
@@ -45,17 +61,28 @@ public class RabbitMQConfig {
         return new Queue(degreeWorkQueue, true);
     }
 
+    // ===== Cola para NOTIFICACIONES =====
+    @Bean
+    public Queue notificationQueue() {
+        return new Queue(notificationQueue, true);
+    }
+
     // ===== Binding: user.queue -> evaluation.exchange con user.routingkey =====
     @Bean
     public Binding bindingUser(Queue userQueue, DirectExchange mainExchange) {
         return BindingBuilder.bind(userQueue).to(mainExchange).with(userRoutingKey);
     }
 
-    // ===== Binding: degreework.queue -> evaluation.exchange con
-    // degreework.routingkey =====
+    // ===== Binding: degreework.queue -> evaluation.exchange con degreework.routingkey =====
     @Bean
     public Binding bindingDegreeWork(Queue degreeWorkQueue, DirectExchange mainExchange) {
         return BindingBuilder.bind(degreeWorkQueue).to(mainExchange).with(degreeWorkRoutingKey);
+    }
+
+    // ===== Binding: notification.queue -> notification.exchange con notification.routingkey =====
+    @Bean
+    public Binding bindingNotification(Queue notificationQueue, DirectExchange notificationExchange) {
+        return BindingBuilder.bind(notificationQueue).to(notificationExchange).with(notificationRoutingKey);
     }
 
     // ===== Convertidor JSON para serializar DTOs =====
