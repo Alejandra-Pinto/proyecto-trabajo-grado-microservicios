@@ -17,8 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
-
 @Service
 public class EvaluacionService {
 
@@ -80,52 +78,55 @@ public class EvaluacionService {
         // ✅ Obtener el estado actual del documento
         EnumEstadoDocument estadoDocumento = document.getEstado();
 
+        // ✅ Actualizar calificación local y preparar DTO para degreework
+        degreeWork.setCalificacion(resultado);
+        degreeWork.setCorrecciones(correcciones);
+        degreeWorkRepository.save(degreeWork);
+
         // ✅ Crear DTO para enviar por RabbitMQ (para actualizar degreework)
         DegreeWorkUpdateDTO updateDTO = DegreeWorkUpdateDTO.builder()
-            .degreeWorkId(degreeWork.getId().intValue())
+            .degreeWorkId(degreeWork.getId())
             .estado(estadoDocumento.name())
             .correcciones(correcciones)
+            .calificacion(resultado)
             .build();
 
         // ✅ Publicar actualización a degreework
         evaluationPublisher.publicarActualizacionDegreeWork(updateDTO);
 
         // ✅ ENVIAR NOTIFICACIÓN (NUEVO)
-        enviarNotificacionEvaluacion(degreeWork, document, resultado, correcciones, evaluador.getNombre());
+        enviarNotificacionEvaluacion(degreeWork, document, resultado);
 
         return saved;
     }
 
     // ✅ Método para enviar notificaciones
-    private void enviarNotificacionEvaluacion(DegreeWork degreeWork, Document document, 
-                                            String resultado, String correcciones, String nombreEvaluador) {
+    private void enviarNotificacionEvaluacion(DegreeWork degreeWork, Document document,
+                                              String resultado) {
         try {
             // Determinar el tipo de evento basado en el resultado
             String eventType = determinarTipoEvento(resultado, document.getTipo());
             
             // Obtener emails de estudiantes (si existen)
             String studentEmail = null;
-            if (degreeWork.getEstudiantes() != null && !degreeWork.getEstudiantes().isEmpty()) {
-                studentEmail = degreeWork.getEstudiantes().get(0).getEmail();
+            if (degreeWork.getEstudiantesEmails() != null && !degreeWork.getEstudiantesEmails().isEmpty()) {
+                studentEmail = degreeWork.getEstudiantesEmails().get(0);
             }
 
             // Obtener emails de codirectores (si existen)
             String coDirector1Email = null;
             String coDirector2Email = null;
-            if (degreeWork.getCodirectoresProyecto() != null && !degreeWork.getCodirectoresProyecto().isEmpty()) {
-                if (degreeWork.getCodirectoresProyecto().size() >= 1) {
-                    coDirector1Email = degreeWork.getCodirectoresProyecto().get(0).getEmail();
+            if (degreeWork.getCodirectoresEmails() != null && !degreeWork.getCodirectoresEmails().isEmpty()) {
+                if (degreeWork.getCodirectoresEmails().size() >= 1) {
+                    coDirector1Email = degreeWork.getCodirectoresEmails().get(0);
                 }
-                if (degreeWork.getCodirectoresProyecto().size() >= 2) {
-                    coDirector2Email = degreeWork.getCodirectoresProyecto().get(1).getEmail();
+                if (degreeWork.getCodirectoresEmails().size() >= 2) {
+                    coDirector2Email = degreeWork.getCodirectoresEmails().get(1);
                 }
             }
 
             // Obtener email del director
-            String directorEmail = null;
-            if (degreeWork.getDirectorProyecto() != null) {
-                directorEmail = degreeWork.getDirectorProyecto().getEmail();
-            }
+            String directorEmail = degreeWork.getDirectorEmail();
 
             // Crear evento de notificación
             NotificationEventDTO notificationEvent = new NotificationEventDTO(

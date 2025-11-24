@@ -10,7 +10,7 @@ public class DegreeWorkAssignmentDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private Integer degreeWorkId;
+    private Long degreeWorkId;
     private String titulo;
     private String correoEvaluador1;
     private String nombreEvaluador1;
@@ -21,7 +21,7 @@ public class DegreeWorkAssignmentDTO implements Serializable {
     public DegreeWorkAssignmentDTO() {
     }
 
-    public DegreeWorkAssignmentDTO(Integer degreeWorkId, String titulo,
+    public DegreeWorkAssignmentDTO(Long degreeWorkId, String titulo,
             String correoEvaluador1, String nombreEvaluador1,
             String correoEvaluador2, String nombreEvaluador2,
             String estado) {
@@ -35,11 +35,11 @@ public class DegreeWorkAssignmentDTO implements Serializable {
     }
 
     // Getters y Setters
-    public Integer getDegreeWorkId() {
+    public Long getDegreeWorkId() {
         return degreeWorkId;
     }
 
-    public void setDegreeWorkId(Integer degreeWorkId) {
+    public void setDegreeWorkId(Long degreeWorkId) {
         this.degreeWorkId = degreeWorkId;
     }
 

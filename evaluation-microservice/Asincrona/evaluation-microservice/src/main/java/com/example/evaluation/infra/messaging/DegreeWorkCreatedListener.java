@@ -1,12 +1,12 @@
 package com.example.evaluation.infra.messaging;
 
-import com.example.evaluation.entity.*;
+import com.example.evaluation.entity.DegreeWork;
+import com.example.evaluation.entity.Document;
 import com.example.evaluation.entity.enums.EnumEstadoDegreeWork;
 import com.example.evaluation.entity.enums.EnumModalidad;
 import com.example.evaluation.infra.dto.DegreeWorkCreatedEvent;
 import com.example.evaluation.infra.dto.DocumentDTO;
 import com.example.evaluation.repository.DegreeWorkRepository;
-import com.example.evaluation.repository.UserRepository;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
@@ -21,14 +21,12 @@ import java.util.stream.Collectors;
 public class DegreeWorkCreatedListener {
 
     private final DegreeWorkRepository degreeWorkRepository;
-    private final UserRepository userRepository;
 
-    public DegreeWorkCreatedListener(DegreeWorkRepository degreeWorkRepository, UserRepository userRepository) {
+    public DegreeWorkCreatedListener(DegreeWorkRepository degreeWorkRepository) {
         this.degreeWorkRepository = degreeWorkRepository;
-        this.userRepository = userRepository;
     }
 
-    @RabbitListener(queues = "degreework.queue")
+    @RabbitListener(queues = "${app.rabbitmq.degreework.queue}")
     public void onDegreeWorkCreated(DegreeWorkCreatedEvent event) {
         System.out.println("📩 Recibido DegreeWorkCreatedEvent desde Proyectos: " + event.getTitulo() + " (ID: " + event.getId() + ")");
 
@@ -50,21 +48,6 @@ public class DegreeWorkCreatedListener {
             estadoEnum = EnumEstadoDegreeWork.FORMATO_A;
         }
 
-        // Buscar director
-        User director = userRepository.findByEmail(event.getDirectorEmail()).orElse(null);
-
-        // Buscar estudiantes
-        List<User> estudiantes = event.getEstudiantesEmails().stream()
-                .map(email -> userRepository.findByEmail(email).orElse(null))
-                .filter(u -> u != null)
-                .collect(Collectors.toList());
-
-        // Buscar codirectores
-        List<User> codirectores = event.getCodirectoresEmails().stream()
-                .map(email -> userRepository.findByEmail(email).orElse(null))
-                .filter(u -> u != null)
-                .collect(Collectors.toList());
-
         // Documentos asociados
         List<Document> formatosA = convertirDocumentos(event.getFormatosA());
         List<Document> anteproyectos = convertirDocumentos(event.getAnteproyectos());
@@ -75,11 +58,12 @@ public class DegreeWorkCreatedListener {
                 .id(event.getId()) // 👈 Se asigna el mismo id del microservicio de proyectos
                 .titulo(event.getTitulo())
                 .modalidad(modalidadEnum)
-                .directorProyecto(director)
-                .estudiantes(estudiantes)
-                .codirectoresProyecto(codirectores)
+                .directorEmail(event.getDirectorEmail())
+                .estudiantesEmails(event.getEstudiantesEmails() != null ? event.getEstudiantesEmails() : List.of())
+                .codirectoresEmails(event.getCodirectoresEmails() != null ? event.getCodirectoresEmails() : List.of())
                 .fechaActual(event.getFechaActual())
                 .estado(estadoEnum)
+                .calificacion(null)
                 .formatosA(formatosA)
                 .anteproyectos(anteproyectos)
                 .cartasAceptacion(cartas)

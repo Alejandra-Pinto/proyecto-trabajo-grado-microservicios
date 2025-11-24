@@ -1,10 +1,26 @@
 package com.example.evaluation.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
+import com.example.evaluation.entity.enums.EnumEstadoDegreeWork;
+import com.example.evaluation.entity.enums.EnumModalidad;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDate;
-import java.util.*;
-import com.example.evaluation.entity.enums.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
@@ -17,34 +33,17 @@ public class DegreeWork {
     @Id
     private Long id;
 
-    /**
-     * Un trabajo de grado puede tener uno o dos estudiantes
-     * (solo en modalidad de investigación).
-     */
-    @ManyToMany
-    @JoinTable(
-        name = "degreework_estudiantes",
-        joinColumns = @JoinColumn(name = "degree_work_id"),
-        inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
-    private List<User> estudiantes = new ArrayList<>();
+    @ElementCollection
+    @CollectionTable(name = "degreework_estudiantes_emails", joinColumns = @JoinColumn(name = "degree_work_id"))
+    @Column(name = "email")
+    private List<String> estudiantesEmails = new ArrayList<>();
 
-    /**
-     * Un solo director.
-     */
-    @ManyToOne
-    private User directorProyecto;
+    private String directorEmail;
 
-    /**
-     * Puede tener cero, uno o dos codirectores.
-     */
-    @ManyToMany
-    @JoinTable(
-        name = "degreework_codirectores",
-        joinColumns = @JoinColumn(name = "degree_work_id"),
-        inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
-    private List<User> codirectoresProyecto = new ArrayList<>();
+    @ElementCollection
+    @CollectionTable(name = "degreework_codirectores_emails", joinColumns = @JoinColumn(name = "degree_work_id"))
+    @Column(name = "email")
+    private List<String> codirectoresEmails = new ArrayList<>();
 
     private String titulo;
 
@@ -72,6 +71,8 @@ public class DegreeWork {
     @Enumerated(EnumType.STRING)
     private EnumEstadoDegreeWork estado;
 
+    private String calificacion;
+
     private int noAprobadoCount = 0;
 
     @Column(length = 2000)
@@ -80,36 +81,13 @@ public class DegreeWork {
     public void incrementNoAprobadoCount() {
         this.noAprobadoCount++;
     }
+
     public Long getId() {
         return id;
     }
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public List<User> getEstudiantes() {
-        return estudiantes;
-    }
-
-    public void setEstudiantes(List<User> estudiantes) {
-        this.estudiantes = estudiantes;
-    }
-
-    public User getDirectorProyecto() {
-        return directorProyecto;
-    }
-
-    public void setDirectorProyecto(User directorProyecto) {
-        this.directorProyecto = directorProyecto;
-    }
-
-    public List<User> getCodirectoresProyecto() {
-        return codirectoresProyecto;
-    }
-
-    public void setCodirectoresProyecto(List<User> codirectoresProyecto) {
-        this.codirectoresProyecto = codirectoresProyecto;
     }
 
     public String getTitulo() {
@@ -200,4 +178,35 @@ public class DegreeWork {
         this.correcciones = correcciones;
     }
 
+    public List<String> getEstudiantesEmails() {
+        return estudiantesEmails;
+    }
+
+    public void setEstudiantesEmails(List<String> estudiantesEmails) {
+        this.estudiantesEmails = estudiantesEmails;
+    }
+
+    public String getDirectorEmail() {
+        return directorEmail;
+    }
+
+    public void setDirectorEmail(String directorEmail) {
+        this.directorEmail = directorEmail;
+    }
+
+    public List<String> getCodirectoresEmails() {
+        return codirectoresEmails;
+    }
+
+    public void setCodirectoresEmails(List<String> codirectoresEmails) {
+        this.codirectoresEmails = codirectoresEmails;
+    }
+
+    public String getCalificacion() {
+        return calificacion;
+    }
+
+    public void setCalificacion(String calificacion) {
+        this.calificacion = calificacion;
+    }
 }

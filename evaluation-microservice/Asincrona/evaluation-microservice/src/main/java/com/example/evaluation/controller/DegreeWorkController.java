@@ -37,7 +37,7 @@ public class DegreeWorkController {
     // ✅ Asignar evaluadores (usando sus correos)
     @PostMapping("/{id}/asignar-evaluadores")
     public void asignarEvaluadores(
-            @PathVariable int id,
+            @PathVariable Long id,
             @RequestParam String correoEvaluador1,
             @RequestParam String correoEvaluador2) {
         degreeWorkService.asignarEvaluadoresPorCorreo(id, correoEvaluador1, correoEvaluador2);

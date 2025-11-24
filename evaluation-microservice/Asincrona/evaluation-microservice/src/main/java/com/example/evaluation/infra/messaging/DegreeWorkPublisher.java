@@ -13,8 +13,11 @@ public class DegreeWorkPublisher {
     @Value("${app.rabbitmq.evaluation.exchange}")
     private String exchange;
 
-    @Value("${app.rabbitmq.degreework.routingkey}")
+    @Value("${app.rabbitmq.evaluators.routingkey}")
     private String routingKey;
+
+    @Value("${app.rabbitmq.evaluators.queue}")
+    private String evaluatorsQueueName;
 
     public DegreeWorkPublisher(RabbitTemplate rabbitTemplate) {
         this.rabbitTemplate = rabbitTemplate;
@@ -25,7 +28,7 @@ public class DegreeWorkPublisher {
             System.out.println("📤 [DegreeWorkPublisher] Enviando asignación a DEGREEWORK SERVICE...");
             System.out.println("   Exchange: " + exchange);
             System.out.println("   RoutingKey: " + routingKey);
-            System.out.println("   Queue destino: degreework.queue");
+            System.out.println("   Queue destino: " + evaluatorsQueueName);
             System.out.println("   Trabajo de Grado ID: " + asignacion.getDegreeWorkId());
             System.out.println("   Título: " + asignacion.getTitulo());
             System.out.println("   Evaluador 1: " + asignacion.getNombreEvaluador1() + " ("
@@ -36,7 +39,7 @@ public class DegreeWorkPublisher {
 
             rabbitTemplate.convertAndSend(exchange, routingKey, asignacion);
 
-            System.out.println("✅ [DegreeWorkPublisher] Asignación publicada correctamente en degreework.queue\n");
+            System.out.println("✅ [DegreeWorkPublisher] Asignación publicada correctamente en " + evaluatorsQueueName + "\n");
         } catch (Exception e) {
             System.err.println("❌ [DegreeWorkPublisher] Error al publicar asignación: " + e.getMessage());
             e.printStackTrace();

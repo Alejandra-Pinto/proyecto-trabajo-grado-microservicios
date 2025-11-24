@@ -1,4 +1,4 @@
-package com.example.evaluation.entity;
+package co.unicauca.degreework.domain.entities;
 
 import jakarta.persistence.*;
 import lombok.*;

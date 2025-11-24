@@ -1,0 +1,221 @@
+{
+  "info": {
+    "_postman_id": "f3b5a23e-9ac7-48d7-a93e-4c88b4d3e9b2",
+    "name": "degreework-microservice",
+    "description": "Colección de endpoints del microservicio DegreeWork - Incluye evaluaciones",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "📋 CONSULTAS",
+      "item": [
+        {
+          "name": "Listar Todos los DegreeWorks",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:8081/api/degreeworks",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "degreeworks"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener DegreeWork por ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:8081/api/degreeworks/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "degreeworks", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar DegreeWorks por Docente",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:8081/api/degreeworks/docente/carlos.rodriguez@unicauca.edu.co",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "degreeworks", "docente", "carlos.rodriguez@unicauca.edu.co"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar DegreeWorks por Estado",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:8081/api/degreeworks/listar/ANTEPROYECTO",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "degreeworks", "listar", "ANTEPROYECTO"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "✏️ EVALUACIONES",
+      "item": [
+        {
+          "name": "Actualizar Evaluación (Estado + Observaciones) - CORREGIDO",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"degreeWorkId\": 1,\n  \"observaciones\": \"El trabajo presenta una buena estructura pero necesita profundizar en el marco teórico y especificar mejor la metodología de desarrollo. Revisar los objetivos específicos para que sean medibles.\",\n  \"estado\": \"ANTEPROYECTO\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/degreeworks/evaluacion",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "degreeworks", "evaluacion"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Aprobar Trabajo - CORREGIDO",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"degreeWorkId\": 3,\n  \"observaciones\": \"Excelente trabajo. Cumple con todos los requisitos y la metodología está bien documentada.\",\n  \"estado\": \"MONOGRAFIA\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/degreeworks/evaluacion",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "degreeworks", "evaluacion"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Solo Observaciones",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "\"Se requiere agregar más referencias bibliográficas actualizadas y mejorar la descripción de los instrumentos de recolección de datos.\""
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/degreeworks/2/observaciones",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "degreeworks", "2", "observaciones"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Solo Estado - CORREGIDO",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "\"FORMATO_A\""
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/degreeworks/1/estado",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "degreeworks", "1", "estado"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📝 GESTIÓN",
+      "item": [
+        {
+          "name": "Registrar DegreeWork (Investigación)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Sistema IoT para monitoreo ambiental\",\n  \"modalidad\": \"INVESTIGACION\",\n  \"fechaActual\": \"2025-10-29\",\n  \"directorEmail\": \"carlos.rodriguez@unicauca.edu.co\",\n  \"estudiantesEmails\": [\"laura@unicauca.edu.co\", \"marcos@unicauca.edu.co\"],\n  \"codirectoresEmails\": [\"ana.ruiz@unicauca.edu.co\"],\n  \"objetivoGeneral\": \"Desarrollar un sistema de monitoreo ambiental basado en IoT\",\n  \"objetivosEspecificos\": [\n    \"Recolectar datos de temperatura y humedad\",\n    \"Diseñar una arquitectura modular de sensores\",\n    \"Implementar una interfaz web de monitoreo\"\n  ],\n  \"estado\": \"FORMATO_A\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/degreeworks/registrar",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "degreeworks", "registrar"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar DegreeWork Completo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Sistema IoT de monitoreo ambiental (actualizado)\",\n  \"objetivoGeneral\": \"Optimizar el sistema IoT existente para mejorar su eficiencia energética\",\n  \"objetivosEspecificos\": [\n    \"Mejorar el consumo de energía de los sensores\",\n    \"Optimizar la transmisión de datos\",\n    \"Actualizar el dashboard con métricas energéticas\"\n  ],\n  \"correcciones\": \"Actualizar los diagramas UML\",\n  \"estado\": \"ANTEPROYECTO\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/degreeworks/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "degreeworks", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar DegreeWork",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://localhost:8081/api/degreeworks/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "degreeworks", "1"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

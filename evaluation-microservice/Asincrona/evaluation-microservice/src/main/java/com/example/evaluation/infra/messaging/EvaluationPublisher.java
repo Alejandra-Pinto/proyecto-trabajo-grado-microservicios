@@ -29,6 +29,7 @@ public class EvaluationPublisher {
             System.out.println("   DegreeWork ID: " + updateDTO.getDegreeWorkId());
             System.out.println("   Estado: " + updateDTO.getEstado());
             System.out.println("   Correcciones: " + updateDTO.getCorrecciones());
+            System.out.println("   Calificación: " + updateDTO.getCalificacion());
 
             rabbitTemplate.convertAndSend(exchange, routingKeyDegreeWork, updateDTO);
 

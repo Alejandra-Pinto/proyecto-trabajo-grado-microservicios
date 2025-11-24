@@ -55,7 +55,7 @@ public class DegreeWorkService {
      * solo se envía la asignación como evento a RabbitMQ.
      */
     @Transactional
-    public void asignarEvaluadoresPorCorreo(int degreeWorkId, String correoEvaluador1, String correoEvaluador2) {
+    public void asignarEvaluadoresPorCorreo(Long degreeWorkId, String correoEvaluador1, String correoEvaluador2) {
         // 1️⃣ Buscar el trabajo de grado
         DegreeWork degreeWork = degreeWorkRepository.findById(degreeWorkId)
                 .orElseThrow(() -> new RuntimeException("❌ Trabajo de grado no encontrado con ID: " + degreeWorkId));
@@ -69,7 +69,7 @@ public class DegreeWorkService {
 
         // 3️⃣ Publicar evento de asignación en RabbitMQ
         DegreeWorkAssignmentDTO dto = new DegreeWorkAssignmentDTO(
-                degreeWork.getId().intValue(),
+                degreeWork.getId(),
                 degreeWork.getTitulo(),
                 evaluador1.getCorreo(),
                 evaluador1.getNombre(),

@@ -1,32 +1,31 @@
 package com.example.evaluation.infra.messaging;
 
-import com.example.evaluation.entity.User;
+import com.example.evaluation.entity.Evaluador;
 import com.example.evaluation.infra.dto.UserCreatedEvent;
-import com.example.evaluation.repository.UserRepository;
+import com.example.evaluation.repository.EvaluadorRepository;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 @Component
 public class UserCreatedListener {
 
-    private final UserRepository userRepository;
+    private final EvaluadorRepository evaluadorRepository;
 
-    public UserCreatedListener(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    public UserCreatedListener(EvaluadorRepository evaluadorRepository) {
+        this.evaluadorRepository = evaluadorRepository;
     }
 
-    @RabbitListener(queues = "users.queue")
+    @RabbitListener(queues = "${app.rabbitmq.user.queue}")
     public void onUserCreated(UserCreatedEvent event) {
-        User user = User.builder()
-                .id(event.getId())
-                .firstName(event.getFirstName())
-                .lastName(event.getLastName())
-                .email(event.getEmail())
-                .role(event.getRole())
-                .program(event.getProgram())
-                .status(event.getStatus())
-                .build();
-        userRepository.save(user);
+        String nombreCompleto = (event.getFirstName() + " " + event.getLastName()).trim();
+        evaluadorRepository.findByCorreo(event.getEmail())
+                .ifPresentOrElse(existing -> {
+                    existing.setNombre(nombreCompleto);
+                    existing.setRol(event.getRole());
+                    evaluadorRepository.save(existing);
+                }, () -> {
+                    Evaluador evaluador = new Evaluador(nombreCompleto, event.getRole(), event.getEmail());
+                    evaluadorRepository.save(evaluador);
+                });
     }
-    
 }

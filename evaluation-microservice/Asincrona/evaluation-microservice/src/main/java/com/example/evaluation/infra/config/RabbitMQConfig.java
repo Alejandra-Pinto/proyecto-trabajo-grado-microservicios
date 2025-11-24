@@ -27,6 +27,12 @@ public class RabbitMQConfig {
     @Value("${app.rabbitmq.degreework.routingkey}")
     private String degreeWorkRoutingKey;
 
+    @Value("${app.rabbitmq.evaluators.queue}")
+    private String evaluatorsQueue;
+
+    @Value("${app.rabbitmq.evaluators.routingkey}")
+    private String evaluatorsRoutingKey;
+
     // Colas y routing keys para notificaciones (nuevas)
     @Value("${app.rabbitmq.notification.exchange}")
     private String notificationExchange;
@@ -61,6 +67,12 @@ public class RabbitMQConfig {
         return new Queue(degreeWorkQueue, true);
     }
 
+    // ===== Cola para ASIGNACIÓN DE EVALUADORES =====
+    @Bean
+    public Queue evaluatorsQueue() {
+        return new Queue(evaluatorsQueue, true);
+    }
+
     // ===== Cola para NOTIFICACIONES =====
     @Bean
     public Queue notificationQueue() {
@@ -77,6 +89,12 @@ public class RabbitMQConfig {
     @Bean
     public Binding bindingDegreeWork(Queue degreeWorkQueue, DirectExchange mainExchange) {
         return BindingBuilder.bind(degreeWorkQueue).to(mainExchange).with(degreeWorkRoutingKey);
+    }
+
+    // ===== Binding: evaluators.queue -> evaluation.exchange con evaluators.routingkey =====
+    @Bean
+    public Binding bindingEvaluators(Queue evaluatorsQueue, DirectExchange mainExchange) {
+        return BindingBuilder.bind(evaluatorsQueue).to(mainExchange).with(evaluatorsRoutingKey);
     }
 
     // ===== Binding: notification.queue -> notification.exchange con notification.routingkey =====
