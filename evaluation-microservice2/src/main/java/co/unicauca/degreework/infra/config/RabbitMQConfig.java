@@ -1,4 +1,4 @@
-package co.unicauca.evaluation.infra.config;
+package co.unicauca.degreework.infra.config;
 
 import org.springframework.amqp.core.*;
 import org.springframework.context.annotation.Bean;

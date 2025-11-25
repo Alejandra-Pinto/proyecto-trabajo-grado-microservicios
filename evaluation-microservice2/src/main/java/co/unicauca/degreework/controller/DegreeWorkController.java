@@ -1,9 +1,6 @@
 package co.unicauca.degreework.controller;
 
 import co.unicauca.degreework.domain.entities.DegreeWork;
-import co.unicauca.degreework.domain.entities.builder.DegreeWorkBuilder;
-import co.unicauca.degreework.domain.entities.builder.ProfessionalPracticeBuilder;
-import co.unicauca.degreework.domain.entities.builder.ResearchDegreeWorkBuilder;
 import co.unicauca.degreework.domain.entities.enums.EnumEstadoDegreeWork;
 import co.unicauca.degreework.infra.dto.DegreeWorkDTO;
 import co.unicauca.degreework.infra.dto.ActualizarEvaluacionDTO;

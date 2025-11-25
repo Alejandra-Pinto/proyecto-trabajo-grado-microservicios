@@ -2,14 +2,10 @@ package co.unicauca.degreework.service;
 
 import co.unicauca.degreework.access.*;
 import co.unicauca.degreework.domain.entities.*;
-import co.unicauca.degreework.domain.entities.builder.DegreeWorkBuilder;
-import co.unicauca.degreework.domain.entities.builder.DegreeWorkDirector;
 import co.unicauca.degreework.domain.entities.enums.EnumEstadoDegreeWork;
 import co.unicauca.degreework.domain.entities.enums.EnumEstadoDocument;
 import co.unicauca.degreework.domain.entities.enums.EnumTipoDocumento;
-import co.unicauca.degreework.domain.entities.memento.DegreeWorkCaretaker;
-import co.unicauca.degreework.domain.entities.memento.DegreeWorkMemento;
-import co.unicauca.degreework.domain.entities.memento.DegreeWorkOriginator;
+
 import co.unicauca.degreework.infra.dto.DegreeWorkCreatedEvent;
 import co.unicauca.degreework.infra.dto.DegreeWorkDTO;
 import co.unicauca.degreework.infra.dto.DegreeWorkUpdateDTO;
@@ -214,5 +210,3 @@ public class DegreeWorkService {
     }
 
 }
-
-YA FUNCIONAAAAAAAAAAAAAAAA
