@@ -12,10 +12,10 @@ public class DegreeWorkProducer {
 
     private final RabbitTemplate rabbitTemplate;
 
-    @Value("${app.rabbitmq.degreework.exchange}")
+    @Value("${app.rabbitmq.evaluation.exchange}")
     private String exchange;
 
-    @Value("${app.rabbitmq.degreework.routingkey}")
+    @Value("${app.rabbitmq.evaluation.routingkey}")
     private String routingKey;
 
     public DegreeWorkProducer(RabbitTemplate rabbitTemplate) {
@@ -31,8 +31,8 @@ public class DegreeWorkProducer {
     public void sendEvaluacionEvent(EvaluacionEventDTO evento) {
     try {
         rabbitTemplate.convertAndSend(
-            "degreework.exchange", // o el exchange que uses
-            "evaluacion.routing.key", // routing key específico para evaluaciones
+            exchange, // o el exchange que uses
+            routingKey, // routing key específico para evaluaciones
             evento
         );
         System.out.println("✅ Evento de evaluación enviado a la cola: " + evento.getDegreeWorkId());

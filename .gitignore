@@ -1,0 +1,19 @@
+# Ignorar bases de datos H2
+*.db
+*.mv.db
+*.trace.db
+
+# Ignorar carpetas de compilación
+target/
+
+# Ignorar archivos de logs
+*.log
+
+# Configuraciones del IDE
+.vscode/
+.idea/
+*.iml
+
+# Archivos del sistema
+Thumbs.db
+.DS_Store

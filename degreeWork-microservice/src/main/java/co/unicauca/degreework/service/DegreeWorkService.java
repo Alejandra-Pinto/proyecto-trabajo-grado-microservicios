@@ -257,62 +257,88 @@ public class DegreeWorkService {
      */
     private void actualizarDocumentos(DegreeWorkDTO dto, DegreeWork existente) {
 
-        // FORMATO A
-        if (dto.getFormatosA() != null && !dto.getFormatosA().isEmpty()) {
-            DocumentDTO formatoADto = dto.getFormatosA().get(0);
-            Document formatoExistente = existente.getUltimoDocumentoPorTipo(EnumTipoDocumento.FORMATO_A);
+    // ============================
+    // FORMATO A
+    // ============================
+    if (dto.getFormatosA() != null && !dto.getFormatosA().isEmpty()) {
 
-            if (formatoExistente == null) {
-                // Si no hay formato A, se crea
-                Document nuevoFormatoA = new Document();
-                nuevoFormatoA.setTipo(EnumTipoDocumento.FORMATO_A);
-                nuevoFormatoA.setRutaArchivo(formatoADto.getRutaArchivo());
-                nuevoFormatoA.setEstado(formatoADto.getEstado());
-                existente.manejarRevision(nuevoFormatoA);
-            } else {
-                // Si ya existe, se actualiza la ruta y el estado
-                formatoExistente.setRutaArchivo(formatoADto.getRutaArchivo());
-                formatoExistente.setEstado(formatoADto.getEstado());
-                formatoExistente.setFechaActual(LocalDate.now());
-                existente.manejarRevision(formatoExistente);
-            }
-        }
+        DocumentDTO formatoADto = dto.getFormatosA().get(0);
+        Document formatoExistente = existente.getUltimoDocumentoPorTipo(EnumTipoDocumento.FORMATO_A);
 
-        // VALIDAR ANTEPROYECTO SOLO SI FORMATO A ESTÁ ACEPTADO
-        if (dto.getAnteproyectos() != null && !dto.getAnteproyectos().isEmpty()) {
-            Document formatoA = existente.getUltimoDocumentoPorTipo(EnumTipoDocumento.FORMATO_A);
+        if (formatoExistente == null) {
+            // Crear nuevo Formato A
+            Document nuevoFormatoA = new Document();
+            nuevoFormatoA.setTipo(EnumTipoDocumento.FORMATO_A);
+            nuevoFormatoA.setRutaArchivo(formatoADto.getRutaArchivo());
+            nuevoFormatoA.setEstado(formatoADto.getEstado());
+            nuevoFormatoA.setFechaActual(LocalDate.now());
 
-            if (formatoA == null || formatoA.getEstado() != EnumEstadoDocument.ACEPTADO) {
-                throw new IllegalStateException("No se puede subir un anteproyecto hasta que el Formato A haya sido ACEPTADO.");
-            }
+            existente.manejarRevision(nuevoFormatoA);
 
-            // Si está permitido, se agrega o actualiza
-            DocumentDTO anteproyectoDto = dto.getAnteproyectos().get(0);
-            Document anteproyectoExistente = existente.getUltimoDocumentoPorTipo(EnumTipoDocumento.ANTEPROYECTO);
+        } else {
+            // Actualizar documento existente
+            formatoExistente.setRutaArchivo(formatoADto.getRutaArchivo());
+            formatoExistente.setEstado(formatoADto.getEstado());
+            formatoExistente.setFechaActual(LocalDate.now());
 
-            if (anteproyectoExistente == null) {
-                Document nuevoAnteproyecto = new Document();
-                nuevoAnteproyecto.setTipo(EnumTipoDocumento.ANTEPROYECTO);
-                nuevoAnteproyecto.setRutaArchivo(anteproyectoDto.getRutaArchivo());
-                nuevoAnteproyecto.setEstado(anteproyectoDto.getEstado());
-                existente.manejarRevision(nuevoAnteproyecto);
-            } else {
-                anteproyectoExistente.setRutaArchivo(anteproyectoDto.getRutaArchivo());
-                anteproyectoExistente.setEstado(anteproyectoDto.getEstado());
-                anteproyectoExistente.setFechaActual(LocalDate.now());
-                existente.manejarRevision(anteproyectoExistente);
-            }
-        }
-
-        // CARTA DE ACEPTACIÓN
-        if (dto.getCartasAceptacion() != null && !dto.getCartasAceptacion().isEmpty()) {
-            DocumentDTO cartaDto = dto.getCartasAceptacion().get(0);
-            Document carta = new Document();
-            carta.setRutaArchivo(cartaDto.getRutaArchivo());
-            carta.setTipo(EnumTipoDocumento.CARTA_ACEPTACION);
-            carta.setEstado(cartaDto.getEstado());
+            existente.manejarRevision(formatoExistente);
         }
     }
+
+    // ============================
+    // ANTEPROYECTO
+    // ============================
+    if (dto.getAnteproyectos() != null && !dto.getAnteproyectos().isEmpty()) {
+
+        // Validar Formato A aceptado
+        Document formatoA = existente.getUltimoDocumentoPorTipo(EnumTipoDocumento.FORMATO_A);
+        if (formatoA == null || formatoA.getEstado() != EnumEstadoDocument.ACEPTADO) {
+            throw new IllegalStateException("No se puede subir un anteproyecto hasta que el Formato A haya sido ACEPTADO.");
+        }
+
+        DocumentDTO anteDto = dto.getAnteproyectos().get(0);
+        Document anteExistente = existente.getUltimoDocumentoPorTipo(EnumTipoDocumento.ANTEPROYECTO);
+
+        if (anteExistente == null) {
+            Document nuevo = new Document();
+            nuevo.setTipo(EnumTipoDocumento.ANTEPROYECTO);
+            nuevo.setRutaArchivo(anteDto.getRutaArchivo());
+            nuevo.setEstado(anteDto.getEstado());
+            nuevo.setFechaActual(LocalDate.now());
+            existente.manejarRevision(nuevo);
+        } else {
+            anteExistente.setRutaArchivo(anteDto.getRutaArchivo());
+            anteExistente.setEstado(anteDto.getEstado());
+            anteExistente.setFechaActual(LocalDate.now());
+            existente.manejarRevision(anteExistente);
+        }
+    }
+
+    // ============================
+    // CARTA DE ACEPTACIÓN
+    // ============================
+    if (dto.getCartasAceptacion() != null && !dto.getCartasAceptacion().isEmpty()) {
+
+        DocumentDTO cartaDto = dto.getCartasAceptacion().get(0);
+
+        Document cartaExistente = existente.getUltimoDocumentoPorTipo(EnumTipoDocumento.CARTA_ACEPTACION);
+
+        if (cartaExistente == null) {
+            Document nueva = new Document();
+            nueva.setTipo(EnumTipoDocumento.CARTA_ACEPTACION);
+            nueva.setRutaArchivo(cartaDto.getRutaArchivo());
+            nueva.setEstado(cartaDto.getEstado());
+            nueva.setFechaActual(LocalDate.now());
+            existente.manejarRevision(nueva);
+        } else {
+            cartaExistente.setRutaArchivo(cartaDto.getRutaArchivo());
+            cartaExistente.setEstado(cartaDto.getEstado());
+            cartaExistente.setFechaActual(LocalDate.now());
+            existente.manejarRevision(cartaExistente);
+        }
+    }
+}
+
 
 
 
