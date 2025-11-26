@@ -2,11 +2,17 @@ package com.unicauca.front.controller;
 
 import com.unicauca.front.model.User;
 import com.unicauca.front.service.ApiGatewayService;
+import com.unicauca.front.service.KeycloakService;
 import com.unicauca.front.util.NavigationController;
+import com.unicauca.front.util.SessionManager;
+
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
+
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 
@@ -23,11 +29,13 @@ public class LoginController {
     private Hyperlink hpl_register;
 
     private final ApiGatewayService apiService;
+    private final KeycloakService keycloakService;
     private final NavigationController navigation;
 
-    public LoginController(ApiGatewayService apiService, NavigationController navigation) {
+    public LoginController(ApiGatewayService apiService, KeycloakService keycloakService, NavigationController navigation) {
         this.apiService = apiService;
         this.navigation = navigation;
+        this.keycloakService = keycloakService;
     }
 
     @FXML
@@ -41,46 +49,36 @@ public class LoginController {
         }
 
         try {
-            //Envia login al microservicio
-            User loginRequest = new User();
-            loginRequest.setEmail(usuario);
-            loginRequest.setPassword(contrasenia);
-
-            String basePath;
-            if (usuario.toLowerCase().contains("admin")) {
-                basePath = "api/admin";
-            } else {
-                basePath = "api/usuarios";
-            }
-
-            ResponseEntity<User> response = apiService.post(basePath, "/login", loginRequest, User.class);
-
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                User usuarioLogueado = response.getBody();
-                System.out.println("ROL del usuario logueado: " + usuarioLogueado.getRole());
-                System.out.println("ESTADO del usuario: " + usuarioLogueado.getStatus());
+            // NUEVO: Login con Keycloak
+            String token = keycloakService.login(usuario, contrasenia);
+            
+            if (token != null) {
+                // Guardar token en ApiGatewayService
+                apiService.setAccessToken(token);
                 
-                // Verifica estado del coordinador O jefe de departamento (si aplica)
-                if ("COORDINATOR".equalsIgnoreCase(usuarioLogueado.getRole()) || 
-                    "DEPARTMENT_HEAD".equalsIgnoreCase(usuarioLogueado.getRole())) {
+                // Obtener información del usuario desde Keycloak
+                Map<String, Object> userInfo = keycloakService.getUserInfo(token);
+                
+                if (userInfo != null) {
+                    // Crear objeto User con la información de Keycloak
+                    User usuarioLogueado = new User();
+                    usuarioLogueado.setEmail(usuario);
+                    usuarioLogueado.setFirstName((String) userInfo.get("given_name"));
+                    usuarioLogueado.setLastName((String) userInfo.get("family_name"));
                     
-                    if ("PENDIENTE".equals(usuarioLogueado.getStatus())) {
-                        mostrarAlerta("Solicitud en espera",
-                                "Su solicitud de registro aún está en revisión.",
-                                Alert.AlertType.INFORMATION);
-                        return;
-                    } else if ("RECHAZADO".equals(usuarioLogueado.getStatus())) {
-                        mostrarAlerta("Solicitud rechazada",
-                                "Su solicitud de registro fue rechazada.",
-                                Alert.AlertType.ERROR);
-                        return;
-                    }
-                }
-                
-                if("ADMIN".equalsIgnoreCase(usuarioLogueado.getRole())) {
-                    navigation.showHomeAdmin(usuarioLogueado);
-                } else {
+                    // Obtener rol desde los realm_access roles de Keycloak
+                    // Esto requiere configuración adicional en Keycloak
+                    usuarioLogueado.setRole("USER"); // Temporal - lo mejoraremos
+                    
+                    // Guardar en sesión
+                    SessionManager.setCurrentUser(usuarioLogueado);
+                    
+                    // Navegar según el rol
+                    // TEMPORAL: Por ahora todos van al home normal
                     navigation.showHomeWithUser(usuarioLogueado);
+                    
+                } else {
+                    mostrarAlerta("Error de login", "No se pudo obtener información del usuario.", Alert.AlertType.ERROR);
                 }
                 
             } else {
