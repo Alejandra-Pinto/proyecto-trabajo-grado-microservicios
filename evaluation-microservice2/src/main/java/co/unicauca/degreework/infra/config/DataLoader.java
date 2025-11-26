@@ -1,4 +1,4 @@
-package co.unicauca.degreework.infra.config;
+/*package co.unicauca.degreework.infra.config;
 
 import co.unicauca.degreework.domain.entities.*;
 import co.unicauca.degreework.domain.entities.enums.*;
@@ -199,4 +199,4 @@ public class DataLoader {
             System.out.println("ℹ️ DataLoader: Ya existen trabajos de grado, no se insertaron datos iniciales.");
         }
     }
-}
+}*/

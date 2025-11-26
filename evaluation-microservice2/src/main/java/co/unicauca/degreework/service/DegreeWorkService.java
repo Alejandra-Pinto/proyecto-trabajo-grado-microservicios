@@ -153,42 +153,76 @@ public class DegreeWorkService {
         if (dto == null || dto.getDegreeWorkId() == null) {
             throw new IllegalArgumentException("DTO inválido: se requiere degreeWorkId");
         }
-        
+
         DegreeWork degreeWork = repository.findById(dto.getDegreeWorkId())
-                .orElseThrow(() -> new IllegalArgumentException("No se encontró el trabajo de grado con ID " + dto.getDegreeWorkId()));
-        
-        // Guardar estado anterior para el evento
-        EnumEstadoDegreeWork estadoAnterior = degreeWork.getEstado();
-        String observacionesAnteriores = degreeWork.getCorrecciones();
-        
-        // Actualizar solo observaciones y estado
+                .orElseThrow(() -> new IllegalArgumentException(
+                    "No se encontró el trabajo de grado con ID " + dto.getDegreeWorkId()
+                ));
+
+        // -----------------------------------------
+        // 1️⃣ OBTENER EL ÚLTIMO DOCUMENTO SUBIDO
+        // -----------------------------------------
+        Document ultimoDoc = null;
+
+        if (degreeWork.getCartasAceptacion() != null && !degreeWork.getCartasAceptacion().isEmpty()) {
+            ultimoDoc = degreeWork.getCartasAceptacion()
+                        .get(degreeWork.getCartasAceptacion().size() - 1);
+        } else if (degreeWork.getAnteproyectos() != null && !degreeWork.getAnteproyectos().isEmpty()) {
+            ultimoDoc = degreeWork.getAnteproyectos()
+                        .get(degreeWork.getAnteproyectos().size() - 1);
+        } else if (degreeWork.getFormatosA() != null && !degreeWork.getFormatosA().isEmpty()) {
+            ultimoDoc = degreeWork.getFormatosA()
+                        .get(degreeWork.getFormatosA().size() - 1);
+        }
+
+        if (ultimoDoc == null) {
+            throw new IllegalStateException("No hay documentos asociados al trabajo.");
+        }
+
+        // Guardar estado previo del documento
+        EnumEstadoDocument estadoAnterior = ultimoDoc.getEstado();
+        String observacionesPrevias = degreeWork.getCorrecciones();
+
+        // -----------------------------------------
+        // 2️⃣ ACTUALIZAR ESTADO Y OBSERVACIONES
+        // -----------------------------------------
+        if (dto.getEstado() != null) {
+            ultimoDoc.setEstado(dto.getEstado());
+            ultimoDoc.setFechaActual(LocalDate.now());
+        }
+
         if (dto.getObservaciones() != null) {
             degreeWork.setCorrecciones(dto.getObservaciones());
         }
-        if (dto.getEstado() != null) {
-            degreeWork.setEstado(dto.getEstado());
-        }
-        
+
+        // -----------------------------------------
+        // 3️⃣ GUARDAR
+        // -----------------------------------------
         DegreeWork saved = repository.save(degreeWork);
-        
-        System.out.println("[EVALUACION] Trabajo de grado ID " + dto.getDegreeWorkId() + 
-                        " actualizado - Estado: " + estadoAnterior + " → " + dto.getEstado());
-        
-        // ✅ ENVIAR EVALUACIÓN A LA COLA - SOLO SI HUBO CAMBIOS
-        if (dto.getEstado() != null && !dto.getEstado().equals(estadoAnterior) || 
-            (dto.getObservaciones() != null && !dto.getObservaciones().equals(observacionesAnteriores))) {
-            
+
+        System.out.println("[EVALUACION] Documento actualizado - Estado: " 
+                + estadoAnterior + " → " + dto.getEstado());
+
+        // -----------------------------------------
+        // 4️⃣ ENVIAR EVENTO SOLO SI HAY CAMBIOS
+        // -----------------------------------------
+        boolean cambioEstado = dto.getEstado() != null && !dto.getEstado().equals(estadoAnterior);
+        boolean cambioObs = dto.getObservaciones() != null 
+                            && !dto.getObservaciones().equals(observacionesPrevias);
+
+        if (cambioEstado || cambioObs) {
             enviarEvaluacionACola(saved, estadoAnterior, dto.getEstado(), dto.getObservaciones());
         }
-        
+
         return saved;
     }
+
 
     /**
      * Método para enviar la evaluación a la cola de mensajes
      */
-    private void enviarEvaluacionACola(DegreeWork degreeWork, EnumEstadoDegreeWork estadoAnterior, 
-                                    EnumEstadoDegreeWork estadoNuevo, String observaciones) {
+    private void enviarEvaluacionACola(DegreeWork degreeWork, EnumEstadoDocument estadoAnterior, 
+                                    EnumEstadoDocument estadoNuevo, String observaciones) {
         try {
             EvaluacionEventDTO evento = new EvaluacionEventDTO(
                 degreeWork.getId(),

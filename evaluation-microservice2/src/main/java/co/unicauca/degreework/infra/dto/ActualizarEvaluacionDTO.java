@@ -1,11 +1,12 @@
 package co.unicauca.degreework.infra.dto;
 
 import co.unicauca.degreework.domain.entities.enums.EnumEstadoDegreeWork;
+import co.unicauca.degreework.domain.entities.enums.EnumEstadoDocument;
 
 public class ActualizarEvaluacionDTO {
     private Long degreeWorkId;
     private String observaciones;
-    private EnumEstadoDegreeWork estado;
+    private EnumEstadoDocument estado;
     
     // Getters y Setters
     public Long getDegreeWorkId() {
@@ -24,11 +25,11 @@ public class ActualizarEvaluacionDTO {
         this.observaciones = observaciones;
     }
     
-    public EnumEstadoDegreeWork getEstado() {
+    public EnumEstadoDocument getEstado() {
         return estado;
     }
     
-    public void setEstado(EnumEstadoDegreeWork estado) {
+    public void setEstado(EnumEstadoDocument estado) {
         this.estado = estado;
     }
 }

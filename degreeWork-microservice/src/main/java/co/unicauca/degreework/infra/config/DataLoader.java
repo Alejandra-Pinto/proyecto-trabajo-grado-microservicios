@@ -45,6 +45,15 @@ public class DataLoader {
                     .program("Ingeniería de Sistemas")
                     .status("ACEPTADO")
                     .build();
+        User estudiante3 = User.builder()
+                    .id(5L)
+                    .firstName("matias")
+                    .lastName("gomez")
+                    .email("matias@unicauca.edu.co")
+                    .role("STUDENT")
+                    .program("Ingeniería de Sistemas")
+                    .status("ACEPTADO")
+                    .build();
 
             // Director
             User director = User.builder()
@@ -68,21 +77,21 @@ public class DataLoader {
                     .status("ACEPTADO")
                     .build();
 
-            userRepository.saveAll(List.of(estudiante1, estudiante2, director, codirector));
+            userRepository.saveAll(List.of(estudiante1, estudiante2, estudiante3, director, codirector));
             // ============ DOCUMENTOS ============
 
             Document formatoA = new Document();
             formatoA.setTipo(EnumTipoDocumento.FORMATO_A);
             formatoA.setRutaArchivo("/docs/formatoA_aceptado.pdf");
             formatoA.setFechaActual(LocalDate.now().minusDays(10));
-            formatoA.setEstado(EnumEstadoDocument.ACEPTADO);
-
+            formatoA.setEstado(EnumEstadoDocument.PRIMERA_REVISION);
+/* 
             Document anteproyecto = new Document();
             anteproyecto.setTipo(EnumTipoDocumento.ANTEPROYECTO);
             anteproyecto.setRutaArchivo("/docs/anteproyecto_v1.pdf");
             anteproyecto.setFechaActual(LocalDate.now());
             anteproyecto.setEstado(EnumEstadoDocument.PRIMERA_REVISION);
-
+ */
             // ============ TRABAJO DE GRADO ============
 
             DegreeWork degreeWork = DegreeWork.builder()
@@ -95,12 +104,12 @@ public class DataLoader {
                             "Diseñar la arquitectura basada en microservicios.",
                             "Implementar los módulos principales."
                     ))
-                    .estado(EnumEstadoDegreeWork.ANTEPROYECTO)
+                    .estado(EnumEstadoDegreeWork.FORMATO_A)
                     .build();
 
             // Asociar documentos
             degreeWork.setFormatosA(new ArrayList<>(List.of(formatoA)));
-            degreeWork.setAnteproyectos(new ArrayList<>(List.of(anteproyecto)));
+            //degreeWork.setAnteproyectos(new ArrayList<>(List.of(anteproyecto)));
 
             // Asociar usuarios
             degreeWork.setEstudiantes(new ArrayList<>(List.of(estudiante1, estudiante2)));

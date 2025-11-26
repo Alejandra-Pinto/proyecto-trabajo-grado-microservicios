@@ -64,24 +64,41 @@ public abstract class DegreeWorkBuilder {
      * Carga los documentos enviados en el DTO.
      */
     public DegreeWorkBuilder documentosDesdeDTOs(List<DocumentDTO> documentosDTO) {
-        if (documentosDTO != null && !documentosDTO.isEmpty()) {
-            for (DocumentDTO docDto : documentosDTO) {
-                Document doc = new Document();
-                doc.setTipo(docDto.getTipo());
-                doc.setEstado(docDto.getEstado());
-                doc.setRutaArchivo(docDto.getRutaArchivo());
+        if (documentosDTO == null || documentosDTO.isEmpty()) {
+            return this;
+        }
 
-                if (doc.getTipo() == EnumTipoDocumento.FORMATO_A) {
+        for (DocumentDTO docDto : documentosDTO) {
+
+            if (docDto.getTipo() == null) {
+                System.out.println("⚠ DOCUMENTO IGNORADO - tipo es NULL: " + docDto);
+                continue;
+            }
+
+            Document doc = new Document();
+            doc.setTipo(docDto.getTipo());
+            doc.setEstado(docDto.getEstado());
+            doc.setRutaArchivo(docDto.getRutaArchivo());
+            doc.setFechaActual(LocalDate.now()); // <-- ESTA ERA LA QUE FALTABA
+
+            switch (docDto.getTipo()) {
+                case FORMATO_A:
                     degreeWork.getFormatosA().add(doc);
-                } else if (doc.getTipo() == EnumTipoDocumento.CARTA_ACEPTACION) {
+                    break;
+                case CARTA_ACEPTACION:
                     degreeWork.getCartasAceptacion().add(doc);
-                } else if (doc.getTipo() == EnumTipoDocumento.ANTEPROYECTO) {
+                    break;
+                case ANTEPROYECTO:
                     degreeWork.getAnteproyectos().add(doc);
-                }
+                    break;
+                default:
+                    System.out.println("⚠ Tipo de documento desconocido: " + docDto.getTipo());
             }
         }
+
         return this;
     }
+
 
 
     public DegreeWork build() {
