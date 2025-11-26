@@ -18,11 +18,12 @@ public class UserCreatedEvent implements Serializable {
     private String role;
     private String program;
     private String status;
+    private boolean isEvaluator; 
 
     public UserCreatedEvent() {}
 
     public UserCreatedEvent(Long id, String firstName, String lastName, String email,
-                            String role, String program, String status) {
+                            String role, String program, String status, boolean isEvaluator) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -30,6 +31,7 @@ public class UserCreatedEvent implements Serializable {
         this.role = role;
         this.program = program;
         this.status = status;
+        this.isEvaluator = isEvaluator;
     }
 
     // Getters y Setters
@@ -53,4 +55,7 @@ public class UserCreatedEvent implements Serializable {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public boolean isEvaluator() { return isEvaluator; }
+    public void setEvaluator(boolean evaluator) { isEvaluator = evaluator; }
 }

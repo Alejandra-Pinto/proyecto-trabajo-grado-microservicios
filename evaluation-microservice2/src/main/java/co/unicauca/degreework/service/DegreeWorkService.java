@@ -1,50 +1,33 @@
 package co.unicauca.degreework.service;
 
-import co.unicauca.degreework.access.*;
-import co.unicauca.degreework.domain.entities.*;
-import co.unicauca.degreework.domain.entities.enums.EnumEstadoDegreeWork;
+import co.unicauca.degreework.access.DegreeWorkRepository;
+import co.unicauca.degreework.access.DocumentRepository;
+import co.unicauca.degreework.domain.entities.DegreeWork;
+import co.unicauca.degreework.domain.entities.Document;
 import co.unicauca.degreework.domain.entities.enums.EnumEstadoDocument;
-import co.unicauca.degreework.domain.entities.enums.EnumTipoDocumento;
-
-import co.unicauca.degreework.infra.dto.DegreeWorkCreatedEvent;
-import co.unicauca.degreework.infra.dto.DegreeWorkDTO;
-import co.unicauca.degreework.infra.dto.DegreeWorkUpdateDTO;
-import co.unicauca.degreework.infra.dto.DocumentDTO;
-import co.unicauca.degreework.infra.dto.NotificationEventDTO;
-import co.unicauca.degreework.infra.dto.EvaluacionEventDTO;
-import co.unicauca.degreework.infra.messaging.DegreeWorkProducer;
-import co.unicauca.degreework.infra.messaging.NotificationProducer;
 import co.unicauca.degreework.infra.dto.ActualizarEvaluacionDTO;
-
+import co.unicauca.degreework.infra.dto.DegreeWorkUpdateDTO;
+import co.unicauca.degreework.infra.messaging.DegreeWorkProducer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class DegreeWorkService {
 
     private final DegreeWorkRepository repository;
-    private final UserService userService;
     private final DocumentRepository documentRepository;
-    private final DegreeWorkProducer degreeWorkProducer; 
-    private final NotificationProducer notificationProducer;
+    private final DegreeWorkProducer degreeWorkProducer;
 
-    public DegreeWorkService(DegreeWorkRepository repository, UserService userService,
-                            DocumentRepository documentRepository,
-                            DegreeWorkProducer degreeWorkProducer, 
-                            NotificationProducer notificationProducer) {
+    public DegreeWorkService(DegreeWorkRepository repository,
+                             DocumentRepository documentRepository,
+                             DegreeWorkProducer degreeWorkProducer) {
         this.repository = repository;
-        this.userService = userService;
         this.documentRepository = documentRepository;
-        this.degreeWorkProducer = degreeWorkProducer; 
-        this.notificationProducer = notificationProducer;
+        this.degreeWorkProducer = degreeWorkProducer;
     }
-
 
     /**
      * Obtener un trabajo de grado por ID
@@ -54,138 +37,35 @@ public class DegreeWorkService {
     }
 
     /**
-     * Listar todos los trabajos de grado
-     */
-    public List<DegreeWork> listarTodos() {
-        return repository.findAll();
-    }
-
-    /**
-     * Listar trabajos por docente (director)
-     */
-    public List<DegreeWork> listarDegreeWorksPorDocente(String teacherEmail) {
-        return repository.listByTeacher(teacherEmail);
-    }
-
-    /**
-     * Listar trabajos por estudiante
-     */
-    public List<DegreeWork> listarDegreeWorksPorEstudiante(String studentEmail) {
-        return repository.listByStudent(studentEmail);
-    }
-
-    /**
-     * Listar anteproyectos
-     */
-    public List<DegreeWork> listarAnteproyectos(EnumEstadoDegreeWork estado) {
-        return repository.findByEstado(estado);
-    }
-
-    /**
-     * Eliminar un trabajo de grado
-     */
-    public void eliminarDegreeWork(Long id) {
-        repository.deleteById(id);
-    }
-
-    /**
-     * Actualizar correcciones y estado desde el microservicio de evaluaciones
-    */
-    @Transactional
-    public void actualizarDesdeEvaluacion(DegreeWorkUpdateDTO dto) {
-        if (dto == null || dto.getDegreeWorkId() == null) {
-            throw new IllegalArgumentException("El DTO recibido desde Evaluaciones es inválido.");
-        }
-
-        System.out.println("📥 [RabbitMQ] Recibido mensaje de Evaluaciones: " + dto);
-
-        Long id = dto.getDegreeWorkId().longValue();
-        DegreeWork degreeWork = repository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("No se encontró el trabajo de grado con ID " + id));
-
-        // --- Obtener el último documento subido (de cualquier tipo) ---
-        Document ultimoDoc = null;
-        if (degreeWork.getCartasAceptacion() != null && !degreeWork.getCartasAceptacion().isEmpty()) {
-            ultimoDoc = degreeWork.getCartasAceptacion().get(degreeWork.getCartasAceptacion().size() - 1);
-        } else if (degreeWork.getAnteproyectos() != null && !degreeWork.getAnteproyectos().isEmpty()) {
-            ultimoDoc = degreeWork.getAnteproyectos().get(degreeWork.getAnteproyectos().size() - 1);
-        } else if (degreeWork.getFormatosA() != null && !degreeWork.getFormatosA().isEmpty()) {
-            ultimoDoc = degreeWork.getFormatosA().get(degreeWork.getFormatosA().size() - 1);
-        }
-
-        if (ultimoDoc == null) {
-            throw new IllegalStateException("No se encontró ningún documento asociado al trabajo de grado.");
-        }
-
-        // --- Actualizar el estado del último documento ---
-        try {
-            EnumEstadoDocument nuevoEstado = EnumEstadoDocument.valueOf(dto.getEstado().toUpperCase());
-            ultimoDoc.setEstado(nuevoEstado);
-            ultimoDoc.setFechaActual(LocalDate.now());
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("El estado recibido no es válido: " + dto.getEstado());
-        }
-
-        // --- Actualizar las correcciones ---
-        degreeWork.setCorrecciones(dto.getCorrecciones());
-
-        // --- Si el estado no fue aceptado, incrementar contador ---
-        if (!"ACEPTADO".equalsIgnoreCase(dto.getEstado())) {
-            degreeWork.setNoAprobadoCount(degreeWork.getNoAprobadoCount() + 1);
-            System.out.println("El documento fue rechazado o no aprobado. Se incrementa contador a: "
-                    + degreeWork.getNoAprobadoCount());
-        } else {
-            System.out.println("Documento aceptado. No se incrementa contador.");
-        }
-
-        // --- Guardar cambios ---
-        repository.save(degreeWork);
-
-        System.out.println("[Evaluaciones] Estado del último documento y correcciones actualizados para DegreeWork ID " + id);
-    }
-
-    /**
-     * Actualiza solo el estado y las observaciones de un trabajo de grado
-     * Para uso específico de evaluadores - Y ENVÍA A COLA
+     * Actualizar estado y observaciones y ENVIAR DegreeWorkUpdateDTO a la cola
      */
     @Transactional
     public DegreeWork actualizarEstadoYObservaciones(ActualizarEvaluacionDTO dto) {
+
         if (dto == null || dto.getDegreeWorkId() == null) {
-            throw new IllegalArgumentException("DTO inválido: se requiere degreeWorkId");
+            throw new IllegalArgumentException("DTO inválido: se requiere degreeWorkId.");
         }
 
         DegreeWork degreeWork = repository.findById(dto.getDegreeWorkId())
                 .orElseThrow(() -> new IllegalArgumentException(
-                    "No se encontró el trabajo de grado con ID " + dto.getDegreeWorkId()
+                        "No existe un DegreeWork con ID " + dto.getDegreeWorkId()
                 ));
 
-        // -----------------------------------------
-        // 1️⃣ OBTENER EL ÚLTIMO DOCUMENTO SUBIDO
-        // -----------------------------------------
-        Document ultimoDoc = null;
-
-        if (degreeWork.getCartasAceptacion() != null && !degreeWork.getCartasAceptacion().isEmpty()) {
-            ultimoDoc = degreeWork.getCartasAceptacion()
-                        .get(degreeWork.getCartasAceptacion().size() - 1);
-        } else if (degreeWork.getAnteproyectos() != null && !degreeWork.getAnteproyectos().isEmpty()) {
-            ultimoDoc = degreeWork.getAnteproyectos()
-                        .get(degreeWork.getAnteproyectos().size() - 1);
-        } else if (degreeWork.getFormatosA() != null && !degreeWork.getFormatosA().isEmpty()) {
-            ultimoDoc = degreeWork.getFormatosA()
-                        .get(degreeWork.getFormatosA().size() - 1);
-        }
+        // ---------------------------------------------------
+        // 1️⃣ OBTENER EL ÚLTIMO DOCUMENTO
+        // ---------------------------------------------------
+        Document ultimoDoc = obtenerUltimoDocumento(degreeWork);
 
         if (ultimoDoc == null) {
             throw new IllegalStateException("No hay documentos asociados al trabajo.");
         }
 
-        // Guardar estado previo del documento
         EnumEstadoDocument estadoAnterior = ultimoDoc.getEstado();
-        String observacionesPrevias = degreeWork.getCorrecciones();
+        String obsPrevias = degreeWork.getCorrecciones();
 
-        // -----------------------------------------
+        // ---------------------------------------------------
         // 2️⃣ ACTUALIZAR ESTADO Y OBSERVACIONES
-        // -----------------------------------------
+        // ---------------------------------------------------
         if (dto.getEstado() != null) {
             ultimoDoc.setEstado(dto.getEstado());
             ultimoDoc.setFechaActual(LocalDate.now());
@@ -195,52 +75,67 @@ public class DegreeWorkService {
             degreeWork.setCorrecciones(dto.getObservaciones());
         }
 
-        // -----------------------------------------
+        // ---------------------------------------------------
         // 3️⃣ GUARDAR
-        // -----------------------------------------
+        // ---------------------------------------------------
         DegreeWork saved = repository.save(degreeWork);
 
-        System.out.println("[EVALUACION] Documento actualizado - Estado: " 
-                + estadoAnterior + " → " + dto.getEstado());
-
-        // -----------------------------------------
-        // 4️⃣ ENVIAR EVENTO SOLO SI HAY CAMBIOS
-        // -----------------------------------------
         boolean cambioEstado = dto.getEstado() != null && !dto.getEstado().equals(estadoAnterior);
-        boolean cambioObs = dto.getObservaciones() != null 
-                            && !dto.getObservaciones().equals(observacionesPrevias);
+        boolean cambioObs = dto.getObservaciones() != null &&
+                !dto.getObservaciones().equals(obsPrevias);
 
+        // ---------------------------------------------------
+        // 4️⃣ ENVIAR A COLA SOLO SI HAY CAMBIOS
+        // ---------------------------------------------------
         if (cambioEstado || cambioObs) {
-            enviarEvaluacionACola(saved, estadoAnterior, dto.getEstado(), dto.getObservaciones());
+            enviarDegreeWorkUpdate(saved, dto.getEstado(), dto.getObservaciones());
         }
 
         return saved;
     }
 
-
     /**
-     * Método para enviar la evaluación a la cola de mensajes
+     * Devuelve el último documento que tenga el DegreeWork (FormA, anteproyecto o carta)
      */
-    private void enviarEvaluacionACola(DegreeWork degreeWork, EnumEstadoDocument estadoAnterior, 
-                                    EnumEstadoDocument estadoNuevo, String observaciones) {
-        try {
-            EvaluacionEventDTO evento = new EvaluacionEventDTO(
-                degreeWork.getId(),
-                degreeWork.getTitulo(),
-                observaciones,
-                estadoAnterior,
-                estadoNuevo
-            );
-            
-            // Usar el producer existente o crear uno específico para evaluaciones
-            degreeWorkProducer.sendEvaluacionEvent(evento);
-            
-            System.out.println("📤 [COLA] Evaluación enviada a la cola para DegreeWork ID: " + degreeWork.getId());
-            
-        } catch (Exception e) {
-            System.err.println("❌ [COLA] Error enviando evaluación a la cola: " + e.getMessage());
-            // No lanzamos excepción para no afectar la operación principal
+    private Document obtenerUltimoDocumento(DegreeWork degreeWork) {
+
+        if (degreeWork.getCartasAceptacion() != null && !degreeWork.getCartasAceptacion().isEmpty()) {
+            return degreeWork.getCartasAceptacion()
+                    .get(degreeWork.getCartasAceptacion().size() - 1);
         }
+
+        if (degreeWork.getAnteproyectos() != null && !degreeWork.getAnteproyectos().isEmpty()) {
+            return degreeWork.getAnteproyectos()
+                    .get(degreeWork.getAnteproyectos().size() - 1);
+        }
+
+        if (degreeWork.getFormatosA() != null && !degreeWork.getFormatosA().isEmpty()) {
+            return degreeWork.getFormatosA()
+                    .get(degreeWork.getFormatosA().size() - 1);
+        }
+
+        return null;
     }
 
+    /**
+     *  Enviar DegreeWorkUpdateDTO a RabbitMQ (este es el DTO correcto)
+     */
+    private void enviarDegreeWorkUpdate(DegreeWork degreeWork,
+                                        EnumEstadoDocument nuevoEstado,
+                                        String observaciones) {
+        try {
+            DegreeWorkUpdateDTO dto = DegreeWorkUpdateDTO.builder()
+                    .degreeWorkId(degreeWork.getId().intValue())
+                    .estado(nuevoEstado != null ? nuevoEstado.name() : null)
+                    .correcciones(observaciones)
+                    .build();
+
+            degreeWorkProducer.sendUpdate(dto);
+
+            System.out.println("📤 [RABBITMQ] DegreeWorkUpdateDTO enviado: " + dto);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error enviando DegreeWorkUpdateDTO a la cola: " + e.getMessage());
+        }
+    }
 }

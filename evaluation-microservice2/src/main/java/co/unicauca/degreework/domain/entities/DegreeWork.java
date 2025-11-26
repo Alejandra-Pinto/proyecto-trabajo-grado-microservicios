@@ -78,6 +78,8 @@ public class DegreeWork {
     @Column(length = 2000)
     private String correcciones = "";
 
+    private List<User> evaluadores = new ArrayList<>();
+
     public void incrementNoAprobadoCount() {
         this.noAprobadoCount++;
     }
@@ -199,6 +201,14 @@ public class DegreeWork {
 
     public void setCorrecciones(String correcciones) {
         this.correcciones = correcciones;
+    }
+
+    public void setEvaluadores(List<User> evaluadores) {
+        this.evaluadores = evaluadores;
+    }
+
+    public List<User> getEvaluadores() {
+        return evaluadores;
     }
 
     public void agregarAnteproyecto(Document anteproyecto) {
