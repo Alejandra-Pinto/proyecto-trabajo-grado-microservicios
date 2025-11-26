@@ -83,7 +83,8 @@ public class HomeController {
     //Logout
     @FXML
     private void handleLogout() {
-        navigation.showLogin();
+
+        navigation.logout();
     }
 
     //Botones de navegación según rol

@@ -396,6 +396,7 @@ public class DegreeWorkService {
         System.out.println("📥 [RabbitMQ] Recibido mensaje de Evaluaciones: " + dto);
 
         Long id = dto.getDegreeWorkId().longValue();
+
         DegreeWork degreeWork = repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("No se encontró el trabajo de grado con ID " + id));
 
@@ -410,34 +411,64 @@ public class DegreeWorkService {
         }
 
         if (ultimoDoc == null) {
+            // Si no hay documento, solo actualizamos correcciones si vienen (no hacer NPE)
+            if (dto.getCorrecciones() != null && !dto.getCorrecciones().isBlank()) {
+                degreeWork.setCorrecciones(dto.getCorrecciones());
+                repository.save(degreeWork);
+                System.out.println("[Evaluaciones] No había documentos. Guardadas correcciones para DegreeWork ID " + id);
+                return;
+            }
             throw new IllegalStateException("No se encontró ningún documento asociado al trabajo de grado.");
         }
 
-        // --- Actualizar el estado del último documento ---
-        try {
-            EnumEstadoDocument nuevoEstado = EnumEstadoDocument.valueOf(dto.getEstado().toUpperCase());
-            ultimoDoc.setEstado(nuevoEstado);
-            ultimoDoc.setFechaActual(LocalDate.now());
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("El estado recibido no es válido: " + dto.getEstado());
+        // Guardar estado previo del documento para logs / conteo
+        EnumEstadoDocument estadoPrevio = ultimoDoc.getEstado();
+        boolean cambioEstado = false;
+
+        // --- Actualizar el estado del último documento (si viene estado) ---
+        if (dto.getEstado() != null && !dto.getEstado().isBlank()) {
+            try {
+                EnumEstadoDocument nuevoEstado = EnumEstadoDocument.valueOf(dto.getEstado().toUpperCase());
+                if (nuevoEstado != ultimoDoc.getEstado()) {
+                    ultimoDoc.setEstado(nuevoEstado);
+                    ultimoDoc.setFechaActual(LocalDate.now());
+                    cambioEstado = true;
+                } else {
+                    // Si es el mismo estado, solo actualizar fecha si quieres; por ahora dejamos como está
+                }
+            } catch (IllegalArgumentException e) {
+                // Estado no reconocido: loguear y lanzar para que quien envía lo corrija
+                throw new IllegalArgumentException("El estado recibido no es válido: " + dto.getEstado(), e);
+            }
         }
 
-        // --- Actualizar las correcciones ---
-        degreeWork.setCorrecciones(dto.getCorrecciones());
+        // --- Actualizar las correcciones (observaciones) si vienen ---
+        boolean cambioCorrecciones = false;
+        if (dto.getCorrecciones() != null) {
+            String prevCorrecciones = degreeWork.getCorrecciones() == null ? "" : degreeWork.getCorrecciones();
+            if (!dto.getCorrecciones().equals(prevCorrecciones)) {
+                degreeWork.setCorrecciones(dto.getCorrecciones());
+                cambioCorrecciones = true;
+            }
+        }
 
-        // --- Si el estado no fue aceptado, incrementar contador ---
-        if (!"ACEPTADO".equalsIgnoreCase(dto.getEstado())) {
-            degreeWork.setNoAprobadoCount(degreeWork.getNoAprobadoCount() + 1);
-            System.out.println("El documento fue rechazado o no aprobado. Se incrementa contador a: "
-                    + degreeWork.getNoAprobadoCount());
+        // Si hubo cambios en el documento o en correcciones, guardar
+        if (cambioEstado || cambioCorrecciones) {
+            // IMPORTANTE: asegurarse de que la relación Owner esté bien y que JPA persista el documento
+            // Si Document es entidad separada con repo, podrías guardar documentoRepository.save(ultimoDoc);
+            repository.save(degreeWork);
+            System.out.println("[Evaluaciones] DegreeWork ID " + id + " actualizado. Estado doc: " +
+                    estadoPrevio + " -> " + ultimoDoc.getEstado() + ", correcciones actualizadas: " + cambioCorrecciones);
         } else {
-            System.out.println("Documento aceptado. No se incrementa contador.");
+            System.out.println("[Evaluaciones] DegreeWork ID " + id + " recibido pero sin cambios (estado/correcciones).");
         }
 
-        // --- Guardar cambios ---
-        repository.save(degreeWork);
-
-        System.out.println("[Evaluaciones] Estado del último documento y correcciones actualizados para DegreeWork ID " + id);
+        // --- Si el estado fue distinto a ACEPTADO, incrementar contador (si corresponde) ---
+        if (cambioEstado && !"ACEPTADO".equalsIgnoreCase(ultimoDoc.getEstado().name())) {
+            degreeWork.setNoAprobadoCount(degreeWork.getNoAprobadoCount() + 1);
+            repository.save(degreeWork);
+            System.out.println("[Evaluaciones] Documento no aprobado. NoAprobadoCount incrementado a: " + degreeWork.getNoAprobadoCount());
+        }
     }
 
 }
