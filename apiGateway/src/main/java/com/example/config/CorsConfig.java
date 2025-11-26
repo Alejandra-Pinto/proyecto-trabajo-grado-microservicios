@@ -16,6 +16,9 @@ public class CorsConfig {
         CorsConfiguration corsConfig = new CorsConfiguration();
         //Permitir peticiones desde cualquier origen (puedes restringirlo después)
         corsConfig.setAllowedOrigins(List.of("*"));
+
+        //corsConfig.setAllowedOrigins(List.of("http://localhost:8086"));
+
         //Permitir métodos HTTP comunes
         corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         //Permitir encabezados (headers)
