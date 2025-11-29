@@ -15,17 +15,15 @@ public class DegreeWorkEvaluationListener {
         this.degreeWorkService = degreeWorkService;
     }
 
-    // Usar la property para que sea configurable y evitar hardcodear el nombre de la cola
     @RabbitListener(queues = "evaluation.queue")
-    public void onDegreeWorkUpdate(DegreeWorkUpdateDTO dto) {
-        System.out.println("📥 [RabbitMQ] Recibido mensaje de Evaluaciones: " + dto);
-        try {
-            degreeWorkService.actualizarDesdeEvaluacion(dto);
-        } catch (Exception e) {
-            // Log claro para debugging; no re-lanzamos aquí para evitar requeue infinito (si quieres otro comportamiento, ajustar)
-            System.err.println("❌ Error procesando DegreeWorkUpdateDTO: " + e.getMessage());
-            e.printStackTrace();
-            throw e; // Spring manejará según la estrategia de error configurada (si prefieres evitar fatal, quita este throw)
-        }
+    public void onUpdate(DegreeWorkUpdateDTO dto) {
+        System.out.println("📥 Recibido UPDATE DTO: " + dto);
+        degreeWorkService.actualizarDesdeEvaluacion(dto);
+    }
+
+    @RabbitListener(queues = "evaluation.queue")
+    public void onEvaluadores(EvaluacionEventDTO dto) {
+        System.out.println("📥 Recibido EVALUADORES DTO: " + dto);
+        degreeWorkService.asignarEvaluadoresDesdeEvento(dto);
     }
 }
