@@ -28,40 +28,6 @@ public class DegreeWorkProducer {
     }
 
     /**
-     * Evento cuando se crea un trabajo de grado
-     */
-    public void sendDegreeWorkCreated(DegreeWorkCreatedEvent event) {
-        try {
-            System.out.println("📤 Enviando evento DegreeWorkCreatedEvent a RabbitMQ...");
-            rabbitTemplate.convertAndSend(exchange, routingKeyDegreeWorkCreated, event);
-            System.out.println("✅ Evento enviado correctamente: " + event.getTitulo());
-        } catch (Exception e) {
-            System.err.println("❌ Error enviando evento DegreeWorkCreatedEvent: " + e.getMessage());
-            throw new RuntimeException("Error enviando evento DegreeWorkCreatedEvent", e);
-        }
-    }
-
-    /**
-     * Evento cuando se registra una evaluación
-     */
-    public void sendEvaluacionEvent(EvaluacionEventDTO evento) {
-        try {
-            System.out.println("📤 Enviando EvaluacionEventDTO...");
-
-            rabbitTemplate.convertAndSend(
-                exchange,
-                routingKeyDegreeWorkCreated, // si tienes otro routing key, cámbialo aquí
-                evento
-            );
-
-            System.out.println("✅ Evento de evaluación enviado: " + evento.getDegreeWorkId());
-        } catch (Exception e) {
-            System.err.println("❌ Error enviando EvaluacionEventDTO: " + e.getMessage());
-            throw new RuntimeException("Error enviando evento de evaluación", e);
-        }
-    }
-
-    /**
      * Método opcional: enviar actualizaciones de trabajo o evaluación
      */
     public void sendUpdate(Object updateEvent) {
