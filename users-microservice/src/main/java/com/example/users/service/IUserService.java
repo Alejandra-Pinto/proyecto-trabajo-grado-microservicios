@@ -20,4 +20,6 @@ public interface IUserService {
     List<User> findByRole(String role);
     
     Optional<User> findByEmail(String email);
+    User syncUserFromKeycloak(UserRequest request);
+    
 }

@@ -2,6 +2,7 @@ package com.unicauca.front.controller;
 
 import com.unicauca.front.model.User;
 import com.unicauca.front.service.ApiGatewayService;
+import com.unicauca.front.service.KeycloakService;
 import com.unicauca.front.util.NavigationController;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -33,7 +34,7 @@ public class RegisterController {
     @FXML
     private RadioButton rbCoordinador;
     @FXML
-    private RadioButton rbJefeDepartamento; // NUEVO RADIO BUTTON
+    private RadioButton rbJefeDepartamento; 
     @FXML
     private Button btn_register;
     @FXML
@@ -42,11 +43,13 @@ public class RegisterController {
     private ToggleGroup groupRoles;
     private final ApiGatewayService apiService;
     private final NavigationController navigation;
+    private final KeycloakService keycloakService; 
 
-    public RegisterController(ApiGatewayService apiService, NavigationController navigation) {
+    public RegisterController(ApiGatewayService apiService, NavigationController navigation, KeycloakService keycloakService) {
         this.apiService = apiService;
         this.navigation = navigation;
-    }
+        this.keycloakService = keycloakService;
+    }   
 
     @FXML
     private void onRegister(ActionEvent event) {
@@ -57,7 +60,7 @@ public class RegisterController {
         String pass = txt_password.getText();
         String confirmPass = txt_confirmPassword.getText();
 
-        //Validaciones básicas
+        // Validaciones básicas
         if (nombre.isEmpty() || apellido.isEmpty() || programa == null ||
             correo.isEmpty() || pass.isEmpty() || confirmPass.isEmpty() ||
             groupRoles.getSelectedToggle() == null) {
@@ -65,43 +68,71 @@ public class RegisterController {
             return;
         }
 
-        //Validación de contraseñas
+        // Validación de contraseñas
         if (!pass.equals(confirmPass)) {
             mostrarAlerta("Error de registro", "Las contraseñas no coinciden", Alert.AlertType.ERROR);
             return;
         }
 
+        // Validación de email
+        if (!correo.contains("@")) {
+            mostrarAlerta("Error de registro", "Por favor ingrese un email válido", Alert.AlertType.ERROR);
+            return;
+        }
+
         try {
-            //Cambio: Crear usuario y enviar al microservicio
-            User user = new User();
-            user.setFirstName(nombre);
-            user.setLastName(apellido);
-            user.setProgram(programa);
-            user.setEmail(correo);
-            user.setPassword(pass);
-            user.setStatus("ACEPTADO");
+            // Determinar rol basado en RadioButtons
+            String role;
+            String status = "ACEPTADO";
             
-            //Cambio: Determinar rol basado en RadioButtons
             if (rbEstudiante.isSelected()) {
-                user.setRole("STUDENT");
+                role = "STUDENT";
             } else if (rbDocente.isSelected()) {
-                user.setRole("PROFESSOR");
+                role = "PROFESSOR";
             } else if (rbCoordinador.isSelected()) {
-                user.setRole("COORDINATOR");
-                user.setStatus("PENDIENTE"); // Coordinadores requieren aprobación
+                role = "COORDINATOR";
+                status = "PENDIENTE";
             } else if (rbJefeDepartamento.isSelected()) {
-                user.setRole("DEPARTMENT_HEAD");
-                user.setStatus("PENDIENTE"); // Jefes de departamento requieren aprobación
+                role = "DEPARTMENT_HEAD";
+                status = "PENDIENTE";
+            } else {
+                mostrarAlerta("Error de registro", "Por favor seleccione un rol", Alert.AlertType.ERROR);
+                return;
             }
 
-            System.out.println("=== DEBUG: Intentando registrar usuario ===");
-            System.out.println("Nombre: " + user.getFirstName());
-            System.out.println("Email: " + user.getEmail());
-            System.out.println("Rol: " + user.getRole());
-            System.out.println("Estado: " + user.getStatus());
+            System.out.println("=== REGISTRO CON KEYCLOAK ===");
+            System.out.println("Nombre: " + nombre + " " + apellido);
+            System.out.println("Email: " + correo);
+            System.out.println("Rol Keycloak: " + role);
+            System.out.println("Programa: " + programa);
 
-            //Cambio: Enviar registro al microservicio de usuarios
-            ResponseEntity<User> response = apiService.post("api/usuarios", "/register", user, User.class);
+            // PASO 1: Registrar usuario en Keycloak
+            boolean keycloakSuccess = keycloakService.registerUser(correo, pass, nombre, apellido, role);
+            
+            if (!keycloakSuccess) {
+                mostrarAlerta("Error de registro", 
+                    "No se pudo crear el usuario. El email puede estar en uso.", 
+                    Alert.AlertType.ERROR);
+                return;
+            }
+
+            System.out.println("✅ Usuario creado en Keycloak - procediendo a crear perfil extendido");
+
+            // PASO 2: Crear perfil extendido en el microservicio de usuarios
+            User userProfile = new User();
+            userProfile.setFirstName(nombre);
+            userProfile.setLastName(apellido);
+            userProfile.setProgram(programa);
+            userProfile.setEmail(correo);
+            userProfile.setRole(role);
+            userProfile.setStatus(status);
+
+            // Obtener el token de admin de Keycloak y establecerlo en el ApiGatewayService
+            String adminToken = keycloakService.getAdminToken();
+            apiService.setAccessToken(adminToken);
+
+            // Llamar al endpoint de sync-user con el token de admin
+            ResponseEntity<User> response = apiService.post("api/usuarios", "/sync-user", userProfile, User.class, true);
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 User usuarioRegistrado = response.getBody();
@@ -115,25 +146,24 @@ public class RegisterController {
                 mostrarAlerta("Registro exitoso", mensajeExito, Alert.AlertType.CONFIRMATION);
                 limpiarCampos();
                 
-                //Cambio: Navegar al login usando NavigationController
+                // Navegar al login
                 navigation.showLogin();
                 
             } else {
-                System.out.println("=== DEBUG: Error en respuesta del servidor ===");
-                System.out.println("Status Code: " + response.getStatusCode());
-                mostrarAlerta("Error de registro", 
-                    "No se pudo registrar el usuario. Verifique si el correo ya está en uso.", 
-                    Alert.AlertType.ERROR);
+                System.out.println("⚠️ Usuario creado en Keycloak pero error sincronizando perfil: " + response.getStatusCode());
+                mostrarAlerta("Registro parcial", 
+                    "Usuario creado pero hubo un error sincronizando el perfil. Puede iniciar sesión.", 
+                    Alert.AlertType.WARNING);
+                limpiarCampos();
+                navigation.showLogin();
             }
 
         } catch (Exception e) {
-            System.out.println("=== DEBUG: Excepción durante el registro ===");
-            System.out.println("Tipo de error: " + e.getClass().getName());
-            System.out.println("Mensaje: " + e.getMessage());
+            System.out.println("❌ Error durante el registro: " + e.getMessage());
             e.printStackTrace();
             
             mostrarAlerta("Error de conexión", 
-                "No se pudo conectar con el servidor: " + e.getMessage(), 
+                "Error durante el registro: " + e.getMessage(), 
                 Alert.AlertType.ERROR);
         }
     }

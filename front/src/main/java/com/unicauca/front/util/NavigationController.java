@@ -428,4 +428,10 @@ public void showPublishedDepartmentHeadDraft(User usuario) {
          alert.showAndWait();
       }
    }
+
+   public void logout() {
+      SessionManager.clearSession();
+      showLogin();
+      System.out.println("✅ Sesión cerrada correctamente");
+   }
 }
