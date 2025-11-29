@@ -141,22 +141,28 @@ public class KeycloakService {
     }
 
     /**
-     * Registrar usuario en Keycloak (versión mejorada)
+     * Registrar usuario en Keycloak (con mejor logging)
      */
     public boolean registerUser(String username, String password, String firstName, String lastName, String role) {
         try {
             System.out.println("=== REGISTERING USER IN KEYCLOAK ===");
             System.out.println("Username: " + username);
             System.out.println("Role: " + role);
+            System.out.println("Name: " + firstName + " " + lastName);
             
             // 1. Primero obtener token de administrador
+            System.out.println("Step 1: Obtaining admin token...");
             String adminToken = getAdminToken();
             if (adminToken == null) {
                 System.out.println("❌ No se pudo obtener token de administrador");
+                System.out.println("⚠️ Verifica que el usuario admin exista en Keycloak");
                 return false;
             }
+            
+            System.out.println("✅ Admin token obtained, length: " + adminToken.length());
 
             // 2. Crear usuario en Keycloak
+            System.out.println("Step 2: Creating user in Keycloak...");
             String createUserUrl = KEYCLOAK_URL + "/admin/realms/" + REALM + "/users";
             
             HttpHeaders headers = new HttpHeaders();
@@ -186,14 +192,20 @@ public class KeycloakService {
             // Crear usuario
             ResponseEntity<String> createResponse = restTemplate.exchange(createUserUrl, HttpMethod.POST, entity, String.class);
             
+            System.out.println("Create user response: " + createResponse.getStatusCode());
+            
             if (!createResponse.getStatusCode().is2xxSuccessful()) {
                 System.out.println("❌ Error creando usuario en Keycloak: " + createResponse.getStatusCode());
+                if (createResponse.getStatusCode() == HttpStatus.CONFLICT) {
+                    System.out.println("⚠️ El usuario ya existe en Keycloak");
+                }
                 return false;
             }
             
             System.out.println("✅ Usuario creado en Keycloak");
             
             // 3. Obtener ID del usuario recién creado
+            System.out.println("Step 3: Getting user ID...");
             String userId = getUserIdByUsername(adminToken, username);
             if (userId == null) {
                 System.out.println("❌ No se pudo obtener ID del usuario creado");
@@ -203,13 +215,16 @@ public class KeycloakService {
             System.out.println("✅ User ID obtenido: " + userId);
             
             // 4. Asignar rol al usuario
+            System.out.println("Step 4: Assigning role '" + role + "' to user...");
             boolean roleAssigned = assignRoleToUser(adminToken, userId, role);
             if (!roleAssigned) {
                 System.out.println("❌ No se pudo asignar rol al usuario");
+                System.out.println("⚠️ Verifica que el rol '" + role + "' exista en Keycloak");
                 return false;
             }
             
             System.out.println("✅ Rol asignado correctamente");
+            System.out.println("🎉 Usuario registrado exitosamente en Keycloak");
             return true;
             
         } catch (Exception e) {
@@ -289,10 +304,24 @@ public class KeycloakService {
     /**
      * Obtener token de administrador mejorado
      */
-    private String getAdminToken() {
+    public String getAdminToken() {
         try {
-            // Usar un usuario administrador específico
-            return login("admin", "admin"); // Cambia por tus credenciales de admin reales
+            System.out.println("=== OBTAINING ADMIN TOKEN ===");
+            
+            // Usar las credenciales específicas del admin
+            String adminUsername = "keycloak-admin";
+            String adminPassword = "admin";
+            
+            String token = login(adminUsername, adminPassword);
+            
+            if (token != null) {
+                System.out.println("✅ Admin token obtained successfully");
+                return token;
+            } else {
+                System.out.println("❌ Failed to obtain admin token");
+                return null;
+            }
+            
         } catch (Exception e) {
             System.out.println("Error obteniendo admin token: " + e.getMessage());
             return null;

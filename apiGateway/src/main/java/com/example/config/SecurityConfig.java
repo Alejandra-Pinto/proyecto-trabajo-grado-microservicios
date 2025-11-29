@@ -4,6 +4,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.http.HttpMethod;
+
 
 @Configuration
 public class SecurityConfig {
@@ -17,7 +19,9 @@ public class SecurityConfig {
             .authorizeExchange(exchanges -> exchanges
 
                 // Públicos
-                .pathMatchers("/api/usuarios/login", "/api/usuarios/register").permitAll()
+                .pathMatchers("/api/usuarios/login", "/api/usuarios/register", "/api/usuarios/sync-user").permitAll()
+
+
 
                 // Admin
                 .pathMatchers("/api/admin/**").hasRole("ADMIN")
