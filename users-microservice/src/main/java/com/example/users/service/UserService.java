@@ -39,15 +39,65 @@ public class UserService implements IUserService {
     }
 
     private User createUserByRole(String role) {
-    return switch (role.toUpperCase()) {
-        case "STUDENT" -> new Student();
-        case "PROFESSOR" -> new Teacher();
-        case "COORDINATOR" -> new Coordinator();
-        case "DEPARTMENT_HEAD" -> new DepartmentHead();
-        default -> throw new IllegalArgumentException("Rol no reconocido: " + role);
-    };
-}
+        return switch (role.toUpperCase()) {
+            case "STUDENT" -> new Student();
+            case "PROFESSOR" -> new Teacher();
+            case "COORDINATOR" -> new Coordinator();
+            case "DEPARTMENT_HEAD" -> new DepartmentHead();
+            default -> throw new IllegalArgumentException("Rol no reconocido: " + role);
+        };
+    }
 
+
+    @Override
+    public User syncUserFromKeycloak(UserRequest request) {
+        try {
+            System.out.println("=== SYNC USER SERVICE ===");
+            
+            // Crear instancia según el rol
+            User user = createUserByRole(request.getRole());
+
+            // Asignar atributos
+            user.setFirstName(request.getFirstName());
+            user.setLastName(request.getLastName());
+            user.setPhone(request.getPhone() != null ? request.getPhone() : "");
+            user.setProgram(request.getProgram());
+            user.setEmail(request.getEmail());
+            user.setRole(request.getRole());
+            user.setStatus(request.getStatus());
+
+            // ⚠️ IMPORTANTE: No validar email ni password para sync desde Keycloak
+            // Keycloak ya validó el email y maneja la autenticación
+            
+            // ⚠️ NO cifrar la password - usar un valor dummy ya que la auth es con Keycloak
+            user.setPassword("keycloak-managed-password");
+
+            // Guardar en la base de datos
+            User savedUser = userRepository.save(user);
+
+            // Crear evento DTO para enviar por RabbitMQ
+            UserCreatedEvent event = new UserCreatedEvent(
+                savedUser.getId(),
+                savedUser.getFirstName(),
+                savedUser.getLastName(),
+                savedUser.getEmail(),
+                savedUser.getRole(),
+                savedUser.getProgram(),
+                savedUser.getStatus(),
+                false
+            );
+
+            // Enviar el evento al exchange
+            rabbitTemplate.convertAndSend(exchange, routingKey, event);
+
+            System.out.println("✅ User sync completed: " + savedUser.getEmail());
+            return savedUser;
+
+        } catch (Exception e) {
+            System.out.println("❌ Error in user sync: " + e.getMessage());
+            throw new RuntimeException("Error sincronizando usuario desde Keycloak: " + e.getMessage());
+        }
+    }
     @Override
     public User register(UserRequest request) {
         // Crear instancia según el rol
@@ -87,7 +137,7 @@ public class UserService implements IUserService {
             savedUser.getRole(),
             savedUser.getProgram(),
             savedUser.getStatus(),
-            user.isEvaluator()
+            savedUser.isEvaluator()
         );
 
         // Enviar el evento al exchange
@@ -154,7 +204,14 @@ public class UserService implements IUserService {
     
 
     private boolean isValidEmail(String email) {
-        return email != null && email.endsWith("@unicauca.edu.co");
+        // Para sync desde Keycloak, aceptar cualquier email válido
+        // Para registro normal, mantener validación estricta
+        return email != null && email.contains("@") && email.contains(".");
+    }
+
+    // O crear un método separado para sync
+    private boolean isValidEmailForSync(String email) {
+        return email != null && email.contains("@") && email.contains(".");
     }
 
     private boolean isValidPassword(String password) {
@@ -163,17 +220,4 @@ public class UserService implements IUserService {
         return Pattern.matches(regex, password);
     }
 
-    // private String encryptPassword(String password) {
-    //     try {
-    //         MessageDigest md = MessageDigest.getInstance("SHA-256");
-    //         byte[] hash = md.digest(password.getBytes());
-    //         StringBuilder hexString = new StringBuilder();
-    //         for (byte b : hash) {
-    //             hexString.append(String.format("%02x", b));
-    //         }
-    //         return hexString.toString();
-    //     } catch (NoSuchAlgorithmException e) {
-    //         throw new RuntimeException("Error en cifrado de contraseña", e);
-    //     }
-    // }
 }

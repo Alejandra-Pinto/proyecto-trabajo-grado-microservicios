@@ -127,8 +127,12 @@ public class RegisterController {
             userProfile.setRole(role);
             userProfile.setStatus(status);
 
-            // NUEVO: Usar endpoint diferente para sincronización
-            ResponseEntity<User> response = apiService.post("api/usuarios", "/sync-user", userProfile, User.class, false);
+            // Obtener el token de admin de Keycloak y establecerlo en el ApiGatewayService
+            String adminToken = keycloakService.getAdminToken();
+            apiService.setAccessToken(adminToken);
+
+            // Llamar al endpoint de sync-user con el token de admin
+            ResponseEntity<User> response = apiService.post("api/usuarios", "/sync-user", userProfile, User.class, true);
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 User usuarioRegistrado = response.getBody();

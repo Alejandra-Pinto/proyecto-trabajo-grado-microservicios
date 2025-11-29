@@ -26,33 +26,42 @@ public class UserController {
         this.service = service;
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody UserRequest request) {
+    @PostMapping("/sync-user")
+    public ResponseEntity<User> syncUserWithKeycloak(@RequestBody UserRequest userRequest) {
         try {
-            User created = service.register(request);
-            return ResponseEntity.ok(created);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error interno al registrar el usuario.");
-        }
-    }
+            System.out.println("=== SYNC USER FROM KEYCLOAK ===");
+            System.out.println("Email: " + userRequest.getEmail());
+            System.out.println("Role: " + userRequest.getRole());
+            System.out.println("Status: " + userRequest.getStatus());
 
+            // Verificar si el usuario ya existe
+            Optional<User> existingUser = service.findByEmail(userRequest.getEmail());
+            if (existingUser.isPresent()) {
+                System.out.println("✅ Usuario ya existe, retornando existente");
+                return ResponseEntity.ok(existingUser.get());
+            }
 
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody UserRequest request) {
-        try {
-            User user = service.login(request.getEmail(), request.getPassword());
-            return ResponseEntity.ok(user);
-        } catch (IllegalArgumentException e) {
-            // usuario no encontrado o contraseña incorrecta
-            return ResponseEntity.status(401).body(e.getMessage());
-        } catch (IllegalStateException e) {
-            // usuario no aceptado
-            return ResponseEntity.status(403).body(e.getMessage());
+            // Crear UserRequest para el servicio existente
+            UserRequest request = new UserRequest();
+            request.setFirstName(userRequest.getFirstName());
+            request.setLastName(userRequest.getLastName());
+            request.setProgram(userRequest.getProgram());
+            request.setEmail(userRequest.getEmail());
+            request.setPassword("temp-password-" + System.currentTimeMillis()); // Password temporal
+            request.setRole(userRequest.getRole());
+            request.setStatus(userRequest.getStatus());
+            request.setPhone("0000000"); // Opcional
+
+            // Usar el método register existente pero sin validaciones de password/email estrictas
+            User createdUser = service.syncUserFromKeycloak(request);
+            
+            System.out.println("✅ Usuario sincronizado exitosamente: " + createdUser.getEmail());
+            return ResponseEntity.ok(createdUser);
+
         } catch (Exception e) {
-            // error inesperado
-            return ResponseEntity.internalServerError().body("Error interno al iniciar sesión.");
+            System.out.println("❌ Error sincronizando usuario: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(null);
         }
     }
 

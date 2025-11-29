@@ -78,6 +78,13 @@ public class DegreeWork {
     @Column(length = 2000)
     private String correcciones = "";
 
+    @ManyToMany
+    @JoinTable(
+        name = "degreework_evaluadores",
+        joinColumns = @JoinColumn(name = "degree_work_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    @Builder.Default
     private List<User> evaluadores = new ArrayList<>();
 
     public void incrementNoAprobadoCount() {

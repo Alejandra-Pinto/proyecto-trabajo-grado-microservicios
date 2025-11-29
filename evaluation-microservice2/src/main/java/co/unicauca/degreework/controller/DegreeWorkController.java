@@ -1,9 +1,13 @@
 package co.unicauca.degreework.controller;
 
 import co.unicauca.degreework.domain.entities.DegreeWork;
+import co.unicauca.degreework.domain.entities.User;
 import co.unicauca.degreework.domain.entities.enums.EnumEstadoDocument;
 import co.unicauca.degreework.infra.dto.ActualizarEvaluacionDTO;
 import co.unicauca.degreework.service.DegreeWorkService;
+
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -80,4 +84,12 @@ public class DegreeWorkController {
             return ResponseEntity.badRequest().body("Error: " + e.getMessage());
         }
     }
+
+    @PostMapping("/{degreeWorkId}/asignar-evaluadores")
+    public ResponseEntity<?> asignarEvaluadores(
+            @PathVariable Long degreeWorkId,
+            @RequestBody List<User> emailsEvaluadores) {
+        return ResponseEntity.ok(service.asignarEvaluadores(degreeWorkId, emailsEvaluadores));
+    }
+
 }

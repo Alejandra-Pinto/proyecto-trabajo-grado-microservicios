@@ -18,4 +18,5 @@ public class User {
     private String role;
     private String program;
     private String status;
+    private boolean isEvaluator;
 }

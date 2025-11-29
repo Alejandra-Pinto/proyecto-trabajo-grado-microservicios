@@ -25,6 +25,7 @@ public class UserCreatedListener {
                 .role(event.getRole())
                 .program(event.getProgram())
                 .status(event.getStatus())
+                .isEvaluator(event.isEvaluator())
                 .build();
         userRepository.save(user);
     }
