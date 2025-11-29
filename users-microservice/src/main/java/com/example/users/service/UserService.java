@@ -87,7 +87,7 @@ public class UserService implements IUserService {
             savedUser.getRole(),
             savedUser.getProgram(),
             savedUser.getStatus(),
-            user.isEvaluator()
+            savedUser.isEvaluator()
         );
 
         // Enviar el evento al exchange
