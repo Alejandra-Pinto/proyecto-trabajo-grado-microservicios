@@ -89,11 +89,22 @@ public class LoginController {
                         List<String> clientRoles = (List<String>) userInfo.get("client_roles");
                         System.out.println("Roles del cliente: " + clientRoles);
                     }
+
+                    // NUEVO: Verificar estado del usuario en el sistema
+                    if (!isUserAllowedToLogin(usuarioLogueado.getEmail(), usuarioLogueado.getRole())) {
+                        mostrarAlerta("Acceso no autorizado", 
+                                    "Su cuenta está pendiente de aprobación. Por favor, espere a que un administrador active su cuenta.", 
+                                    Alert.AlertType.WARNING);
+                        // Limpiar sesión
+                        SessionManager.clearSession();
+                        apiService.setAccessToken(null);
+                        return;
+                    }
                     
                     // Guardar en sesión
                     SessionManager.setCurrentUser(usuarioLogueado);
 
-                    // NUEVO: Probar una petición autenticada
+                    // Probar una petición autenticada
                     testAuthenticatedRequest();
                     
                     // Navegar según el rol
@@ -116,6 +127,54 @@ public class LoginController {
                         "No se pudo conectar con el servidor: " + e.getMessage(), 
                         Alert.AlertType.ERROR);
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Verifica si el usuario tiene permiso para iniciar sesión
+     * Solo permitir si el estado es ACEPTADO o ACTIVO, o si es ADMIN
+     */
+    private boolean isUserAllowedToLogin(String email, String role) {
+        try {
+            System.out.println("=== VERIFICANDO ESTADO DEL USUARIO ===");
+            System.out.println("Email: " + email);
+            System.out.println("Rol: " + role);
+            
+            // EXCEPCIÓN: Los usuarios ADMIN siempre pueden iniciar sesión
+            if ("ADMIN".equalsIgnoreCase(role)) {
+                return true;
+            }
+            
+            // Obtener información completa del usuario desde el microservicio
+            ResponseEntity<User> response = apiService.get("api/usuarios", "/email/" + email, User.class);
+            
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                User userFromDb = response.getBody();
+                String estado = userFromDb.getStatus();
+                
+                System.out.println("Estado del usuario: " + estado);
+                
+                // Definir qué estados permiten login
+                boolean allowed = "ACEPTADO".equalsIgnoreCase(estado) || 
+                                "ACTIVO".equalsIgnoreCase(estado) ||
+                                "ACTIVE".equalsIgnoreCase(estado);
+                
+                if (!allowed) {
+                    System.out.println("❌ Usuario no autorizado - Estado: " + estado);
+                }
+                
+                return allowed;
+                
+            } else {
+                System.out.println("❌ No se pudo obtener información del usuario desde la BD: " + response.getStatusCode());
+                // Por seguridad, no permitir acceso si no se puede verificar el estado
+                return false;
+            }
+            
+        } catch (Exception e) {
+            System.out.println("❌ Error verificando estado del usuario: " + e.getMessage());
+            // Por seguridad, no permitir acceso si hay error
+            return false;
         }
     }
 
@@ -165,22 +224,19 @@ public class LoginController {
         alerta.showAndWait();
     }
 
-
     @FXML
     private void initialize() {
-        //El método se ejecuta AUTOMÁTICAMENTE cuando se carga el FXML
+        // El método se ejecuta AUTOMÁTICAMENTE cuando se carga el FXML
         System.out.println("LoginController inicializado");
         
         // Test temporal - eliminar después
         testKeycloakConnection();
 
-        //Verifica que los componentes se cargaron
+        // Verifica que los componentes se cargaron
         if (txt_email == null) System.out.println("ERROR: txt_email es null");
         if (txt_password == null) System.out.println("ERROR: txt_password es null");
         if (btn_login == null) System.out.println("ERROR: btn_login es null");
         if (hpl_register == null) System.out.println("ERROR: hpl_register es null");
-
-        
     }
 
     private void testKeycloakConnection() {

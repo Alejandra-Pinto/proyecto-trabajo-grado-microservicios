@@ -118,8 +118,7 @@ public class KeycloakService {
         List<String> technicalRoles = Arrays.asList(
             "offline_access", 
             "uma_authorization",
-            "default-roles-",
-            "admin"
+            "default-roles-"
         );
         
         return technicalRoles.stream()
