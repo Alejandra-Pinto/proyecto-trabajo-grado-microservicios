@@ -3,6 +3,8 @@ package com.unicauca.front.controller;
 import com.unicauca.front.model.User;
 import com.unicauca.front.service.ApiGatewayService;
 import com.unicauca.front.util.NavigationController;
+import com.unicauca.front.util.SessionManager;
+
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.SplitPane;
@@ -46,9 +48,25 @@ public class HomeController {
         configurarBotones();
     }
 
-    //Método para recibir el usuario (similar a setUsuario)
-    public void configurarConUsuario(User usuario) {
-        this.usuario = usuario;
+
+   public void configurarConUsuario(User usuario) {
+        System.out.println("=== HOME CONTROLLER - CONFIGURANDO USUARIO ===");
+        
+        // Siempre obtener el usuario actualizado de SessionManager
+        this.usuario = SessionManager.getCurrentUser();
+        
+        System.out.println("Usuario de SessionManager: " + (this.usuario != null ? this.usuario.getEmail() : "null"));
+        System.out.println("Programa de SessionManager: " + (this.usuario != null ? this.usuario.getProgram() : "null"));
+        
+        // Si SessionManager está null, usar el usuario proporcionado
+        if (this.usuario == null) {
+            System.out.println("⚠️  SessionManager null, usando usuario proporcionado");
+            this.usuario = usuario;
+            if (usuario != null) {
+                SessionManager.setCurrentUser(usuario);
+            }
+        }
+        
         cargarUsuario();
     }
 

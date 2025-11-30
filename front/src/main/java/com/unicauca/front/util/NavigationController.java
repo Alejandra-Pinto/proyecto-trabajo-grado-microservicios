@@ -253,7 +253,7 @@ public class NavigationController {
          Parent root = loader.load();
          
          PersonalInformationController controller = loader.getController();
-         controller.configurarConUsuario(usuario);
+         //controller.configurarConUsuario(usuario);
          
          Scene scene = new Scene(root);
          this.primaryStage.setScene(scene);

@@ -15,14 +15,17 @@ public class SessionManager {
         apiGatewayService = service;
     }
 
-// En SessionManager, modifica setCurrentUser:
-public static void setCurrentUser(User user) {
-    System.out.println("=== SESSION MANAGER ===");
-    System.out.println("Setting current user: " + user);
-    System.out.println("User program: " + (user != null ? user.getProgram() : "null"));
-    System.out.println("=== END SESSION MANAGER ===");
-    currentUser = user;
-}
+    public static void setCurrentUser(User user) {
+        System.out.println("=== SESSION MANAGER ===");
+        System.out.println("Setting current user: " + user);
+        System.out.println("User program: " + (user != null ? user.getProgram() : "null"));
+        
+        // DEBUG: Mostrar de dónde viene la llamada
+        Thread.dumpStack();
+        
+        System.out.println("=== END SESSION MANAGER ===");
+        currentUser = user;
+    }
 
     public static User getCurrentUser() {
         return currentUser;

@@ -45,12 +45,18 @@ public class PersonalInformationController {
 
 @FXML
 private void initialize() {
+    System.out.println("=== INICIALIZANDO PersonalInformationController ===");
+    
     usuarioActual = SessionManager.getCurrentUser();
     if (usuarioActual != null) {
-        // Actualizar información y luego cargarla
+        System.out.println("📋 Usuario en sesión: " + usuarioActual.getEmail());
+        System.out.println("📋 Programa en sesión: " + usuarioActual.getProgram());
+        
         actualizarInformacionUsuario();
-        cargarInformacionUsuario(); // ¡ESTA LÍNEA FALTABA!
+        cargarInformacionUsuario();
         configurarBotonesPorRol();
+    } else {
+        System.out.println("❌ ERROR: usuarioActual es null en initialize()");
     }
 }
 
@@ -58,38 +64,36 @@ private void actualizarInformacionUsuario() {
     try {
         String email = usuarioActual.getEmail();
         if (email != null && !email.isEmpty()) {
+            System.out.println("🔄 Actualizando información para: " + email);
+            
             ResponseEntity<User> response = apiService.get("api/usuarios", "/email/" + email, User.class);
             
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 User updatedUser = response.getBody();
                 
-                // SOLUCIÓN SIMPLE: Hardcode para el programa
-                if (updatedUser.getProgram() != null && updatedUser.getProgram().contains("Sistemas")) {
-                    updatedUser.setProgram("Ingeniería de Sistemas");
+                System.out.println("📥 Programa desde API: " + updatedUser.getProgram());
+                
+                // ✅ CORREGIR caracteres para TODOS los programas
+                if (updatedUser.getProgram() != null) {
+                    String programaCorregido = corregirCaracteresPrograma(updatedUser.getProgram());
+                    updatedUser.setProgram(programaCorregido);
+                    System.out.println("🔧 Programa corregido: " + programaCorregido);
                 }
                 
                 SessionManager.setCurrentUser(updatedUser);
                 this.usuarioActual = updatedUser;
+                
+                System.out.println("✅ Usuario actualizado en sesión");
+            } else {
+                System.out.println("❌ Error en respuesta de API: " + response.getStatusCode());
             }
         }
     } catch (Exception e) {
         System.out.println("❌ Error actualizando información del usuario: " + e.getMessage());
+        e.printStackTrace();
     }
 }
 
-
-public void configurarConUsuario(User usuario) {
-    // Actualizar SessionManager también
-    if (usuario != null) {
-        SessionManager.setCurrentUser(usuario);
-    }
-    this.usuarioActual = SessionManager.getCurrentUser();
-    
-    if (usuarioActual != null) {
-        cargarInformacionUsuario();
-        configurarBotonesPorRol();
-    }
-}
 
 
 private void cargarInformacionUsuario() {
@@ -105,12 +109,40 @@ private void cargarInformacionUsuario() {
     lblNombre.setText(nombreCompleto.trim());
     lblEmail.setText(usuarioActual.getEmail() != null ? usuarioActual.getEmail() : "");
     
-    // Hardcode final en la UI
-    lblPrograma.setText("Ingeniería de Sistemas");
+    // ✅ CORRECCIÓN: Mostrar TODOS los programas, no solo "Sistemas"
+    if (usuarioActual.getProgram() != null) {
+        if (usuarioActual.getProgram().contains("Sistemas")) {
+            lblPrograma.setText("Ingeniería de Sistemas");
+        } else {
+            // Para otros programas, corregir caracteres y mostrar
+            String programaCorregido = corregirCaracteresPrograma(usuarioActual.getProgram());
+            lblPrograma.setText(programaCorregido);
+        }
+    } else {
+        lblPrograma.setText("No asignado");
+    }
     
     lblRol.setText(usuarioActual.getRole() != null ? usuarioActual.getRole() : "");
     lblTelefono.setText(usuarioActual.getPhone() != null ? usuarioActual.getPhone() : "N/A");
     lblEstado.setText(usuarioActual.getStatus() != null ? usuarioActual.getStatus() : "ACTIVO");
+    
+    // DEBUG: Verificar qué se está mostrando
+    System.out.println("=== INFORMACIÓN CARGADA EN UI ===");
+    System.out.println("Programa en UI: " + lblPrograma.getText());
+    System.out.println("Email en UI: " + lblEmail.getText());
+}
+
+// Método para corregir caracteres de programas
+private String corregirCaracteresPrograma(String programa) {
+    if (programa == null) return "No asignado";
+    
+    return programa
+        .replace("Ý", "í")
+        .replace("ß", "á")
+        .replace("Ò", "ó")
+        .replace("þ", "ñ")
+        .replace("¨", "é")
+        .replace("³", "ú");
 }
 
     private String determinarTipoUsuario() {
