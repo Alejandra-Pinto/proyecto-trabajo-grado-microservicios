@@ -1,5 +1,7 @@
 package com.example.users.controller;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -76,12 +78,28 @@ public class UserController {
         return service.getAllUsers();
     }
 
-    @GetMapping("/email/{email}")
-    public ResponseEntity<User> getUserByEmail(@PathVariable String email) {
-        Optional<User> user = service.findByEmail(email);
-        return user.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+@GetMapping(value = "/email/{email}", produces = "application/json;charset=UTF-8")
+public ResponseEntity<User> getUserByEmail(@PathVariable String email) {
+    Optional<User> user = service.findByEmail(email);
+    
+    if (user.isPresent()) {
+        User userEntity = user.get();
+        
+        // DEBUG: Crear un JSON manualmente para ver la codificación
+        String manualJson = String.format(
+            "{\"program\":\"%s\", \"email\":\"%s\", \"role\":\"%s\"}", 
+            userEntity.getProgram(), userEntity.getEmail(), userEntity.getRole()
+        );
+        
+        System.out.println("=== MANUAL JSON DEBUG ===");
+        System.out.println("Manual JSON: " + manualJson);
+        System.out.println("Program bytes: " + Arrays.toString(userEntity.getProgram().getBytes(StandardCharsets.UTF_8)));
+        System.out.println("=== END DEBUG ===");
     }
+    
+    return user.map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
+}
 
     @GetMapping("/rol/{role}")
     public ResponseEntity<List<User>> getUsersByRole(@PathVariable String role) {

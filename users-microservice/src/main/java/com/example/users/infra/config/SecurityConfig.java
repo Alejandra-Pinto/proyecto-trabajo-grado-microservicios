@@ -14,12 +14,24 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
+
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/api/usuarios/sync-user", "/usuarios/sync-user").permitAll() // Temporal: permitir sync sin auth
+                .requestMatchers("/api/usuarios/sync-user").permitAll()
+                .requestMatchers("/h2-console/**").permitAll()
                 .anyRequest().authenticated()
             )
-            .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {}));
-        
+
+            .headers(headers -> headers
+                .frameOptions(frame -> frame.disable())
+            )
+
+            // IMPORTANTE: esto dice a Spring Security:
+            // "si no viene un JWT, no bloquees la petición"
+            .oauth2ResourceServer(oauth2 -> oauth2
+                .jwt(jwt -> {})
+            
+            );
+
         return http.build();
     }
 }

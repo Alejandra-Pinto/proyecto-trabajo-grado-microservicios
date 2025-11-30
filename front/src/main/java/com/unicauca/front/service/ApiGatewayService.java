@@ -53,22 +53,22 @@ public class ApiGatewayService {
     }
 
     // Método genérico para GET (obtener datos)
-    public <T> ResponseEntity<T> get(String microservicio, String endpoint, Class<T> responseType) {
-        String url = API_GATEWAY_URL + "/" + microservicio + endpoint;
-        
-        HttpHeaders headers = new HttpHeaders();
-        
-        // Nuevo: Agregar token de autorización
-        if (accessToken != null && !accessToken.isEmpty()) {
-            headers.setBearerAuth(accessToken);
-            System.out.println("✅ Token incluido en GET request");
-        }
-        
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-        
-        return restTemplate.exchange(url, HttpMethod.GET, entity, responseType);
+// En tu ApiGatewayService, modifica el método get:
+public <T> ResponseEntity<T> get(String microservicio, String endpoint, Class<T> responseType) {
+    String url = API_GATEWAY_URL + "/" + microservicio + endpoint;
+    
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("Accept", "application/json;charset=UTF-8"); // Forzar UTF-8 en Accept
+    
+    if (accessToken != null && !accessToken.isEmpty()) {
+        headers.setBearerAuth(accessToken);
+        System.out.println("✅ Token incluido en GET request");
     }
-
+    
+    HttpEntity<String> entity = new HttpEntity<>(headers);
+    
+    return restTemplate.exchange(url, HttpMethod.GET, entity, responseType);
+}
     // Métodos PUT y DELETE similares...
     public <T> ResponseEntity<T> put(String microservicio, String endpoint, Object request, Class<T> responseType) {
         String url = API_GATEWAY_URL + "/" + microservicio + endpoint;

@@ -8,6 +8,10 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.ToggleButton;
+
+import java.nio.charset.StandardCharsets;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 
 @Controller
@@ -39,39 +43,107 @@ public class PersonalInformationController {
         this.navigation = navigation;
     }
 
-    @FXML
-    private void initialize() {
-        usuarioActual = SessionManager.getCurrentUser();
-        if (usuarioActual != null) {
-            cargarInformacionUsuario();
-            configurarBotonesPorRol();
-        }
-    }
-
-    public void configurarConUsuario(User usuario) {
-        this.usuarioActual = usuario;
-        if (usuario != null) {
-            cargarInformacionUsuario();
-            configurarBotonesPorRol();
-        }
-    }
-
-    private void cargarInformacionUsuario() {
-        if (usuarioActual == null) return;
-
-        //Determinar tipo de usuario basado en el rol
-        String tipoUsuario = determinarTipoUsuario();
-        String nombreCompleto = (usuarioActual.getFirstName() != null ? usuarioActual.getFirstName() : "") + " " + 
-                               (usuarioActual.getLastName() != null ? usuarioActual.getLastName() : "");
+@FXML
+private void initialize() {
+    System.out.println("=== INICIALIZANDO PersonalInformationController ===");
+    
+    usuarioActual = SessionManager.getCurrentUser();
+    if (usuarioActual != null) {
+        System.out.println("📋 Usuario en sesión: " + usuarioActual.getEmail());
+        System.out.println("📋 Programa en sesión: " + usuarioActual.getProgram());
         
-        lblTipo.setText(tipoUsuario);
-        lblNombre.setText(nombreCompleto.trim());
-        lblEmail.setText(usuarioActual.getEmail() != null ? usuarioActual.getEmail() : "");
-        lblPrograma.setText(usuarioActual.getProgram() != null ? usuarioActual.getProgram() : "N/A");
-        lblRol.setText(usuarioActual.getRole() != null ? usuarioActual.getRole() : "");
-        lblTelefono.setText(usuarioActual.getPhone() != null ? usuarioActual.getPhone() : "N/A");
-        lblEstado.setText(usuarioActual.getStatus() != null ? usuarioActual.getStatus() : "ACTIVO");
+        actualizarInformacionUsuario();
+        cargarInformacionUsuario();
+        configurarBotonesPorRol();
+    } else {
+        System.out.println("❌ ERROR: usuarioActual es null en initialize()");
     }
+}
+
+private void actualizarInformacionUsuario() {
+    try {
+        String email = usuarioActual.getEmail();
+        if (email != null && !email.isEmpty()) {
+            System.out.println("🔄 Actualizando información para: " + email);
+            
+            ResponseEntity<User> response = apiService.get("api/usuarios", "/email/" + email, User.class);
+            
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                User updatedUser = response.getBody();
+                
+                System.out.println("📥 Programa desde API: " + updatedUser.getProgram());
+                
+                // ✅ CORREGIR caracteres para TODOS los programas
+                if (updatedUser.getProgram() != null) {
+                    String programaCorregido = corregirCaracteresPrograma(updatedUser.getProgram());
+                    updatedUser.setProgram(programaCorregido);
+                    System.out.println("🔧 Programa corregido: " + programaCorregido);
+                }
+                
+                SessionManager.setCurrentUser(updatedUser);
+                this.usuarioActual = updatedUser;
+                
+                System.out.println("✅ Usuario actualizado en sesión");
+            } else {
+                System.out.println("❌ Error en respuesta de API: " + response.getStatusCode());
+            }
+        }
+    } catch (Exception e) {
+        System.out.println("❌ Error actualizando información del usuario: " + e.getMessage());
+        e.printStackTrace();
+    }
+}
+
+
+
+private void cargarInformacionUsuario() {
+    // SIEMPRE sincronizar con SessionManager
+    this.usuarioActual = SessionManager.getCurrentUser();
+    if (usuarioActual == null) return;
+
+    String tipoUsuario = determinarTipoUsuario();
+    String nombreCompleto = (usuarioActual.getFirstName() != null ? usuarioActual.getFirstName() : "") + " " + 
+                           (usuarioActual.getLastName() != null ? usuarioActual.getLastName() : "");
+    
+    lblTipo.setText(tipoUsuario);
+    lblNombre.setText(nombreCompleto.trim());
+    lblEmail.setText(usuarioActual.getEmail() != null ? usuarioActual.getEmail() : "");
+    
+    // ✅ CORRECCIÓN: Mostrar TODOS los programas, no solo "Sistemas"
+    if (usuarioActual.getProgram() != null) {
+        if (usuarioActual.getProgram().contains("Sistemas")) {
+            lblPrograma.setText("Ingeniería de Sistemas");
+        } else {
+            // Para otros programas, corregir caracteres y mostrar
+            String programaCorregido = corregirCaracteresPrograma(usuarioActual.getProgram());
+            lblPrograma.setText(programaCorregido);
+        }
+    } else {
+        lblPrograma.setText("No asignado");
+    }
+    
+    lblRol.setText(usuarioActual.getRole() != null ? usuarioActual.getRole() : "");
+    lblTelefono.setText(usuarioActual.getPhone() != null ? usuarioActual.getPhone() : "N/A");
+    lblEstado.setText(usuarioActual.getStatus() != null ? usuarioActual.getStatus() : "ACTIVO");
+    
+    // DEBUG: Verificar qué se está mostrando
+    System.out.println("=== INFORMACIÓN CARGADA EN UI ===");
+    System.out.println("Programa en UI: " + lblPrograma.getText());
+    System.out.println("Email en UI: " + lblEmail.getText());
+}
+
+// Método para corregir caracteres de programas
+private String corregirCaracteresPrograma(String programa) {
+    if (programa == null) return "No asignado";
+    
+    return programa
+        .replace("Ý", "í")
+        .replace("ß", "á")
+        .replace("Ò", "ó")
+        .replace("þ", "ñ")
+        .replace("¨", "é")
+        .replace("³", "ú");
+}
 
     private String determinarTipoUsuario() {
         if (usuarioActual.getRole() == null) return "Usuario";

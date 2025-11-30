@@ -39,83 +39,175 @@ public class LoginController {
         this.keycloakService = keycloakService;
     }
 
-    @FXML
-    private void evenBtnIngresar(ActionEvent event) {
-        String usuario = txt_email.getText().trim();
-        String contrasenia = txt_password.getText().trim();
+@FXML
+private void evenBtnIngresar(ActionEvent event) {
+    String usuario = txt_email.getText().trim();
+    String contrasenia = txt_password.getText().trim();
 
-        if (usuario.isEmpty() || contrasenia.isEmpty()) {
-            mostrarAlerta("Error de login", "Por favor llene todos los campos.", Alert.AlertType.WARNING);
-            return;
-        }
+    if (usuario.isEmpty() || contrasenia.isEmpty()) {
+        mostrarAlerta("Error de login", "Por favor llene todos los campos.", Alert.AlertType.WARNING);
+        return;
+    }
 
-        try {
-            // Login con Keycloak
-            String token = keycloakService.login(usuario, contrasenia);
+    try {
+        // Login con Keycloak
+        String token = keycloakService.login(usuario, contrasenia);
+        
+        if (token != null) {
+            // Guardar token en SessionManager
+            SessionManager.setAccessToken(token);
+
+            // También en ApiGatewayService (por si acaso)
+            apiService.setAccessToken(token);
             
-            if (token != null) {
-                // Guardar token en SessionManager
-                SessionManager.setAccessToken(token);
-
-                // También en ApiGatewayService (por si acaso)
-                apiService.setAccessToken(token);
+            // Obtener información del usuario desde Keycloak
+            Map<String, Object> userInfo = keycloakService.getUserInfoWithRoles(token);
+            
+            if (userInfo != null) {
+                // Crear objeto User con la información de Keycloak
+                User usuarioLogueado = new User();
+                usuarioLogueado.setEmail((String) userInfo.get("email"));
+                usuarioLogueado.setFirstName((String) userInfo.get("given_name"));
+                usuarioLogueado.setLastName((String) userInfo.get("family_name"));
                 
-                // Obtener información del usuario desde Keycloak
-                Map<String, Object> userInfo = keycloakService.getUserInfoWithRoles(token);
+                // Obtener rol principal
+                String mainRole = (String) userInfo.get("mainRole");
+                usuarioLogueado.setRole(mainRole != null ? mainRole : "USER");
                 
-                if (userInfo != null) {
-                    // Crear objeto User con la información de Keycloak
-                    User usuarioLogueado = new User();
-                    usuarioLogueado.setEmail((String) userInfo.get("email"));
-                    usuarioLogueado.setFirstName((String) userInfo.get("given_name"));
-                    usuarioLogueado.setLastName((String) userInfo.get("family_name"));
-                    
-                    // Obtener rol principal
-                    String mainRole = (String) userInfo.get("mainRole");
-                    usuarioLogueado.setRole(mainRole != null ? mainRole : "USER");
-                    
-                    // Mostrar información de debug
-                    System.out.println("=== USER LOGIN INFO ===");
-                    System.out.println("Email: " + usuarioLogueado.getEmail());
-                    System.out.println("Nombre: " + usuarioLogueado.getFirstName() + " " + usuarioLogueado.getLastName());
-                    System.out.println("Rol principal: " + usuarioLogueado.getRole());
-                    
-                    if (userInfo.containsKey("roles")) {
-                        List<String> roles = (List<String>) userInfo.get("roles");
-                        System.out.println("Todos los roles: " + roles);
-                    }
-                    
-                    if (userInfo.containsKey("client_roles")) {
-                        List<String> clientRoles = (List<String>) userInfo.get("client_roles");
-                        System.out.println("Roles del cliente: " + clientRoles);
-                    }
-                    
-                    // Guardar en sesión
-                    SessionManager.setCurrentUser(usuarioLogueado);
+                // Mostrar información de debug
+                System.out.println("=== USER LOGIN INFO ===");
+                System.out.println("Email: " + usuarioLogueado.getEmail());
+                System.out.println("Nombre: " + usuarioLogueado.getFirstName() + " " + usuarioLogueado.getLastName());
+                System.out.println("Rol principal: " + usuarioLogueado.getRole());
+                
+                if (userInfo.containsKey("roles")) {
+                    List<String> roles = (List<String>) userInfo.get("roles");
+                    System.out.println("Todos los roles: " + roles);
+                }
+                
+                if (userInfo.containsKey("client_roles")) {
+                    List<String> clientRoles = (List<String>) userInfo.get("client_roles");
+                    System.out.println("Roles del cliente: " + clientRoles);
+                }
 
-                    // NUEVO: Probar una petición autenticada
-                    testAuthenticatedRequest();
-                    
-                    // Navegar según el rol
-                    if ("ADMIN".equalsIgnoreCase(usuarioLogueado.getRole())) {
-                        navigation.showHomeAdmin(usuarioLogueado);
-                    } else {
-                        navigation.showHomeWithUser(usuarioLogueado);
-                    }
-                    
+                // ✅ CORREGIDO: Pasar el usuarioLogueado para que se actualice
+                if (!isUserAllowedToLogin(usuarioLogueado.getEmail(), usuarioLogueado.getRole(), usuarioLogueado)) {
+                    mostrarAlerta("Acceso no autorizado", 
+                                "Su cuenta está pendiente de aprobación. Por favor, espere a que un administrador active su cuenta.", 
+                                Alert.AlertType.WARNING);
+                    // Limpiar sesión
+                    SessionManager.clearSession();
+                    apiService.setAccessToken(null);
+                    return;
+                }
+                
+                // ✅ CORREGIR CARACTERES del programa
+                if (usuarioLogueado.getProgram() != null) {
+                    String programaCorregido = corregirCaracteresPrograma(usuarioLogueado.getProgram());
+                    usuarioLogueado.setProgram(programaCorregido);
+                    System.out.println("🔧 Programa corregido: " + programaCorregido);
+                }
+                
+                // Guardar en sesión
+                SessionManager.setCurrentUser(usuarioLogueado);
+
+                // Probar una petición autenticada
+                testAuthenticatedRequest();
+                
+                // Navegar según el rol
+                if ("ADMIN".equalsIgnoreCase(usuarioLogueado.getRole())) {
+                    navigation.showHomeAdmin(usuarioLogueado);
                 } else {
-                    mostrarAlerta("Error de login", "No se pudo obtener información del usuario.", Alert.AlertType.ERROR);
+                    navigation.showHomeWithUser(usuarioLogueado);
                 }
                 
             } else {
-                mostrarAlerta("Error de login", "Usuario o contraseña incorrectos.", Alert.AlertType.ERROR);
+                mostrarAlerta("Error de login", "No se pudo obtener información del usuario.", Alert.AlertType.ERROR);
             }
+            
+        } else {
+            mostrarAlerta("Error de login", "Usuario o contraseña incorrectos.", Alert.AlertType.ERROR);
+        }
 
+    } catch (Exception e) {
+        mostrarAlerta("Error de conexión", 
+                    "No se pudo conectar con el servidor: " + e.getMessage(), 
+                    Alert.AlertType.ERROR);
+        e.printStackTrace();
+    }
+}
+
+// Método para corregir caracteres
+private String corregirCaracteresPrograma(String programa) {
+    if (programa == null) return null;
+    
+    return programa
+        .replace("Ý", "í")
+        .replace("ß", "á")
+        .replace("Ò", "ó")
+        .replace("þ", "ñ")
+        .replace("¨", "é")
+        .replace("³", "ú");
+}
+    /**
+     * Verifica si el usuario tiene permiso para iniciar sesión
+     * Solo permitir si el estado es ACEPTADO o ACTIVO, o si es ADMIN
+     */
+    private boolean isUserAllowedToLogin(String email, String role, User usuarioLogueado) {
+        try {
+            System.out.println("=== VERIFICANDO ESTADO DEL USUARIO ===");
+            System.out.println("Email: " + email);
+            System.out.println("Rol: " + role);
+            
+            // EXCEPCIÓN: Los usuarios ADMIN siempre pueden iniciar sesión
+            if ("ADMIN".equalsIgnoreCase(role)) {
+                return true;
+            }
+            
+            // Obtener información completa del usuario desde el microservicio
+            ResponseEntity<User> response = apiService.get("api/usuarios", "/email/" + email, User.class);
+            
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                User userFromDb = response.getBody();
+                String estado = userFromDb.getStatus();
+                
+                System.out.println("Estado del usuario: " + estado);
+                System.out.println("Programa del usuario desde BD: " + userFromDb.getProgram());
+                
+                // ✅ ACTUALIZAR el usuario logueado con TODA la información de la BD
+                if (usuarioLogueado != null) {
+                    usuarioLogueado.setProgram(userFromDb.getProgram());
+                    usuarioLogueado.setPhone(userFromDb.getPhone());
+                    usuarioLogueado.setStatus(userFromDb.getStatus());
+                    // Actualizar otros campos que puedan ser necesarios
+                    
+                    System.out.println("✅ Usuario actualizado con información de BD:");
+                    System.out.println("   - Programa: " + usuarioLogueado.getProgram());
+                    System.out.println("   - Teléfono: " + usuarioLogueado.getPhone());
+                    System.out.println("   - Estado: " + usuarioLogueado.getStatus());
+                }
+                
+                // Definir qué estados permiten login
+                boolean allowed = "ACEPTADO".equalsIgnoreCase(estado) || 
+                                "ACTIVO".equalsIgnoreCase(estado) ||
+                                "ACTIVE".equalsIgnoreCase(estado);
+                
+                if (!allowed) {
+                    System.out.println("❌ Usuario no autorizado - Estado: " + estado);
+                }
+                
+                return allowed;
+                
+            } else {
+                System.out.println("❌ No se pudo obtener información del usuario desde la BD: " + response.getStatusCode());
+                // Por seguridad, no permitir acceso si no se puede verificar el estado
+                return false;
+            }
+            
         } catch (Exception e) {
-            mostrarAlerta("Error de conexión", 
-                        "No se pudo conectar con el servidor: " + e.getMessage(), 
-                        Alert.AlertType.ERROR);
-            e.printStackTrace();
+            System.out.println("❌ Error verificando estado del usuario: " + e.getMessage());
+            // Por seguridad, no permitir acceso si hay error
+            return false;
         }
     }
 
@@ -165,29 +257,26 @@ public class LoginController {
         alerta.showAndWait();
     }
 
-
     @FXML
     private void initialize() {
-        //El método se ejecuta AUTOMÁTICAMENTE cuando se carga el FXML
+        // El método se ejecuta AUTOMÁTICAMENTE cuando se carga el FXML
         System.out.println("LoginController inicializado");
         
         // Test temporal - eliminar después
         testKeycloakConnection();
 
-        //Verifica que los componentes se cargaron
+        // Verifica que los componentes se cargaron
         if (txt_email == null) System.out.println("ERROR: txt_email es null");
         if (txt_password == null) System.out.println("ERROR: txt_password es null");
         if (btn_login == null) System.out.println("ERROR: btn_login es null");
         if (hpl_register == null) System.out.println("ERROR: hpl_register es null");
-
-        
     }
 
     private void testKeycloakConnection() {
         new Thread(() -> {
             try {
                 System.out.println("=== TEST KEYCLOAK CONNECTION ===");
-                String testToken = keycloakService.login("maria", "1234");
+                String testToken = keycloakService.login("admin@unicauca.edu.co", "admin");
                 if (testToken != null) {
                     System.out.println("✅ Keycloak connection SUCCESS");
                     System.out.println("Token length: " + testToken.length());

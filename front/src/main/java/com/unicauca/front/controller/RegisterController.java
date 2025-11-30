@@ -11,6 +11,7 @@ import javafx.scene.layout.VBox;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 
+import java.util.regex.Pattern;
 
 @Controller
 public class RegisterController {
@@ -43,7 +44,13 @@ public class RegisterController {
     private ToggleGroup groupRoles;
     private final ApiGatewayService apiService;
     private final NavigationController navigation;
-    private final KeycloakService keycloakService; 
+    private final KeycloakService keycloakService;
+
+    // Patrones para validación de contraseña
+    private static final Pattern HAS_UPPERCASE = Pattern.compile("[A-Z]");
+    private static final Pattern HAS_LOWERCASE = Pattern.compile("[a-z]");
+    private static final Pattern HAS_DIGIT = Pattern.compile("\\d");
+    private static final Pattern HAS_SPECIAL = Pattern.compile("[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]");
 
     public RegisterController(ApiGatewayService apiService, NavigationController navigation, KeycloakService keycloakService) {
         this.apiService = apiService;
@@ -68,15 +75,22 @@ public class RegisterController {
             return;
         }
 
-        // Validación de contraseñas
+        // Validación de email
+        if (!isValidEmail(correo)) {
+            mostrarAlerta("Error de registro", "Por favor ingrese un email válido con dominio @unicauca.edu.co", Alert.AlertType.ERROR);
+            return;
+        }
+
+        // Validación de contraseñas coincidan
         if (!pass.equals(confirmPass)) {
             mostrarAlerta("Error de registro", "Las contraseñas no coinciden", Alert.AlertType.ERROR);
             return;
         }
 
-        // Validación de email
-        if (!correo.contains("@")) {
-            mostrarAlerta("Error de registro", "Por favor ingrese un email válido", Alert.AlertType.ERROR);
+        // Validación de fortaleza de contraseña
+        String passwordValidation = isValidPassword(pass);
+        if (!passwordValidation.equals("VALID")) {
+            mostrarAlerta("Contraseña débil", passwordValidation, Alert.AlertType.ERROR);
             return;
         }
 
@@ -168,6 +182,42 @@ public class RegisterController {
         }
     }
 
+    /**
+     * Valida el formato del email
+     */
+    private boolean isValidEmail(String email) {
+        // Validar formato básico de email y dominio unicauca
+        return email.matches("^[A-Za-z0-9+_.-]+@unicauca\\.edu\\.co$");
+    }
+
+    /**
+     * Valida la fortaleza de la contraseña
+     * @return "VALID" si es válida, o mensaje de error si no
+     */
+    private String isValidPassword(String password) {
+        if (password.length() < 6) {
+            return "La contraseña debe tener al menos 6 caracteres";
+        }
+        
+        if (!HAS_UPPERCASE.matcher(password).find()) {
+            return "La contraseña debe contener al menos una letra mayúscula";
+        }
+        
+        if (!HAS_LOWERCASE.matcher(password).find()) {
+            return "La contraseña debe contener al menos una letra minúscula";
+        }
+        
+        if (!HAS_DIGIT.matcher(password).find()) {
+            return "La contraseña debe contener al menos un número";
+        }
+        
+        if (!HAS_SPECIAL.matcher(password).find()) {
+            return "La contraseña debe contener al menos un carácter especial (!@#$%^&*()_+-=[]{};':\"|,.<>/?).";
+        }
+        
+        return "VALID";
+    }
+
     @FXML
     private void onGoToLogin(ActionEvent event) {
         navigation.showLogin();
@@ -203,7 +253,7 @@ public class RegisterController {
 
     @FXML
     private void initialize() {
-        //Inicializar ComboBox
+        // Inicializar ComboBox
         cbx_programa.getItems().addAll(
             "Ingeniería de Sistemas",
             "Ingeniería Automática Industrial", 
@@ -211,11 +261,33 @@ public class RegisterController {
             "Técnologo en Telemática"
         );
 
-        //Configurar el ToggleGroup para los roles
+        // Configurar el ToggleGroup para los roles
         groupRoles = new ToggleGroup();
         rbEstudiante.setToggleGroup(groupRoles);
         rbDocente.setToggleGroup(groupRoles);
         rbCoordinador.setToggleGroup(groupRoles);
-        rbJefeDepartamento.setToggleGroup(groupRoles); // NUEVO RADIO BUTTON AL GRUPO
+        rbJefeDepartamento.setToggleGroup(groupRoles);
+
+        // Opcional: Agregar listener para mostrar fortaleza de contraseña en tiempo real
+        txt_password.textProperty().addListener((observable, oldValue, newValue) -> {
+            updatePasswordStrengthIndicator(newValue);
+        });
+    }
+
+    /**
+     * Opcional: Muestra indicador visual de fortaleza de contraseña
+     */
+    private void updatePasswordStrengthIndicator(String password) {
+        if (password.isEmpty()) {
+            txt_password.setStyle("");
+            return;
+        }
+        
+        String validation = isValidPassword(password);
+        if (validation.equals("VALID")) {
+            txt_password.setStyle("-fx-border-color: green; -fx-border-width: 2px;");
+        } else {
+            txt_password.setStyle("-fx-border-color: orange; -fx-border-width: 2px;");
+        }
     }
 }
