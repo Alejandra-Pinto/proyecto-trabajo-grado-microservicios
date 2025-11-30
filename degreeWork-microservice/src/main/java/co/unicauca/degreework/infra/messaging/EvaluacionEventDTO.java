@@ -1,4 +1,4 @@
-package co.unicauca.degreework.infra.dto;
+package co.unicauca.degreework.infra.messaging;
 
 import java.util.List;
 

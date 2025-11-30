@@ -16,6 +16,7 @@ import co.unicauca.degreework.infra.dto.DegreeWorkUpdateDTO;
 import co.unicauca.degreework.infra.dto.DocumentDTO;
 import co.unicauca.degreework.infra.dto.NotificationEventDTO;
 import co.unicauca.degreework.infra.messaging.DegreeWorkProducer;
+import co.unicauca.degreework.infra.messaging.EvaluacionEventDTO;
 import co.unicauca.degreework.infra.messaging.NotificationProducer;
 
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -469,6 +471,33 @@ public class DegreeWorkService {
             repository.save(degreeWork);
             System.out.println("[Evaluaciones] Documento no aprobado. NoAprobadoCount incrementado a: " + degreeWork.getNoAprobadoCount());
         }
+    }
+
+    @Transactional
+    public void asignarEvaluadoresDesdeEvento(EvaluacionEventDTO dto) {
+        if (dto == null || dto.getDegreeWorkId() == null) {
+            throw new IllegalArgumentException("DTO de Evaluación inválido.");
+        }
+
+        DegreeWork degreeWork = repository.findById(dto.getDegreeWorkId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Trabajo de grado no encontrado con ID " + dto.getDegreeWorkId()
+                ));
+
+        // Convertir emails → Usuarios reales
+        List<User> evaluadores = dto.getEvaluadores().stream()
+                .map(email -> userService.obtenerPorEmail(email))
+                .filter(Objects::nonNull)
+                .toList();
+
+        if (evaluadores.size() != 2) {
+            throw new IllegalStateException("Debe recibir exactamente 2 evaluadores válidos.");
+        }
+
+        degreeWork.setEvaluadores(evaluadores);
+        repository.save(degreeWork);
+
+        System.out.println("✅ Evaluadores asignados para el trabajo " + dto.getDegreeWorkId());
     }
 
 }

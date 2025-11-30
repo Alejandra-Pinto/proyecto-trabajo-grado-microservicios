@@ -4,14 +4,18 @@ import co.unicauca.degreework.access.DegreeWorkRepository;
 import co.unicauca.degreework.access.DocumentRepository;
 import co.unicauca.degreework.domain.entities.DegreeWork;
 import co.unicauca.degreework.domain.entities.Document;
+import co.unicauca.degreework.domain.entities.User;
+import co.unicauca.degreework.domain.entities.enums.EnumEstadoDegreeWork;
 import co.unicauca.degreework.domain.entities.enums.EnumEstadoDocument;
 import co.unicauca.degreework.infra.dto.ActualizarEvaluacionDTO;
 import co.unicauca.degreework.infra.dto.DegreeWorkUpdateDTO;
+import co.unicauca.degreework.infra.dto.EvaluacionEventDTO;
 import co.unicauca.degreework.infra.messaging.DegreeWorkProducer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 @Transactional
@@ -138,4 +142,35 @@ public class DegreeWorkService {
             System.err.println("❌ Error enviando DegreeWorkUpdateDTO a la cola: " + e.getMessage());
         }
     }
+
+    public DegreeWork asignarEvaluadores(Long degreeWorkId, List<User> emailsEvaluadores) {
+        if (emailsEvaluadores.size() != 2) {
+            throw new IllegalArgumentException("Debe asignar exactamente 2 evaluadores.");
+        }
+
+        DegreeWork degreeWork = repository.findById(degreeWorkId)
+                .orElseThrow(() -> new RuntimeException("Trabajo de grado no encontrado"));
+
+        // Guardar evaluadores en la entidad DegreeWork
+        degreeWork.setEvaluadores(emailsEvaluadores);
+
+        // Convertir los User a solo correos (lo que se envía)
+        List<String> correosEvaluadores = emailsEvaluadores.stream()
+                .map(User::getEmail)
+                .toList();
+
+        // Construir el evento
+        EvaluacionEventDTO event = new EvaluacionEventDTO(
+                degreeWorkId,
+                correosEvaluadores
+        );
+
+        // Enviar a RabbitMQ
+        degreeWorkProducer.sendUpdate(event);
+
+        System.out.println("📤 [RABBITMQ] EvaluacionEventDTO enviado: " + event);
+
+        return repository.save(degreeWork);
+    }
+
 }
