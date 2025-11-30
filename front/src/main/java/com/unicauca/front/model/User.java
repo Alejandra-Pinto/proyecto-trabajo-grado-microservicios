@@ -1,10 +1,13 @@
 package com.unicauca.front.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class User {
     private Long id;
     private String firstName;
     private String lastName;
     private String phone;
+    @JsonProperty("program") // Asegurar que el nombre coincida con el JSON
     private String program;
     private String email;
     private String password;

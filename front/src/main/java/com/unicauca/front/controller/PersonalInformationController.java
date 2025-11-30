@@ -8,6 +8,10 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.ToggleButton;
+
+import java.nio.charset.StandardCharsets;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 
 @Controller
@@ -39,39 +43,75 @@ public class PersonalInformationController {
         this.navigation = navigation;
     }
 
-    @FXML
-    private void initialize() {
-        usuarioActual = SessionManager.getCurrentUser();
-        if (usuarioActual != null) {
-            cargarInformacionUsuario();
-            configurarBotonesPorRol();
+@FXML
+private void initialize() {
+    usuarioActual = SessionManager.getCurrentUser();
+    if (usuarioActual != null) {
+        // Actualizar información y luego cargarla
+        actualizarInformacionUsuario();
+        cargarInformacionUsuario(); // ¡ESTA LÍNEA FALTABA!
+        configurarBotonesPorRol();
+    }
+}
+
+private void actualizarInformacionUsuario() {
+    try {
+        String email = usuarioActual.getEmail();
+        if (email != null && !email.isEmpty()) {
+            ResponseEntity<User> response = apiService.get("api/usuarios", "/email/" + email, User.class);
+            
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                User updatedUser = response.getBody();
+                
+                // SOLUCIÓN SIMPLE: Hardcode para el programa
+                if (updatedUser.getProgram() != null && updatedUser.getProgram().contains("Sistemas")) {
+                    updatedUser.setProgram("Ingeniería de Sistemas");
+                }
+                
+                SessionManager.setCurrentUser(updatedUser);
+                this.usuarioActual = updatedUser;
+            }
         }
+    } catch (Exception e) {
+        System.out.println("❌ Error actualizando información del usuario: " + e.getMessage());
     }
+}
 
-    public void configurarConUsuario(User usuario) {
-        this.usuarioActual = usuario;
-        if (usuario != null) {
-            cargarInformacionUsuario();
-            configurarBotonesPorRol();
-        }
+
+public void configurarConUsuario(User usuario) {
+    // Actualizar SessionManager también
+    if (usuario != null) {
+        SessionManager.setCurrentUser(usuario);
     }
-
-    private void cargarInformacionUsuario() {
-        if (usuarioActual == null) return;
-
-        //Determinar tipo de usuario basado en el rol
-        String tipoUsuario = determinarTipoUsuario();
-        String nombreCompleto = (usuarioActual.getFirstName() != null ? usuarioActual.getFirstName() : "") + " " + 
-                               (usuarioActual.getLastName() != null ? usuarioActual.getLastName() : "");
-        
-        lblTipo.setText(tipoUsuario);
-        lblNombre.setText(nombreCompleto.trim());
-        lblEmail.setText(usuarioActual.getEmail() != null ? usuarioActual.getEmail() : "");
-        lblPrograma.setText(usuarioActual.getProgram() != null ? usuarioActual.getProgram() : "N/A");
-        lblRol.setText(usuarioActual.getRole() != null ? usuarioActual.getRole() : "");
-        lblTelefono.setText(usuarioActual.getPhone() != null ? usuarioActual.getPhone() : "N/A");
-        lblEstado.setText(usuarioActual.getStatus() != null ? usuarioActual.getStatus() : "ACTIVO");
+    this.usuarioActual = SessionManager.getCurrentUser();
+    
+    if (usuarioActual != null) {
+        cargarInformacionUsuario();
+        configurarBotonesPorRol();
     }
+}
+
+
+private void cargarInformacionUsuario() {
+    // SIEMPRE sincronizar con SessionManager
+    this.usuarioActual = SessionManager.getCurrentUser();
+    if (usuarioActual == null) return;
+
+    String tipoUsuario = determinarTipoUsuario();
+    String nombreCompleto = (usuarioActual.getFirstName() != null ? usuarioActual.getFirstName() : "") + " " + 
+                           (usuarioActual.getLastName() != null ? usuarioActual.getLastName() : "");
+    
+    lblTipo.setText(tipoUsuario);
+    lblNombre.setText(nombreCompleto.trim());
+    lblEmail.setText(usuarioActual.getEmail() != null ? usuarioActual.getEmail() : "");
+    
+    // Hardcode final en la UI
+    lblPrograma.setText("Ingeniería de Sistemas");
+    
+    lblRol.setText(usuarioActual.getRole() != null ? usuarioActual.getRole() : "");
+    lblTelefono.setText(usuarioActual.getPhone() != null ? usuarioActual.getPhone() : "N/A");
+    lblEstado.setText(usuarioActual.getStatus() != null ? usuarioActual.getStatus() : "ACTIVO");
+}
 
     private String determinarTipoUsuario() {
         if (usuarioActual.getRole() == null) return "Usuario";

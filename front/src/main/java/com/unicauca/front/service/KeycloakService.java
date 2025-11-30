@@ -8,6 +8,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class KeycloakService {
@@ -55,18 +56,17 @@ public class KeycloakService {
         return null;
     }
 
-    /**
-     * Obtener información completa del usuario incluyendo roles
+   /**
+     * Obtener información completa del usuario incluyendo roles (FILTRADOS)
      */
     public Map<String, Object> getUserInfoWithRoles(String token) {
         try {
-            // Decodificar el token JWT para obtener roles
+            // Decodificar el token JWT
             String[] parts = token.split("\\.");
             if (parts.length < 2) {
                 return null;
             }
             
-            // Decodificar el payload del JWT
             String payload = new String(Base64.getUrlDecoder().decode(parts[1]));
             Map<String, Object> tokenData = objectMapper.readValue(payload, Map.class);
             
@@ -76,30 +76,28 @@ public class KeycloakService {
             userInfo.put("given_name", tokenData.get("given_name"));
             userInfo.put("family_name", tokenData.get("family_name"));
             userInfo.put("preferred_username", tokenData.get("preferred_username"));
-            userInfo.put("sub", tokenData.get("sub")); // ID del usuario
+            userInfo.put("sub", tokenData.get("sub"));
             
-            // Extraer roles de Keycloak
+            // Extraer y FILTRAR roles de Keycloak
             if (tokenData.containsKey("realm_access")) {
                 Map<String, Object> realmAccess = (Map<String, Object>) tokenData.get("realm_access");
                 if (realmAccess.containsKey("roles")) {
-                    List<String> roles = (List<String>) realmAccess.get("roles");
-                    userInfo.put("roles", roles);
+                    List<String> allRoles = (List<String>) realmAccess.get("roles");
                     
-                    // Asignar el primer rol como rol principal
-                    if (!roles.isEmpty()) {
-                        userInfo.put("mainRole", roles.get(0).toUpperCase());
-                    }
-                }
-            }
-            
-            // También verificar roles de client específico
-            if (tokenData.containsKey("resource_access")) {
-                Map<String, Object> resourceAccess = (Map<String, Object>) tokenData.get("resource_access");
-                if (resourceAccess.containsKey(CLIENT_ID)) {
-                    Map<String, Object> clientAccess = (Map<String, Object>) resourceAccess.get(CLIENT_ID);
-                    if (clientAccess.containsKey("roles")) {
-                        List<String> clientRoles = (List<String>) clientAccess.get("roles");
-                        userInfo.put("client_roles", clientRoles);
+                    // FILTRAR roles técnicos de Keycloak
+                    List<String> filteredRoles = allRoles.stream()
+                        .filter(role -> !isTechnicalRole(role))
+                        .collect(Collectors.toList());
+                    
+                    userInfo.put("roles", filteredRoles);
+                    userInfo.put("all_roles", allRoles); // Para debug
+                    
+                    // Asignar el primer rol FILTRADO como rol principal
+                    if (!filteredRoles.isEmpty()) {
+                        userInfo.put("mainRole", filteredRoles.get(0).toUpperCase());
+                    } else {
+                        // Si no hay roles filtrados, usar el primero no técnico o default
+                        userInfo.put("mainRole", "USER");
                     }
                 }
             }
@@ -108,9 +106,24 @@ public class KeycloakService {
             
         } catch (Exception e) {
             System.out.println("Error decodificando token: " + e.getMessage());
-            // Fallback: usar el endpoint userinfo
             return getUserInfo(token);
         }
+    }
+
+    /**
+     * Método para identificar roles técnicos de Keycloak que deben ser ignorados
+     */
+    private boolean isTechnicalRole(String role) {
+        // Lista de roles técnicos de Keycloak que deben ser ignorados
+        List<String> technicalRoles = Arrays.asList(
+            "offline_access", 
+            "uma_authorization",
+            "default-roles-",
+            "admin"
+        );
+        
+        return technicalRoles.stream()
+            .anyMatch(technical -> role.toLowerCase().contains(technical.toLowerCase()));
     }
 
     /**
