@@ -276,7 +276,7 @@ private String corregirCaracteresPrograma(String programa) {
         new Thread(() -> {
             try {
                 System.out.println("=== TEST KEYCLOAK CONNECTION ===");
-                String testToken = keycloakService.login("maria", "1234");
+                String testToken = keycloakService.login("admin@unicauca.edu.co", "admin");
                 if (testToken != null) {
                     System.out.println("✅ Keycloak connection SUCCESS");
                     System.out.println("Token length: " + testToken.length());
