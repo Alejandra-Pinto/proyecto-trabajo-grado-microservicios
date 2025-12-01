@@ -15,7 +15,6 @@ import co.unicauca.degreework.domain.entities.enums.*;
 public class DegreeWork {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     /**

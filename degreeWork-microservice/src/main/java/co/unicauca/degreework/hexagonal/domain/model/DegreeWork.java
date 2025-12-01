@@ -4,6 +4,10 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
 import java.util.*;
+
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonSetter;
+
 import co.unicauca.degreework.hexagonal.domain.model.enums.*;
 import co.unicauca.degreework.hexagonal.domain.vo.*;
 
@@ -49,11 +53,13 @@ public class DegreeWork {
     )
     private List<User> codirectoresProyecto = new ArrayList<>();
 
+    @Embedded
     private Titulo titulo;
 
     @Enumerated(EnumType.STRING)
     private EnumModalidad modalidad;
 
+    @Embedded
     private FechaCreacion fechaActual;
 
     private String objetivoGeneral;
@@ -124,12 +130,29 @@ public class DegreeWork {
         this.codirectoresProyecto = codirectoresProyecto;
     }
 
-    public Titulo getTitulo() {
-        return titulo;
+    @JsonGetter("titulo")
+    public String getTituloAsString() {
+        return titulo != null ? titulo.getValor() : null;
     }
 
-    public void setTitulo(Titulo titulo) {
-        this.titulo = titulo;
+    @JsonSetter("titulo")
+    public void setTituloFromString(String tituloStr) {
+        if (tituloStr != null && !tituloStr.trim().isEmpty()) {
+            this.titulo = new Titulo(tituloStr);
+        }
+    }
+
+    @JsonGetter("fechaActual")
+    public String getFechaActualAsString() {
+        return fechaActual != null ? fechaActual.getValor().toString() : null;
+    }
+
+    @JsonSetter("fechaActual")
+    public void setFechaActualFromString(String fechaStr) {
+        if (fechaStr != null && !fechaStr.trim().isEmpty()) {
+            LocalDate fecha = LocalDate.parse(fechaStr);
+            this.fechaActual = new FechaCreacion(fecha);
+        }
     }
 
     public EnumModalidad getModalidad() {
@@ -138,14 +161,6 @@ public class DegreeWork {
 
     public void setModalidad(EnumModalidad modalidad) {
         this.modalidad = modalidad;
-    }
-
-    public FechaCreacion getFechaActual() {
-        return fechaActual;
-    }
-
-    public void setFechaActual(FechaCreacion fechaActual) {
-        this.fechaActual = fechaActual;
     }
 
     public String getObjetivoGeneral() {

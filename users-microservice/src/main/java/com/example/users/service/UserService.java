@@ -27,15 +27,41 @@ public class UserService implements IUserService {
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    @Value("${app.rabbitmq.exchange}")
+    @Value("${app.rabbitmq.users.exchange}")
     private String exchange;
 
-    @Value("${app.rabbitmq.routingkey}")
+    // 🔥 CAMBIO: Hacer el routingKey opcional con valor por defecto
+    @Value("${app.rabbitmq.users.routingkey:}")
     private String routingKey;
 
     public UserService(UserRepository userRepository, RabbitTemplate rabbitTemplate) {
         this.userRepository = userRepository;
         this.rabbitTemplate = rabbitTemplate;
+    }
+
+    // 🔥 CAMBIO: Método auxiliar para enviar eventos (mantiene la lógica existente)
+    private void sendUserEvent(User savedUser, boolean isEvaluator) {
+        UserCreatedEvent event = new UserCreatedEvent(
+            savedUser.getId(),
+            savedUser.getFirstName(),
+            savedUser.getLastName(),
+            savedUser.getEmail(),
+            savedUser.getRole(),
+            savedUser.getProgram(),
+            savedUser.getStatus(),
+            isEvaluator
+        );
+
+        // 🔥 CAMBIO: Lógica adaptada para Fanout Exchange
+        if (routingKey != null && !routingKey.trim().isEmpty()) {
+            // Si hay routing key (compatibilidad con Direct Exchange)
+            rabbitTemplate.convertAndSend(exchange, routingKey, event);
+        } else {
+            // Para Fanout Exchange - routing key vacío
+            rabbitTemplate.convertAndSend(exchange, "", event);
+        }
+
+        System.out.println("✅ Evento enviado al exchange: " + exchange);
     }
 
     private User createUserByRole(String role) {
@@ -75,20 +101,7 @@ public class UserService implements IUserService {
             // Guardar en la base de datos
             User savedUser = userRepository.save(user);
 
-            // Crear evento DTO para enviar por RabbitMQ
-            UserCreatedEvent event = new UserCreatedEvent(
-                savedUser.getId(),
-                savedUser.getFirstName(),
-                savedUser.getLastName(),
-                savedUser.getEmail(),
-                savedUser.getRole(),
-                savedUser.getProgram(),
-                savedUser.getStatus(),
-                false
-            );
-
-            // Enviar el evento al exchange
-            rabbitTemplate.convertAndSend(exchange, routingKey, event);
+            sendUserEvent(savedUser, false);
 
             System.out.println("✅ User sync completed: " + savedUser.getEmail());
             return savedUser;
@@ -129,19 +142,7 @@ public class UserService implements IUserService {
         User savedUser = userRepository.save(user);
 
         // Crear evento DTO para enviar por RabbitMQ
-        UserCreatedEvent event = new UserCreatedEvent(
-            savedUser.getId(),
-            savedUser.getFirstName(),
-            savedUser.getLastName(),
-            savedUser.getEmail(),
-            savedUser.getRole(),
-            savedUser.getProgram(),
-            savedUser.getStatus(),
-            savedUser.isEvaluator()
-        );
-
-        // Enviar el evento al exchange
-        rabbitTemplate.convertAndSend(exchange, routingKey, event);
+        sendUserEvent(savedUser, savedUser.isEvaluator());
 
         return savedUser;
     }

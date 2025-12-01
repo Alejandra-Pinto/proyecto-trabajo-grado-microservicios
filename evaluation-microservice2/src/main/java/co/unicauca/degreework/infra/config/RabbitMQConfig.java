@@ -13,6 +13,50 @@ import org.springframework.beans.factory.annotation.Value;
 public class RabbitMQConfig {
 
     // ============================
+    // ==  COLA DE USUARIOS (FANOUT) ==
+    // ============================
+
+    @Value("${app.rabbitmq.users.exchange}")
+    private String usersExchangeName;
+
+    @Value("${app.rabbitmq.users.queue}")
+    private String usersQueueName;
+
+    @Value("${app.rabbitmq.users.routingkey:}")
+    private String usersRoutingKey;
+
+    @Value("${app.rabbitmq.users.exchange-type:fanout}")
+    private String usersExchangeType;
+
+    @Bean
+    public Exchange usersExchange() {
+        System.out.println("🔧 Creando exchange de usuarios: " + usersExchangeName + " tipo: " + usersExchangeType);
+        
+        if ("fanout".equalsIgnoreCase(usersExchangeType)) {
+            return new FanoutExchange(usersExchangeName);
+        } else {
+            return new DirectExchange(usersExchangeName);
+        }
+    }
+
+    @Bean
+    public Queue usersQueue() {
+        System.out.println("🔧 Creando cola de usuarios para evaluaciones: " + usersQueueName);
+        return new Queue(usersQueueName, true);
+    }
+
+    @Bean
+    public Binding usersBinding(Queue usersQueue, Exchange usersExchange) {
+        System.out.println("🔧 Vinculando cola de usuarios al exchange fanout");
+        
+        if (usersExchange instanceof FanoutExchange) {
+            return BindingBuilder.bind(usersQueue).to((FanoutExchange) usersExchange);
+        } else {
+            return BindingBuilder.bind(usersQueue).to((DirectExchange) usersExchange).with(usersRoutingKey);
+        }
+    }
+
+    // ============================
     // ==  PROYECTOS DE GRADO   ==
     // ============================
 
@@ -43,7 +87,6 @@ public class RabbitMQConfig {
                 .with(degreeworkRoutingKey);
     }
 
-
     // ============================
     // ==        EVALUACIÓN      ==
     // ============================
@@ -57,10 +100,6 @@ public class RabbitMQConfig {
     @Value("${app.rabbitmq.evaluation.routingkey}")
     private String evaluationRoutingKey;
 
-    /*@Bean
-    public TopicExchange evaluationExchange() {
-        return new TopicExchange(evaluationExchangeName);
-    }*/
     @Bean
     public DirectExchange evaluationExchange() {
         return new DirectExchange(evaluationExchangeName);

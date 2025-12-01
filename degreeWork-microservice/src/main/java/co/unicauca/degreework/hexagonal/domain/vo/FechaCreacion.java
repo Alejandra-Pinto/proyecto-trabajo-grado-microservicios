@@ -1,11 +1,17 @@
 package co.unicauca.degreework.hexagonal.domain.vo;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
 import java.time.LocalDate;
 import java.util.Objects;
 
+@Embeddable  // 🔥 Agregar esta anotación
 public class FechaCreacion {
+    
+    @Column(name = "fecha_creacion")  // 🔥 Especificar nombre único de columna
     private final LocalDate valor;
     
+    // 🔥 Constructor sin argumentos requerido por JPA
     public FechaCreacion() {
         this.valor = LocalDate.now();
     }
@@ -22,6 +28,11 @@ public class FechaCreacion {
     
     public LocalDate getValor() { 
         return valor; 
+    }
+    
+    // 🔥 Método getter con nombre diferente para evitar conflictos
+    public LocalDate getFecha() {
+        return valor;
     }
     
     public boolean esReciente() {

@@ -51,7 +51,7 @@ public class CreateDegreeWorkUseCase {
         this.degreeWorkEventMapper = degreeWorkEventMapper;
     }
 
-    public DegreeWork execute(DegreeWorkDTO dto) {
+    public DegreeWorkDTO execute(DegreeWorkDTO dto) {
         // 1. Validar y obtener usuarios
         User director = userRepositoryPort.findByEmail(dto.getDirectorEmail())
                 .orElseThrow(() -> new IllegalArgumentException("No se encontró el director con correo: " + dto.getDirectorEmail()));
@@ -98,7 +98,7 @@ public class CreateDegreeWorkUseCase {
         // 5. Publicar eventos usando los mappers
         publicarEventos(saved, director, estudiantes, codirectores);
 
-        return saved;
+        return degreeWorkMapper.toDTO(saved);
     }
 
     private DegreeWorkBuilder crearBuilder(EnumModalidad modalidad) {

@@ -1,9 +1,19 @@
 package co.unicauca.degreework.hexagonal.domain.vo;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
 import java.util.Objects;
 
+@Embeddable  // 🔥 Agregar esta anotación
 public class Titulo {
+    
+    @Column(name = "titulo_valor", length = 200)  // 🔥 Especificar nombre único de columna
     private final String valor;
+    
+    // 🔥 Constructor sin argumentos requerido por JPA
+    public Titulo() {
+        this.valor = "";
+    }
     
     public Titulo(String valor) {
         if (valor == null || valor.trim().isEmpty()) {

@@ -19,8 +19,11 @@ public class RabbitMQConfig {
     @Value("${app.rabbitmq.users.queue}")
     private String userQueueName;
 
-    @Value("${app.rabbitmq.users.routingkey}")
+    @Value("${app.rabbitmq.users.routingkey:}")
     private String userRoutingKey;
+
+    @Value("${app.rabbitmq.users.exchange-type:fanout}")
+    private String userExchangeType;
 
     // === Cola de proyectos de grado ===
     @Value("${app.rabbitmq.degreework.exchange}")
@@ -32,23 +35,48 @@ public class RabbitMQConfig {
     @Value("${app.rabbitmq.degreework.routingkey}")
     private String degreeworkRoutingKey;
 
-    // === Declaraciones para cola de usuarios ===
+    // === Cola de notificaciones ===
+    @Value("${app.rabbitmq.notification.exchange}")
+    private String notificationExchangeName;
+
+    @Value("${app.rabbitmq.notification.queue}")
+    private String notificationQueueName;
+
+    @Value("${app.rabbitmq.notification.routingkey}")
+    private String notificationRoutingKey;
+
+    // === Declaraciones para cola de usuarios (FANOUT) ===
     @Bean
     public Queue userQueue() {
+        System.out.println("🔧 Creando cola de usuarios: " + userQueueName);
         return new Queue(userQueueName, true);
     }
 
     @Bean
-    public DirectExchange userExchange() {
-        return new DirectExchange(userExchangeName);
+    public Exchange userExchange() {
+        System.out.println("🔧 Creando exchange de usuarios: " + userExchangeName + " tipo: " + userExchangeType);
+        
+        if ("fanout".equalsIgnoreCase(userExchangeType)) {
+            return new FanoutExchange(userExchangeName);
+        } else {
+            return new DirectExchange(userExchangeName);
+        }
     }
 
     @Bean
-    public Binding userBinding(Queue userQueue, DirectExchange userExchange) {
-        return BindingBuilder.bind(userQueue).to(userExchange).with(userRoutingKey);
+    public Binding userBinding(Queue userQueue, Exchange userExchange) {
+        System.out.println("🔧 Vinculando cola de usuarios al exchange");
+        
+        if (userExchange instanceof FanoutExchange) {
+            // Para Fanout Exchange
+            return BindingBuilder.bind(userQueue).to((FanoutExchange) userExchange);
+        } else {
+            // Para Direct Exchange (compatibilidad)
+            return BindingBuilder.bind(userQueue).to((DirectExchange) userExchange).with(userRoutingKey);
+        }
     }
 
-    // === Declaraciones para cola de proyectos de grado ===
+    // === Declaraciones para cola de proyectos de grado (DIRECT - SIN CAMBIOS) ===
     @Bean
     public Queue degreeworkQueue() {
         return new Queue(degreeworkQueueName, true);
@@ -63,18 +91,8 @@ public class RabbitMQConfig {
     public Binding degreeworkBinding(Queue degreeworkQueue, DirectExchange degreeworkExchange) {
         return BindingBuilder.bind(degreeworkQueue).to(degreeworkExchange).with(degreeworkRoutingKey);
     }
-    
-    // === Cola de notificaciones ===
-    @Value("${app.rabbitmq.notification.exchange}")
-    private String notificationExchangeName;
 
-    @Value("${app.rabbitmq.notification.queue}")
-    private String notificationQueueName;
-
-    @Value("${app.rabbitmq.notification.routingkey}")
-    private String notificationRoutingKey;
-
-    // === Declaraciones para cola de notificaciones ===
+    // === Declaraciones para cola de notificaciones (DIRECT - SIN CAMBIOS) ===
     @Bean
     public Queue notificationQueue() {
         return new Queue(notificationQueueName, true);
@@ -89,13 +107,14 @@ public class RabbitMQConfig {
     public Binding notificationBinding(Queue notificationQueue, DirectExchange notificationExchange) {
         return BindingBuilder.bind(notificationQueue).to(notificationExchange).with(notificationRoutingKey);
     }
-    // === Conversor JSON ===
+
+    // === Conversor JSON (SIN CAMBIOS) ===
     @Bean
     public MessageConverter jsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }
 
-    // === RabbitTemplate (para enviar mensajes) ===
+    // === RabbitTemplate (SIN CAMBIOS) ===
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);

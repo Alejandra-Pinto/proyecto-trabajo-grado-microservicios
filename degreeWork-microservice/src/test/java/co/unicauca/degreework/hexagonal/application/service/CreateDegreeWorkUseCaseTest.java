@@ -124,7 +124,7 @@ class CreateDegreeWorkUseCaseTest {
         when(degreeWorkEventMapper.toCreatedEvent(any(DegreeWork.class))).thenReturn(createdEvent);
 
         // Act
-        DegreeWork result = createDegreeWorkUseCase.execute(validDegreeWorkDTO);
+        DegreeWorkDTO result = createDegreeWorkUseCase.execute(validDegreeWorkDTO);
 
         // Assert
         assertNotNull(result);
@@ -167,7 +167,7 @@ class CreateDegreeWorkUseCaseTest {
         when(degreeWorkEventMapper.toCreatedEvent(any(DegreeWork.class))).thenReturn(new DegreeWorkCreatedEvent());
 
         // Act
-        DegreeWork result = createDegreeWorkUseCase.execute(practicaDTO);
+        DegreeWorkDTO result = createDegreeWorkUseCase.execute(practicaDTO);
 
         // Assert
         assertNotNull(result);
@@ -210,7 +210,7 @@ class CreateDegreeWorkUseCaseTest {
         when(degreeWorkEventMapper.toCreatedEvent(any(DegreeWork.class))).thenReturn(new DegreeWorkCreatedEvent());
 
         // Act
-        DegreeWork result = createDegreeWorkUseCase.execute(validDegreeWorkDTO);
+        DegreeWorkDTO result = createDegreeWorkUseCase.execute(validDegreeWorkDTO);
 
         // Assert
         assertNotNull(result);
@@ -233,7 +233,7 @@ class CreateDegreeWorkUseCaseTest {
         when(degreeWorkEventMapper.toCreatedEvent(any(DegreeWork.class))).thenReturn(new DegreeWorkCreatedEvent());
 
         // Act
-        DegreeWork result = createDegreeWorkUseCase.execute(validDegreeWorkDTO);
+        DegreeWorkDTO result = createDegreeWorkUseCase.execute(validDegreeWorkDTO);
 
         // Assert
         assertNotNull(result);
@@ -257,7 +257,7 @@ class CreateDegreeWorkUseCaseTest {
         when(degreeWorkEventMapper.toCreatedEvent(any(DegreeWork.class))).thenReturn(new DegreeWorkCreatedEvent());
 
         // Act
-        DegreeWork result = createDegreeWorkUseCase.execute(validDegreeWorkDTO);
+        DegreeWorkDTO result = createDegreeWorkUseCase.execute(validDegreeWorkDTO);
 
         // Assert
         assertNotNull(result);

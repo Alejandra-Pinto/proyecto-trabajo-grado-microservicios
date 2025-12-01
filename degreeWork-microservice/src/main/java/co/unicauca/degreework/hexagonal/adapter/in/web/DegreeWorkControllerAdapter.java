@@ -41,7 +41,7 @@ public class DegreeWorkControllerAdapter implements DegreeWorkControllerPort {
     @PostMapping("/registrar")
     public ResponseEntity<?> registrarDegreeWork(@RequestBody DegreeWorkDTO dto) {
         try {
-            DegreeWork nuevo = createDegreeWorkUseCase.execute(dto);
+            DegreeWorkDTO nuevo = createDegreeWorkUseCase.execute(dto);
             return ResponseEntity.ok(nuevo);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
