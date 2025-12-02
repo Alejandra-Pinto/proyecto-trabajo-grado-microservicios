@@ -163,7 +163,7 @@ public class NavigationController {
    //Método para mostrar ReviewStudentFormatA con usuario y formato
    public void showStudentReviewFormatA(User usuario, DegreeWork formato) {
       try {
-         FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/StudentReviewFormatA.fxml"));
+         FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/ReviewStudentFormatA.fxml"));
          ApplicationContext var10001 = this.applicationContext;
          loader.setControllerFactory(var10001::getBean);
          Parent root = (Parent)loader.load();
@@ -198,7 +198,7 @@ public class NavigationController {
 
    public void showCoordinatorReviewFormatA(User usuario, DegreeWork formato) {
       try {
-         FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/CoordinatorReviewFormatA.fxml"));
+         FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/ReviewCoordinatorFormatA.fxml"));
          loader.setControllerFactory(applicationContext::getBean);
          Parent root = loader.load();
          
