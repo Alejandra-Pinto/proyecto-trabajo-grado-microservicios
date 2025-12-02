@@ -9,25 +9,21 @@ public class NotificationFactory {
             throw new IllegalArgumentException("El tipo de evento no puede ser nulo");
         }
 
-        // 1. SUBIDO o EVALUADO → Email
-        if (eventType.contains("SUBIDO") || eventType.contains("EVALUADO")) {
+        // Todos los eventos importantes van por email
+        if (eventType.contains("FORMATO_A") || 
+            eventType.contains("ANTEPROYECTO") || 
+            eventType.contains("EVALUADORES") ||
+            eventType.contains("TRABAJO_GRADO")) {
             return new EmailNotificationSender(emailSimulator);
         }
 
-        // 2. TRABAJO_GRADO_REGISTRADO → también Email
-        if (eventType.contains("TRABAJO_GRADO")) {
-            return new EmailNotificationSender(emailSimulator);
-        }
-
-        // 3. Notificaciones internas
+        // Para notificaciones internas
         if (eventType.contains("INTERNA")) {
             return new InternalNotificationSender();
         }
 
-        // 4. Por defecto: Email (opcional, para evitar errores)
+        // Por defecto email
         System.err.println("WARN: Evento no configurado específicamente: " + eventType + " → usando Email");
         return new EmailNotificationSender(emailSimulator);
-
-        // throw new IllegalArgumentException("Tipo de evento no soportado: " + eventType);
     }
 }
