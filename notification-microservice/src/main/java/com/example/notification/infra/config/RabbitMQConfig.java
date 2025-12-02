@@ -18,6 +18,19 @@ public class RabbitMQConfig {
     @Value("${app.rabbitmq.routingkey}")
     private String routingKey;
 
+    //para usuarios, lo usamos para coordinadores:
+    // === Cola de usuarios (FANOUT) ===
+    @Value("${app.rabbitmq.users.exchange}")
+    private String userExchangeName;
+
+    @Value("${app.rabbitmq.users.queue}")
+    private String userQueueName;
+
+    @Value("${app.rabbitmq.users.exchange-type:fanout}")
+    private String userExchangeType;
+
+    
+
     @Bean
     public Queue queue() {
         return QueueBuilder.durable(queue).build();
@@ -37,4 +50,27 @@ public class RabbitMQConfig {
     public Jackson2JsonMessageConverter messageConverter() {
         return new Jackson2JsonMessageConverter();
     }
+
+    @Bean
+    public Queue userQueue() {
+        return new Queue(userQueueName, true);
+    }
+
+    @Bean
+    public Exchange userExchange() {
+        if ("fanout".equalsIgnoreCase(userExchangeType)) {
+            return new FanoutExchange(userExchangeName);
+        } else {
+            return new DirectExchange(userExchangeName);
+        }
+    }
+
+    @Bean
+    public Binding userBinding(Queue userQueue, Exchange userExchange) {
+        if (userExchange instanceof FanoutExchange) {
+            return BindingBuilder.bind(userQueue).to((FanoutExchange) userExchange);
+        }
+        return null; // direct no aplica acá, pero lo dejamos seguro
+    }
+
 }

@@ -2,22 +2,27 @@ package com.example.notification.infra.config.dto;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class NotificationEventDTO implements Serializable {
-    private String eventType;     // Ej: FORMATO_A_SUBIDO, ANTEPROYECTO_SUBIDO, etc.
+    private String eventType;     // Ej: FORMATO_A_SUBIDO, FORMATO_A_EVALUADO, ANTEPROYECTO_SUBIDO, EVALUADORES_ASIGNADOS
     private String title;         // Título del trabajo de grado
     private String modality;      // Modalidad (opcional)
-    private String recipientEmail; // Email principal (opcional)
-    private String coordinatorEmail;
+    private List<String> recipientEmails; // Emails específicos (opcional)
+    private String targetRole;    // Rol para notificar (COORDINATOR, PROFESSOR, etc.)
     private String directorEmail;
     private String coDirector1Email;
     private String coDirector2Email;
+    private List<String> evaluatorEmails; // Para cuando se asignen evaluadores
+    private String status;        // Aprobado, Rechazado, etc.
+    private String observations;  // Observaciones de la evaluación
+    private Integer attemptNumber; // Número de intento (para Formato A)
     private LocalDateTime timestamp;
 
-    // Constructor vacío (requerido por Jackson)
+    // Constructor vacío
     public NotificationEventDTO() {}
 
-    // Getters y setters
+    // Getters y setters para todos los campos
     public String getEventType() { return eventType; }
     public void setEventType(String eventType) { this.eventType = eventType; }
 
@@ -27,11 +32,11 @@ public class NotificationEventDTO implements Serializable {
     public String getModality() { return modality; }
     public void setModality(String modality) { this.modality = modality; }
 
-    public String getRecipientEmail() { return recipientEmail; }
-    public void setRecipientEmail(String recipientEmail) { this.recipientEmail = recipientEmail; }
+    public List<String> getRecipientEmails() { return recipientEmails; }
+    public void setRecipientEmails(List<String> recipientEmails) { this.recipientEmails = recipientEmails; }
 
-    public String getCoordinatorEmail() { return coordinatorEmail; }
-    public void setCoordinatorEmail(String coordinatorEmail) { this.coordinatorEmail = coordinatorEmail; }
+    public String getTargetRole() { return targetRole; }
+    public void setTargetRole(String targetRole) { this.targetRole = targetRole; }
 
     public String getDirectorEmail() { return directorEmail; }
     public void setDirectorEmail(String directorEmail) { this.directorEmail = directorEmail; }
@@ -41,6 +46,18 @@ public class NotificationEventDTO implements Serializable {
 
     public String getCoDirector2Email() { return coDirector2Email; }
     public void setCoDirector2Email(String coDirector2Email) { this.coDirector2Email = coDirector2Email; }
+
+    public List<String> getEvaluatorEmails() { return evaluatorEmails; }
+    public void setEvaluatorEmails(List<String> evaluatorEmails) { this.evaluatorEmails = evaluatorEmails; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public String getObservations() { return observations; }
+    public void setObservations(String observations) { this.observations = observations; }
+
+    public Integer getAttemptNumber() { return attemptNumber; }
+    public void setAttemptNumber(Integer attemptNumber) { this.attemptNumber = attemptNumber; }
 
     public LocalDateTime getTimestamp() { return timestamp; }
     public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
