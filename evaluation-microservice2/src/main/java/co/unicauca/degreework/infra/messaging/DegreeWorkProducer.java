@@ -32,8 +32,8 @@ public class DegreeWorkProducer {
             System.out.println("📤 Enviando actualización a RabbitMQ...");
 
             String routingKeyToUse = (routingKeyUpdate == null || routingKeyUpdate.isEmpty())
-                                      ? routingKeyDegreeWorkCreated
-                                      : routingKeyUpdate;
+                    ? routingKeyDegreeWorkCreated
+                    : routingKeyUpdate;
 
             rabbitTemplate.convertAndSend(exchange, routingKeyToUse, updateEvent);
 
@@ -41,6 +41,19 @@ public class DegreeWorkProducer {
         } catch (Exception e) {
             System.err.println("❌ Error enviando actualización: " + e.getMessage());
             throw new RuntimeException("Error enviando evento de actualización", e);
+        }
+    }
+
+    public void sendNotification(Object notificationEvent) {
+        try {
+            System.out.println("📨 Enviando NOTIFICACIÓN a RabbitMQ...");
+
+            rabbitTemplate.convertAndSend(exchange, routingKeyDegreeWorkCreated, notificationEvent);
+
+            System.out.println("✅ Notificación enviada correctamente: " + notificationEvent.getClass().getSimpleName());
+        } catch (Exception e) {
+            System.err.println("❌ Error enviando notificación: " + e.getMessage());
+            throw new RuntimeException("Error enviando notificación", e);
         }
     }
 }

@@ -11,9 +11,9 @@ import org.springframework.data.repository.query.Param;
 
 public interface DegreeWorkRepository extends JpaRepository<DegreeWork, Long> {
     @Query("""
-           SELECT d FROM DegreeWork  d
-           WHERE d.directorProyecto.email = :teacherEmail
-           """)
+            SELECT d FROM DegreeWork  d
+            WHERE d.directorProyecto.email = :teacherEmail
+            """)
     List<DegreeWork> listByTeacher(String teacherEmail);
 
     @Query("SELECT d FROM DegreeWork d JOIN d.estudiantes e WHERE e.email = :email")
@@ -21,5 +21,11 @@ public interface DegreeWorkRepository extends JpaRepository<DegreeWork, Long> {
 
     List<DegreeWork> findByEstado(EnumEstadoDegreeWork estado);
 
-    int countByEvaluadoresContains(String email);
+    @Query("""
+            SELECT COUNT(d)
+            FROM DegreeWork d
+            JOIN d.evaluadores e
+            WHERE e.email = :email
+            """)
+    int countByEvaluadorEmail(@Param("email") String email);
 }
