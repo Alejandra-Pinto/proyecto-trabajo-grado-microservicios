@@ -171,7 +171,7 @@ public class DegreeWorkService {
         for (User evaluador : emailsEvaluadores) {
             String email = evaluador.getEmail();
 
-            int trabajosAsignados = repository.countByEvaluadoresContains(email);
+            int trabajosAsignados = repository.countByEvaluadorEmail(email);
 
             if (trabajosAsignados >= 3) {
                 throw new IllegalArgumentException(
