@@ -34,7 +34,8 @@ public class DegreeWorkEvaluationUseCase {
 
     public void actualizarDesdeEvaluacion(DegreeWorkUpdateDTO dto) {
         if (dto == null || dto.getDegreeWorkId() == null) {
-            throw new IllegalArgumentException("El DTO recibido desde Evaluaciones es inválido.");
+            System.err.println("DTO inválido, ignorando...");
+            return; // En lugar de lanzar IllegalArgumentException
         }
 
         System.out.println("📥 [RabbitMQ] Recibido mensaje de Evaluaciones: " + dto);

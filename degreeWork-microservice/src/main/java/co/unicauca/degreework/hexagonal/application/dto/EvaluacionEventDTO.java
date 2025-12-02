@@ -1,11 +1,12 @@
 package co.unicauca.degreework.hexagonal.application.dto;
 
+import java.io.Serializable;
 import java.util.List;
 
 import lombok.Data;
 
 @Data
-public class EvaluacionEventDTO {
+public class EvaluacionEventDTO implements Serializable {
     private Long degreeWorkId;
     private List<String> evaluadores;
     
