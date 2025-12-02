@@ -2,40 +2,32 @@ package com.example.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.http.HttpMethod;
 
 
 @Configuration
+@EnableWebFluxSecurity 
 public class SecurityConfig {
 
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
-
+        System.out.println("=== SECURITY CONFIG LOADED ===");
+        
         http
-            .cors(cors -> {}) // usa el CorsWebFilter que ya tienes
+            .cors(cors -> {})
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
-            .authorizeExchange(exchanges -> exchanges
-
-                // Públicos
-                .pathMatchers("/api/usuarios/login", "/api/usuarios/register", "/api/usuarios/sync-user").permitAll()
-
-
-
-                // Admin
-                .pathMatchers("/api/admin/**").hasRole("ADMIN")
-
-                // Docente
-                .pathMatchers("/api/evaluaciones/**").hasRole("PROFESSOR")
-
-                // Degreeworks: Docentes y Estudiantes
-                .pathMatchers("/api/degreeworks/**").hasAnyRole("PROFESSOR", "STUDENT")
-
-
-                // Todo lo demás requiere token
-                .anyExchange().authenticated()
-            )
+            .authorizeExchange(exchanges -> {
+                System.out.println("Configuring authorization rules...");
+                exchanges
+                    .pathMatchers("/api/usuarios/login", "/api/usuarios/register", "/api/usuarios/sync-user").permitAll()
+                    .pathMatchers("/api/admin/**").hasRole("ADMIN")
+                    .pathMatchers("/api/evaluaciones/**").hasRole("PROFESSOR")
+                    .pathMatchers("/api/degreeworks/**").hasAnyRole("PROFESSOR", "STUDENT")
+                    .anyExchange().authenticated();
+            })
             .oauth2ResourceServer(ServerHttpSecurity.OAuth2ResourceServerSpec::jwt);
 
         return http.build();

@@ -3,6 +3,7 @@ package co.unicauca.degreework.hexagonal.application.service;
 import co.unicauca.degreework.hexagonal.application.dto.DegreeWorkCreatedEvent;
 import co.unicauca.degreework.hexagonal.application.dto.DegreeWorkDTO;
 import co.unicauca.degreework.hexagonal.application.dto.DocumentDTO;
+import co.unicauca.degreework.hexagonal.application.dto.NotificationEventDTO;
 import co.unicauca.degreework.hexagonal.domain.model.DegreeWork;
 import co.unicauca.degreework.hexagonal.domain.model.Document;
 import co.unicauca.degreework.hexagonal.domain.model.User;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,6 +57,11 @@ public class UpdateDegreeWorkUseCase {
         DegreeWork existente = degreeWorkRepositoryPort.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("No se encontró el trabajo de grado con ID " + id));
 
+        // Variables para controlar qué tipo de documento se está actualizando
+        boolean isSubiendoFormatoA = false;
+        boolean isSubiendoAnteproyecto = false;
+        int numeroIntentoFormatoA = 0;
+        
         // === INICIO MEMENTO ===
         DegreeWorkOriginator originator = new DegreeWorkOriginator(existente);
         DegreeWorkCaretaker caretaker = new DegreeWorkCaretaker();
@@ -113,12 +120,34 @@ public class UpdateDegreeWorkUseCase {
             // --- Actualizar documentos ---
             actualizarDocumentos(dto, existente);
 
+            // --- Determinar qué tipo de documento se está actualizando ---
+            if (dto.getFormatosA() != null && !dto.getFormatosA().isEmpty()) {
+                isSubiendoFormatoA = true;
+                numeroIntentoFormatoA = calcularNumeroIntentoFormatoA(existente);
+                System.out.println("[NOTIFICACIÓN] Se está subiendo Formato A - Intento #" + numeroIntentoFormatoA);
+            }
+            
+            if (dto.getAnteproyectos() != null && !dto.getAnteproyectos().isEmpty()) {
+                isSubiendoAnteproyecto = true;
+                System.out.println("[NOTIFICACIÓN] Se está subiendo Anteproyecto");
+            }
+
             // --- Guardar cambios ---
             DegreeWork saved = degreeWorkRepositoryPort.save(existente);
 
-            // --- Enviar evento usando el mapper ---
+            // --- Enviar eventos ---
+            // Evento para evaluation microservice usando el mapper
             DegreeWorkCreatedEvent event = degreeWorkEventMapper.toCreatedEvent(saved);
             eventPublisherPort.sendDegreeWorkCreated(event);
+            
+            // Enviar eventos de notificación según el tipo de documento actualizado
+            if (isSubiendoFormatoA) {
+                enviarEventoFormatoASubido(saved, numeroIntentoFormatoA);
+            }
+            
+            if (isSubiendoAnteproyecto) {
+                enviarEventoAnteproyectoSubido(saved);
+            }
 
             System.out.println("[MEMENTO] Actualización completada correctamente.");
             return saved;
@@ -135,6 +164,94 @@ public class UpdateDegreeWorkUseCase {
             }
             throw e;
         }
+    }
+    
+    private int calcularNumeroIntentoFormatoA(DegreeWork degreeWork) {
+        // Contar cuántos formatos A existen (incluyendo el nuevo)
+        List<Document> formatosA = degreeWork.getFormatosA();
+        if (formatosA == null) {
+            return 1;
+        }
+        
+        // Filtrar solo formatos A que no sean rechazados definitivamente
+        long intentosValidos = formatosA.stream()
+            .filter(doc -> doc.getEstado() != EnumEstadoDocument.RECHAZADO)
+            .count();
+            
+        return (int) intentosValidos;
+    }
+    
+    private void enviarEventoFormatoASubido(DegreeWork degreeWork, int numeroIntento) {
+        NotificationEventDTO notificationEvent = new NotificationEventDTO();
+        
+        // Establecer valores básicos
+        notificationEvent.setEventType("FORMATO_A_SUBIDO");
+        notificationEvent.setTitle(degreeWork.getTitulo() != null ? degreeWork.getTitulo().getValor() : null);
+        notificationEvent.setModality(degreeWork.getModalidad() != null ? degreeWork.getModalidad().name() : null);
+        notificationEvent.setTimestamp(LocalDateTime.now());
+        notificationEvent.setAttemptNumber(numeroIntento);
+        
+        // Notificar a TODOS los coordinadores
+        notificationEvent.setTargetRole("COORDINATOR");
+        
+        // También al director del proyecto
+        if (degreeWork.getDirectorProyecto() != null) {
+            List<String> directorEmail = new ArrayList<>();
+            directorEmail.add(degreeWork.getDirectorProyecto().getEmail());
+            notificationEvent.setRecipientEmails(directorEmail);
+            notificationEvent.setDirectorEmail(degreeWork.getDirectorProyecto().getEmail());
+        }
+        
+        // Agregar codirectores si existen
+        if (degreeWork.getCodirectoresProyecto() != null && !degreeWork.getCodirectoresProyecto().isEmpty()) {
+            if (degreeWork.getCodirectoresProyecto().size() > 0) {
+                notificationEvent.setCoDirector1Email(degreeWork.getCodirectoresProyecto().get(0).getEmail());
+            }
+            if (degreeWork.getCodirectoresProyecto().size() > 1) {
+                notificationEvent.setCoDirector2Email(degreeWork.getCodirectoresProyecto().get(1).getEmail());
+            }
+        }
+        
+        System.out.println("[NOTIFICACIÓN] Enviando evento FORMATO_A_SUBIDO para trabajo: " + 
+                         notificationEvent.getTitle() + " - Intento: " + numeroIntento);
+        
+        eventPublisherPort.sendNotification(notificationEvent);
+    }
+    
+    private void enviarEventoAnteproyectoSubido(DegreeWork degreeWork) {
+        NotificationEventDTO notificationEvent = new NotificationEventDTO();
+        
+        // Establecer valores básicos
+        notificationEvent.setEventType("ANTEPROYECTO_SUBIDO");
+        notificationEvent.setTitle(degreeWork.getTitulo() != null ? degreeWork.getTitulo().getValor() : null);
+        notificationEvent.setModality(degreeWork.getModalidad() != null ? degreeWork.getModalidad().name() : null);
+        notificationEvent.setTimestamp(LocalDateTime.now());
+        
+        // Notificar al jefe de departamento (DEPARTMENT_HEAD)
+        notificationEvent.setTargetRole("DEPARTMENT_HEAD");
+        
+        // También al director del proyecto
+        if (degreeWork.getDirectorProyecto() != null) {
+            List<String> directorEmail = new ArrayList<>();
+            directorEmail.add(degreeWork.getDirectorProyecto().getEmail());
+            notificationEvent.setRecipientEmails(directorEmail);
+            notificationEvent.setDirectorEmail(degreeWork.getDirectorProyecto().getEmail());
+        }
+        
+        // Agregar codirectores si existen
+        if (degreeWork.getCodirectoresProyecto() != null && !degreeWork.getCodirectoresProyecto().isEmpty()) {
+            if (degreeWork.getCodirectoresProyecto().size() > 0) {
+                notificationEvent.setCoDirector1Email(degreeWork.getCodirectoresProyecto().get(0).getEmail());
+            }
+            if (degreeWork.getCodirectoresProyecto().size() > 1) {
+                notificationEvent.setCoDirector2Email(degreeWork.getCodirectoresProyecto().get(1).getEmail());
+            }
+        }
+        
+        System.out.println("[NOTIFICACIÓN] Enviando evento ANTEPROYECTO_SUBIDO para trabajo: " + 
+                         notificationEvent.getTitle());
+        
+        eventPublisherPort.sendNotification(notificationEvent);
     }
 
     private void actualizarDocumentos(DegreeWorkDTO dto, DegreeWork existente) {
