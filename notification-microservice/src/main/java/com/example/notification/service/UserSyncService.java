@@ -4,22 +4,22 @@ import com.example.notification.entity.User;
 import com.example.notification.infra.config.dto.UserCreatedEvent;
 import com.example.notification.repository.UserRepository;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class UserSyncService {
 
-    private final UserRepository userRepository;
-
-    public UserSyncService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+    @Autowired
+    private UserRepository userRepository;
 
     @RabbitListener(queues = "${app.rabbitmq.users.queue}")
-    public void consumeUserCreated(UserCreatedEvent event) {
-
-        System.out.println("📩 [NOTIFICATION] Usuario recibido por RabbitMQ: " + event.getEmail());
-
+    public void syncUser(UserCreatedEvent event) {
+        System.out.println("=== SINCRONIZANDO USUARIO ===");
+        System.out.println("Email: " + event.getEmail());
+        System.out.println("Rol: " + event.getRole());
+        System.out.println("Nombre: " + event.getFirstName() + " " + event.getLastName());
+        
         User user = new User();
         user.setId(event.getId());
         user.setFirstName(event.getFirstName());
@@ -29,9 +29,8 @@ public class UserSyncService {
         user.setProgram(event.getProgram());
         user.setStatus(event.getStatus());
         user.setEvaluator(event.isEvaluator());
-
+        
         userRepository.save(user);
-
-        System.out.println("💾 [NOTIFICATION] Usuario guardado para futuras notificaciones");
+        System.out.println("Usuario guardado exitosamente");
     }
 }

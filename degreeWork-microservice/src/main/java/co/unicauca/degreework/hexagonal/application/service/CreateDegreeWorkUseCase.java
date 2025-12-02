@@ -22,7 +22,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 @Service
 @Transactional
@@ -118,22 +120,55 @@ public class CreateDegreeWorkUseCase {
         DegreeWorkCreatedEvent event = degreeWorkEventMapper.toCreatedEvent(saved);
         eventPublisherPort.sendDegreeWorkCreated(event);
 
-        // Evento de notificación
+        // Evento de notificación - ACTUALIZADO para usar nueva estructura
         NotificationEventDTO notificationEvent = createNotificationEvent(saved, director, estudiantes, codirectores);
         eventPublisherPort.sendNotification(notificationEvent);
     }
 
     private NotificationEventDTO createNotificationEvent(DegreeWork saved, User director, 
                                                         List<User> estudiantes, List<User> codirectores) {
-        return new NotificationEventDTO(
-            "TRABAJO_GRADO_REGISTRADO",
-            saved.getTitulo() != null ? saved.getTitulo().getValor() : null, // Extraer String del Value Object
-            saved.getModalidad() != null ? saved.getModalidad().name() : null,
-            estudiantes.isEmpty() ? null : estudiantes.get(0).getEmail(),
-            director.getEmail(),
-            codirectores.size() > 0 ? codirectores.get(0).getEmail() : null,
-            codirectores.size() > 1 ? codirectores.get(1).getEmail() : null
-        );
+        NotificationEventDTO dto = new NotificationEventDTO();
+        
+        // Establecer valores básicos
+        dto.setEventType("FORMATO_A_SUBIDO");
+        dto.setTitle(saved.getTitulo() != null ? saved.getTitulo().getValor() : null);
+        dto.setModality(saved.getModalidad() != null ? saved.getModalidad().name() : null);
+        dto.setTimestamp(LocalDateTime.now());
+        
+        // Establecer emails de los involucrados
+        List<String> directorAndCodirectors = new ArrayList<>();
+        directorAndCodirectors.add(director.getEmail());
+        
+        // Agregar codirectores si existen
+        for (User codirector : codirectores) {
+            directorAndCodirectors.add(codirector.getEmail());
+        }
+        dto.setRecipientEmails(directorAndCodirectors);
+        
+        // Para este evento, TODOS los coordinadores deben ser notificados
+        dto.setTargetRole("COORDINATOR");
+        
+        // Establecer emails específicos para referencia (no para envío directo)
+        dto.setDirectorEmail(director.getEmail());
+        
+        if (!codirectores.isEmpty()) {
+            dto.setCoDirector1Email(codirectores.get(0).getEmail());
+            if (codirectores.size() > 1) {
+                dto.setCoDirector2Email(codirectores.get(1).getEmail());
+            }
+        }
+        
+        // Si hay estudiantes, agregarlos también
+        if (!estudiantes.isEmpty()) {
+            List<String> studentEmails = new ArrayList<>();
+            for (User estudiante : estudiantes) {
+                studentEmails.add(estudiante.getEmail());
+            }
+            // Para este evento, los estudiantes NO reciben notificación inmediata
+            // Solo se notifican cuando el coordinador evalúe
+        }
+        
+        return dto;
     }
 
 }

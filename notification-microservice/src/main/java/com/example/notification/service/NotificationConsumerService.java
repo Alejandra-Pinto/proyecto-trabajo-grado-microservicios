@@ -23,15 +23,32 @@ public class NotificationConsumerService {
     private RecipientService recipientService;
 
     @RabbitListener(queues = "${app.rabbitmq.queue}")
-    public void receive(NotificationEventDTO dto) {
-        try {
-            // 1️ Determinar destinatarios
-            List<String> recipients = recipientService.resolveRecipients(dto);
-            
-            if (recipients.isEmpty()) {
-                System.err.println("WARN: No hay destinatarios para el evento: " + dto.getEventType());
-                return;
-            }
+public void receive(NotificationEventDTO dto) {
+    try {
+        // DEPURACIÓN: Ver qué datos llegan
+        System.out.println("=== EVENTO RECIBIDO ===");
+        System.out.println("Event Type: " + dto.getEventType());
+        System.out.println("Title: " + dto.getTitle());
+        System.out.println("Target Role: " + dto.getTargetRole());
+        System.out.println("Recipient Emails: " + (dto.getRecipientEmails() != null ? dto.getRecipientEmails() : "null"));
+        System.out.println("Director Email: " + dto.getDirectorEmail());
+        System.out.println("=========================");
+        
+        // 1️ Determinar destinatarios
+        List<String> recipients = recipientService.resolveRecipients(dto);
+        
+        // DEPURACIÓN: Ver qué destinatarios se resolvieron
+        System.out.println("Destinatarios resueltos: " + recipients.size());
+        for (String recipient : recipients) {
+            System.out.println("  - " + recipient);
+        }
+        
+        if (recipients.isEmpty()) {
+            System.err.println("WARN: No hay destinatarios para el evento: " + dto.getEventType());
+            return;
+        }
+
+        // Resto del código...
 
             // 2️ Guardar en BD y enviar a cada destinatario
             for (String recipientEmail : recipients) {

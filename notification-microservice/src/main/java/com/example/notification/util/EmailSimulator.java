@@ -9,6 +9,6 @@ public class EmailSimulator {
     private static final Logger logger = LoggerFactory.getLogger(EmailSimulator.class);
 
     public void simulate(String to, String subject, String body) {
-        logger.info("[Simulado] Para: {}\nAsunto: {}\nMensaje: {}\n", to, subject, body);
+        logger.info("\n[Simulado] Para: {}\nAsunto: {}\nMensaje: {}\n", to, subject, body);
     }
 }
