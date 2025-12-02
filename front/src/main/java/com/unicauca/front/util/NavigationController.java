@@ -180,7 +180,7 @@ public class NavigationController {
 
    public void showTeacherReviewFormatA(User usuario, DegreeWork formato) {
       try {
-         FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/TeacherReviewFormatA.fxml"));
+         FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/ReviewTeacherFormatA.fxml"));
          loader.setControllerFactory(applicationContext::getBean);
          Parent root = loader.load();
          

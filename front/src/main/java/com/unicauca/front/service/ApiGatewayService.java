@@ -98,4 +98,23 @@ public <T> ResponseEntity<T> get(String microservicio, String endpoint, Class<T>
         
         return restTemplate.exchange(url, HttpMethod.DELETE, entity, Void.class);
     }
+
+    public <T> ResponseEntity<T> patch(String microservicio, String endpoint, Object request, Class<T> responseType) {
+
+        String url = API_GATEWAY_URL + "/" + microservicio + endpoint;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // 🔥 Agregar token exactamente igual que en GET/POST/PUT
+        if (accessToken != null && !accessToken.isEmpty()) {
+            headers.setBearerAuth(accessToken);
+        }
+
+        HttpEntity<Object> entity = new HttpEntity<>(request, headers);
+
+        return restTemplate.exchange(url, HttpMethod.PATCH, entity, responseType);
+    }
+
+
 }
