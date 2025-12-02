@@ -1,5 +1,6 @@
 package com.unicauca.front.controller;
 
+import com.unicauca.front.dto.ActualizarEvaluacionDTO;
 import com.unicauca.front.model.DegreeWork;
 import com.unicauca.front.model.Document;
 import com.unicauca.front.model.EnumEstadoDegreeWork;
@@ -209,44 +210,39 @@ private EnumEstadoDocument convertirStringAEnumEstadoD(String estadoStr) {
  */
 private void actualizarEstadoFormato(DegreeWork formato, EnumEstadoDocument nuevoEstado) {
     try {
-        if (formato.getFormatosA() == null || formato.getFormatosA().isEmpty()) {
-            mostrarAlerta("Error", "Este trabajo de grado no tiene formatos A registrados.", Alert.AlertType.ERROR);
+        if (formato.getId() == null) {
+            mostrarAlerta("Error", "El trabajo de grado no tiene ID.", Alert.AlertType.ERROR);
             return;
         }
 
-        // ✅ Tomar el último formato A
-        Document ultimoFormatoA = formato.getFormatosA().get(formato.getFormatosA().size() - 1);
-        ultimoFormatoA.setEstado(nuevoEstado);
+        ActualizarEvaluacionDTO dto = new ActualizarEvaluacionDTO();
+        dto.setDegreeWorkId(formato.getId());
+        dto.setEstado(nuevoEstado);
+        dto.setObservaciones(formato.getCorrecciones());
 
-        System.out.println("🟦 Actualizando estado del último Formato A:");
-        System.out.println(" - DegreeWork ID: " + formato.getId());
-        System.out.println(" - Documento ID: " + ultimoFormatoA.getId());
-        System.out.println(" - Nuevo estado: " + nuevoEstado);
+        System.out.println("➡ Enviando DTO a /api/evaluaciones/evaluacion:");
+        System.out.println(dto);
 
-        // ✅ Enviar el DegreeWork completo al backend
-        ResponseEntity<DegreeWork> response = apiService.put(
-            "api/degreeworks",
-            "/" + formato.getId(),
-            formato,  // enviamos el objeto completo
-            DegreeWork.class
+        ResponseEntity<Object> response = apiService.patch(
+            "api/evaluaciones",
+            "/evaluacion",
+            dto,
+            Object.class
         );
 
         if (response.getStatusCode().is2xxSuccessful()) {
-            System.out.println("✅ Estado del Formato A actualizado correctamente en DegreeWork ID: " + formato.getId());
-            Platform.runLater(() -> {
-                mostrarAlerta("Éxito", "Estado del Formato A actualizado correctamente a " + nuevoEstado, Alert.AlertType.INFORMATION);
-                tblFormatos.refresh();
-            });
+            mostrarAlerta("Éxito", "Evaluación actualizada correctamente.", Alert.AlertType.INFORMATION);
+            tblFormatos.refresh();
         } else {
-            System.out.println("❌ Error al actualizar Formato A: " + response.getStatusCode());
-            mostrarAlerta("Error", "No se pudo actualizar el Formato A en el trabajo de grado.", Alert.AlertType.ERROR);
+            mostrarAlerta("Error", "No se pudo actualizar la evaluación.", Alert.AlertType.ERROR);
         }
 
     } catch (Exception e) {
         e.printStackTrace();
-        mostrarAlerta("Error", "Error actualizando el estado del Formato A: " + e.getMessage(), Alert.AlertType.ERROR);
+        mostrarAlerta("Error", "Error actualizando la evaluación: " + e.getMessage(), Alert.AlertType.ERROR);
     }
 }
+
 
     private void configurarFiltros() {
         comboFiltro.getItems().addAll(

@@ -4,9 +4,6 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import co.unicauca.degreework.infra.dto.EvaluacionEventDTO;
-import co.unicauca.degreework.infra.dto.DegreeWorkCreatedEvent;
-
 @Component
 public class DegreeWorkProducer {
 
