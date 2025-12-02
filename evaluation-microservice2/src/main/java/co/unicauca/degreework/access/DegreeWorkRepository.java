@@ -20,4 +20,6 @@ public interface DegreeWorkRepository extends JpaRepository<DegreeWork, Long> {
     List<DegreeWork> listByStudent(@Param("email") String email);
 
     List<DegreeWork> findByEstado(EnumEstadoDegreeWork estado);
+
+    int countByEvaluadoresContains(String email);
 }

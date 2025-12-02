@@ -56,7 +56,7 @@ public class DegreeWorkService {
                 ));
 
         // ---------------------------------------------------
-        // 1️⃣ OBTENER EL ÚLTIMO DOCUMENTO
+        //  OBTENER EL ÚLTIMO DOCUMENTO
         // ---------------------------------------------------
         Document ultimoDoc = obtenerUltimoDocumento(degreeWork);
 
@@ -68,7 +68,7 @@ public class DegreeWorkService {
         String obsPrevias = degreeWork.getCorrecciones();
 
         // ---------------------------------------------------
-        // 2️⃣ ACTUALIZAR ESTADO Y OBSERVACIONES
+        // ACTUALIZAR ESTADO Y OBSERVACIONES
         // ---------------------------------------------------
         if (dto.getEstado() != null) {
             ultimoDoc.setEstado(dto.getEstado());
@@ -79,24 +79,35 @@ public class DegreeWorkService {
             degreeWork.setCorrecciones(dto.getObservaciones());
         }
 
-        // ---------------------------------------------------
-        // 3️⃣ GUARDAR
-        // ---------------------------------------------------
+        // -----------------------------
+        // GUARDAR
+        // -----------------------------
         DegreeWork saved = repository.save(degreeWork);
 
-        boolean cambioEstado = dto.getEstado() != null && !dto.getEstado().equals(estadoAnterior);
+        boolean cambioEstado = dto.getEstado() != null &&
+                !dto.getEstado().equals(estadoAnterior);
+
         boolean cambioObs = dto.getObservaciones() != null &&
                 !dto.getObservaciones().equals(obsPrevias);
 
         // ---------------------------------------------------
-        // 4️⃣ ENVIAR A COLA SOLO SI HAY CAMBIOS
+        // ENVIAR A COLA SOLO SI HAY CAMBIOS
         // ---------------------------------------------------
         if (cambioEstado || cambioObs) {
             enviarDegreeWorkUpdate(saved, dto.getEstado(), dto.getObservaciones());
+
+            // 🔔 NOTIFICACIÓN DE EVALUACIÓN
+            enviarNotificacion(
+                    "EVALUACION_REALIZADA",
+                    saved,
+                    "El proyecto ha sido evaluado. Estado: " +
+                            (dto.getEstado() != null ? dto.getEstado().name() : "sin cambio")
+            );
         }
 
         return saved;
     }
+
 
     /**
      * Devuelve el último documento que tenga el DegreeWork (FormA, anteproyecto o carta)
@@ -122,7 +133,7 @@ public class DegreeWorkService {
     }
 
     /**
-     *  Enviar DegreeWorkUpdateDTO a RabbitMQ (este es el DTO correcto)
+     *  Enviar DegreeWorkUpdateDTO a RabbitMQ 
      */
     private void enviarDegreeWorkUpdate(DegreeWork degreeWork,
                                         EnumEstadoDocument nuevoEstado,
@@ -143,13 +154,39 @@ public class DegreeWorkService {
         }
     }
 
+    /**
+     * Asignar evaluadores a un trabajo de grado y notificar al microservicio de evaluación
+     */
+
     public DegreeWork asignarEvaluadores(Long degreeWorkId, List<User> emailsEvaluadores) {
+        //validación para que sean 2 evaluadores
         if (emailsEvaluadores.size() != 2) {
             throw new IllegalArgumentException("Debe asignar exactamente 2 evaluadores.");
         }
 
+        //validación para ver que el trabajo de grado exista
         DegreeWork degreeWork = repository.findById(degreeWorkId)
                 .orElseThrow(() -> new RuntimeException("Trabajo de grado no encontrado"));
+
+                
+        // Validación: cada evaluador NO debe tener más de 3 TG asignados
+        for (User evaluador : evaluadores) {
+            String email = evaluador.getEmail();
+
+            int trabajosAsignados = repository.countByEvaluadoresContains(email);
+
+            if (trabajosAsignados >= 3) {
+                throw new IllegalArgumentException(
+                        "El evaluador " + email + " ya tiene " + trabajosAsignados + 
+                        " trabajos asignados y no puede recibir más."
+                );
+            }
+        }
+
+        // Guardar evaluadores en la entidad
+        List<String> correosEvaluadores = evaluadores.stream()
+                .map(User::getEmail)
+                .toList();
 
         // Guardar evaluadores en la entidad DegreeWork
         degreeWork.setEvaluadores(emailsEvaluadores);
@@ -159,18 +196,50 @@ public class DegreeWorkService {
                 .map(User::getEmail)
                 .toList();
 
-        // Construir el evento
-        EvaluacionEventDTO event = new EvaluacionEventDTO(
-                degreeWorkId,
-                correosEvaluadores
-        );
-
+        // Evento para evaluación (ya existente)
+        EvaluacionEventDTO event = new EvaluacionEventDTO(degreeWorkId, correosEvaluadores);
+       
         // Enviar a RabbitMQ
         degreeWorkProducer.sendUpdate(event);
 
         System.out.println("📤 [RABBITMQ] EvaluacionEventDTO enviado: " + event);
 
-        return repository.save(degreeWork);
+        DegreeWork saved = repository.save(degreeWork);
+        //return repository.save(degreeWork);
+
+        // 🔔 NOTIFICACIÓN
+        enviarNotificacion(
+                "EVALUADORES_ASIGNADOS",
+                saved,
+                "Se han asignado evaluadores al proyecto."
+        );
+
+        return saved;
     }
+
+    /**
+     * Enviar notificación a RabbitMQ (usado en asignar evaluadores y evaluar)
+     */
+    private void enviarNotificacion(String tipo, DegreeWork degreeWork, String mensaje) {
+        try {
+            NotificationEventDTO notification = new NotificationEventDTO(
+                    tipo,
+                    degreeWork.getTitulo() != null ? degreeWork.getTitulo().getValor() : null,
+                    mensaje,
+                    degreeWork.getEstudiantes().isEmpty() ? null : degreeWork.getEstudiantes().get(0).getEmail(),
+                    degreeWork.getDirectorProyecto() != null ? degreeWork.getDirectorProyecto().getEmail() : null,
+                    degreeWork.getCodirectores().size() > 0 ? degreeWork.getCodirectores().get(0).getEmail() : null,
+                    degreeWork.getCodirectores().size() > 1 ? degreeWork.getCodirectores().get(1).getEmail() : null
+            );
+
+            degreeWorkProducer.sendNotification(notification);
+
+            System.out.println("📨 [NOTIFICACIÓN] Enviada → " + notification);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error enviando notificación: " + e.getMessage());
+        }
+}
+
 
 }
