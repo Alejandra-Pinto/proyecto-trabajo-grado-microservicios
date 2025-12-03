@@ -36,8 +36,9 @@ public class DegreeWorkEvaluationListener {
     @RabbitListener(queues = "degreework.queue")
     @Transactional
     public void onDegreeWorkCreated(DegreeWorkCreatedEvent event) {
-        System.out.println("📥 [DEGREEWORK LISTENER] Recibido nuevo trabajo de grado: " + event.getTitulo());
+        System.out.println("📥 [DEGREEWORK LISTENER] Recibido evento para trabajo de grado: " + event.getTitulo());
         System.out.println("📥 ID del evento: " + event.getId());
+        System.out.println("📥 Tipo de evento (implícito): " + (event.getEstado() != null ? event.getEstado() : "Actualización"));
         
         try {
             // Verificar si existe
@@ -45,24 +46,150 @@ public class DegreeWorkEvaluationListener {
             System.out.println("🔍 ¿Existe el ID " + event.getId() + " en la BD?: " + exists);
             
             if (exists) {
-                System.out.println("⚠️ El DegreeWork con ID " + event.getId() + " ya existe en la BD");
-                return;
+                System.out.println("🔄 DegreeWork ya existe - Actualizando...");
+                updateExistingDegreeWork(event);
+            } else {
+                System.out.println("🆕 DegreeWork no existe - Creando nuevo...");
+                createNewDegreeWork(event);
             }
-
-            // Convertir el Evento a Entidad DegreeWork
-            DegreeWork degreeWork = convertEventToEntity(event);
-            System.out.println("🔧 DegreeWork construido - ID: " + degreeWork.getId());
-            
-            // 🔥 SOLUCIÓN: Usar EntityManager para forzar PERSIST en lugar de MERGE
-            entityManager.persist(degreeWork);
-            entityManager.flush(); // Forzar el INSERT inmediatamente
-            
-            System.out.println("✅ [DEGREEWORK LISTENER] Trabajo de grado guardado ID: " + degreeWork.getId());
             
         } catch (Exception e) {
-            System.err.println("❌ [DEGREEWORK LISTENER] Error guardando trabajo de grado: " + e.getMessage());
+            System.err.println("❌ [DEGREEWORK LISTENER] Error procesando trabajo de grado: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+    
+    private void createNewDegreeWork(DegreeWorkCreatedEvent event) {
+        // Convertir el Evento a Entidad DegreeWork
+        DegreeWork degreeWork = convertEventToEntity(event);
+        System.out.println("🔧 DegreeWork construido - ID: " + degreeWork.getId());
+        
+        // Usar EntityManager para forzar PERSIST
+        entityManager.persist(degreeWork);
+        entityManager.flush(); // Forzar el INSERT inmediatamente
+        
+        System.out.println("✅ [DEGREEWORK LISTENER] Trabajo de grado creado ID: " + degreeWork.getId());
+    }
+    
+    private void updateExistingDegreeWork(DegreeWorkCreatedEvent event) {
+        // Buscar el DegreeWork existente
+        DegreeWork existingDegreeWork = degreeWorkRepository.findById(event.getId())
+            .orElseThrow(() -> new RuntimeException("DegreeWork no encontrado para actualizar: " + event.getId()));
+        
+        System.out.println("🔄 Encontrado DegreeWork existente - Estado actual: " + existingDegreeWork.getEstado());
+        
+        // Actualizar campos básicos
+        if (event.getTitulo() != null) {
+            existingDegreeWork.setTitulo(event.getTitulo());
+            System.out.println("📝 Actualizado título: " + event.getTitulo());
+        }
+        
+        if (event.getModalidad() != null) {
+            existingDegreeWork.setModalidad(EnumModalidad.valueOf(event.getModalidad()));
+            System.out.println("📝 Actualizada modalidad: " + event.getModalidad());
+        }
+        
+        if (event.getFechaActual() != null) {
+            existingDegreeWork.setFechaActual(event.getFechaActual());
+            System.out.println("📝 Actualizada fecha: " + event.getFechaActual());
+        }
+        
+        if (event.getEstado() != null) {
+            existingDegreeWork.setEstado(EnumEstadoDegreeWork.valueOf(event.getEstado()));
+            System.out.println("📝 Actualizado estado: " + event.getEstado());
+        }
+        
+        // 🔥 ACTUALIZAR DOCUMENTOS - ESTO ES LO MÁS IMPORTANTE
+        updateDocuments(event, existingDegreeWork);
+        
+        // Guardar cambios
+        degreeWorkRepository.save(existingDegreeWork);
+        
+        System.out.println("✅ [DEGREEWORK LISTENER] Trabajo de grado actualizado ID: " + existingDegreeWork.getId());
+    }
+    
+    private void updateDocuments(DegreeWorkCreatedEvent event, DegreeWork degreeWork) {
+        // Actualizar Formato A (si viene en el evento)
+        if (event.getFormatosA() != null && !event.getFormatosA().isEmpty()) {
+            System.out.println("📄 Actualizando Formato A...");
+            
+            // Obtener el último Formato A del evento
+            DocumentDTO ultimoFormatoADto = event.getFormatosA().get(event.getFormatosA().size() - 1);
+            
+            // Buscar si ya existe un Formato A con el mismo tipo y estado
+            Document formatoAExistente = findOrCreateDocument(
+                degreeWork.getFormatosA(), 
+                EnumTipoDocumento.FORMATO_A, 
+                ultimoFormatoADto
+            );
+            
+            // Si no existe, crear uno nuevo
+            if (!degreeWork.getFormatosA().contains(formatoAExistente)) {
+                degreeWork.getFormatosA().add(formatoAExistente);
+                System.out.println("📄 Nuevo Formato A agregado - Estado: " + formatoAExistente.getEstado());
+            } else {
+                System.out.println("📄 Formato A actualizado - Estado: " + formatoAExistente.getEstado());
+            }
+        }
+        
+        // Actualizar Anteproyecto (si viene en el evento)
+        if (event.getAnteproyectos() != null && !event.getAnteproyectos().isEmpty()) {
+            System.out.println("📄 Actualizando Anteproyecto...");
+            
+            DocumentDTO ultimoAnteproyectoDto = event.getAnteproyectos().get(event.getAnteproyectos().size() - 1);
+            
+            Document anteproyectoExistente = findOrCreateDocument(
+                degreeWork.getAnteproyectos(), 
+                EnumTipoDocumento.ANTEPROYECTO, 
+                ultimoAnteproyectoDto
+            );
+            
+            if (!degreeWork.getAnteproyectos().contains(anteproyectoExistente)) {
+                degreeWork.getAnteproyectos().add(anteproyectoExistente);
+                System.out.println("📄 Nuevo Anteproyecto agregado - Estado: " + anteproyectoExistente.getEstado());
+            } else {
+                System.out.println("📄 Anteproyecto actualizado - Estado: " + anteproyectoExistente.getEstado());
+            }
+        }
+        
+        // Actualizar Cartas de Aceptación (si viene en el evento)
+        if (event.getCartasAceptacion() != null && !event.getCartasAceptacion().isEmpty()) {
+            System.out.println("📄 Actualizando Carta de Aceptación...");
+            
+            DocumentDTO ultimaCartaDto = event.getCartasAceptacion().get(event.getCartasAceptacion().size() - 1);
+            
+            Document cartaExistente = findOrCreateDocument(
+                degreeWork.getCartasAceptacion(), 
+                EnumTipoDocumento.CARTA_ACEPTACION, 
+                ultimaCartaDto
+            );
+            
+            if (!degreeWork.getCartasAceptacion().contains(cartaExistente)) {
+                degreeWork.getCartasAceptacion().add(cartaExistente);
+                System.out.println("📄 Nueva Carta de Aceptación agregada - Estado: " + cartaExistente.getEstado());
+            } else {
+                System.out.println("📄 Carta de Aceptación actualizada - Estado: " + cartaExistente.getEstado());
+            }
+        }
+    }
+    
+    private Document findOrCreateDocument(List<Document> existingDocuments, 
+                                         EnumTipoDocumento tipo, 
+                                         DocumentDTO dto) {
+        // Buscar documento existente con el mismo tipo
+        if (existingDocuments != null && !existingDocuments.isEmpty()) {
+            for (Document doc : existingDocuments) {
+                if (doc.getTipo() == tipo) {
+                    // Actualizar el documento existente
+                    doc.setRutaArchivo(dto.getRutaArchivo());
+                    doc.setEstado(EnumEstadoDocument.valueOf(dto.getEstado().name()));
+                    return doc;
+                }
+            }
+        }
+        
+        // Si no existe, crear uno nuevo
+        return convertDocumentDTOToEntity(dto);
     }
 
     private DegreeWork convertEventToEntity(DegreeWorkCreatedEvent event) {
@@ -71,12 +198,31 @@ public class DegreeWorkEvaluationListener {
         // Información básica
         degreeWork.setId(event.getId()); // ✅ Mantener el mismo ID
         degreeWork.setTitulo(event.getTitulo());
-        degreeWork.setModalidad(EnumModalidad.valueOf(event.getModalidad()));
+        
+        if (event.getModalidad() != null) {
+            degreeWork.setModalidad(EnumModalidad.valueOf(event.getModalidad()));
+        }
+        
         degreeWork.setFechaActual(event.getFechaActual());
-        degreeWork.setEstado(EnumEstadoDegreeWork.valueOf(event.getEstado()));
-        degreeWork.setObjetivoGeneral("Objetivo general del trabajo");
-        degreeWork.setObjetivosEspecificos(List.of("Objetivo 1", "Objetivo 2"));
+        
+        if (event.getEstado() != null) {
+            degreeWork.setEstado(EnumEstadoDegreeWork.valueOf(event.getEstado()));
+        }
+        
+        // Usar valores por defecto si no están en el evento
+        if (degreeWork.getObjetivoGeneral() == null) {
+            degreeWork.setObjetivoGeneral("Objetivo general del trabajo");
+        }
+        
+        if (degreeWork.getObjetivosEspecificos() == null || degreeWork.getObjetivosEspecificos().isEmpty()) {
+            degreeWork.setObjetivosEspecificos(List.of("Objetivo 1", "Objetivo 2"));
+        }
          
+        // Inicializar listas de documentos
+        degreeWork.setFormatosA(new ArrayList<>());
+        degreeWork.setAnteproyectos(new ArrayList<>());
+        degreeWork.setCartasAceptacion(new ArrayList<>());
+        
         // Convertir documentos
         if (event.getFormatosA() != null) {
             degreeWork.setFormatosA(

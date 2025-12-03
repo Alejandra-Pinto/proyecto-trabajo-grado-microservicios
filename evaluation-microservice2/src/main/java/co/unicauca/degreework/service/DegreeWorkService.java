@@ -143,7 +143,7 @@ public class DegreeWorkService {
                     .correcciones(observaciones)
                     .build();
 
-            degreeWorkProducer.sendUpdate(dto);
+            degreeWorkProducer.sendStatusUpdate(dto);
 
             System.out.println("📤 [RABBITMQ] DegreeWorkUpdateDTO enviado: " + dto);
 
@@ -192,7 +192,7 @@ public class DegreeWorkService {
         EvaluacionEventDTO event = new EvaluacionEventDTO(degreeWorkId, correosEvaluadores);
 
         // Enviar a RabbitMQ
-        degreeWorkProducer.sendUpdate(event);
+        degreeWorkProducer.sendEvaluatorsAssignment(event);
 
         System.out.println("📤 [RABBITMQ] EvaluacionEventDTO enviado: " + event);
 
