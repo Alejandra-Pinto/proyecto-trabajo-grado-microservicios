@@ -111,4 +111,8 @@ public ResponseEntity<User> getUserByEmail(@PathVariable String email) {
         }
     }
 
+    @GetMapping("/evaluadores")
+    public ResponseEntity<List<User>> listAssignedEvaluators() {
+        return ResponseEntity.ok(service.listAssignedEvaluators());
+    }
 }

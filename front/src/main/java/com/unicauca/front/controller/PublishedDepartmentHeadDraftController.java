@@ -35,11 +35,17 @@ public class PublishedDepartmentHeadDraftController {
     @FXML private ToggleButton btnRol;
     @FXML private ToggleButton btnEvaluarPropuestas;
     @FXML private ToggleButton btnEvaluarAnteproyectos;
+    @FXML private Button btnGuardar;
 
     private final ApiGatewayService apiService;
     private final NavigationController navigation;
     private User usuarioActual;
     private ObservableList<DegreeWork> todosLosAnteproyectos;
+
+    // Mapa para almacenar las celdas de acciones por índice de fila
+    private final Map<Integer, TableCell<DegreeWork, Void>> celdasAcciones = new HashMap<>();
+    // Mapa para almacenar temporalmente las selecciones de evaluadores
+    private final Map<Long, List<String>> seleccionesTemporales = new HashMap<>();
 
     public PublishedDepartmentHeadDraftController(ApiGatewayService apiService, NavigationController navigation) {
         this.apiService = apiService;
@@ -53,6 +59,10 @@ public class PublishedDepartmentHeadDraftController {
         
         if (usuarioActual != null && "DEPARTMENT_HEAD".equalsIgnoreCase(usuarioActual.getRole())) {
             cargarAnteproyectos();
+        }
+
+        if (btnGuardar != null) {
+            btnGuardar.setOnAction(event -> guardarAsignaciones());
         }
     }
 
@@ -80,6 +90,11 @@ public class PublishedDepartmentHeadDraftController {
         comboClasificar.setValue("Todos");
 
         comboClasificar.setOnAction(event -> aplicarFiltro(comboClasificar.getValue()));
+        
+        // Configurar botón Guardar si existe
+        if (btnGuardar != null) {
+            btnGuardar.setOnAction(event -> guardarAsignaciones());
+        }
 
         // Configurar columnas de la tabla
         configurarColumnasTabla();
@@ -155,155 +170,199 @@ public class PublishedDepartmentHeadDraftController {
         });
 
         // Columna de acciones (ComboBox de evaluadores)
-colAcciones.setCellFactory(new Callback<TableColumn<DegreeWork, Void>, TableCell<DegreeWork, Void>>() {
-    @Override
-    public TableCell<DegreeWork, Void> call(final TableColumn<DegreeWork, Void> param) {
-        return new TableCell<DegreeWork, Void>() {
-            private final ComboBox<String> comboEvaluador1 = new ComboBox<>();
-            private final ComboBox<String> comboEvaluador2 = new ComboBox<>();
-            private final HBox hbox = new HBox(5);
-            private final Label lblAsignar = new Label("Asignar:");
-            private ObservableList<String> todosLosEvaluadores = FXCollections.observableArrayList();
-            private boolean evaluadoresCargados = false;
-            
-            {
-                // Configurar ComboBox más compactos
-                comboEvaluador1.setPromptText("Eval1");
-                comboEvaluador2.setPromptText("Eval2");
-                comboEvaluador1.setPrefWidth(120);
-                comboEvaluador2.setPrefWidth(120);
-                comboEvaluador1.setMaxWidth(120);
-                comboEvaluador2.setMaxWidth(120);
-                
-                // Estilo más compacto
-                lblAsignar.setStyle("-fx-font-size: 10px; -fx-padding: 0 5 0 0;");
-                hbox.setStyle("-fx-alignment: center-left; -fx-padding: 2;");
-                
-                hbox.getChildren().addAll(lblAsignar, comboEvaluador1, comboEvaluador2);
-                
-                // Listeners para sincronizar los ComboBox
-                comboEvaluador1.valueProperty().addListener((obs, oldVal, newVal) -> {
-                    if (newVal != null) {
-                        actualizarOpcionesComboBox2();
-                    }
-                });
-                
-                comboEvaluador2.valueProperty().addListener((obs, oldVal, newVal) -> {
-                    if (newVal != null) {
-                        actualizarOpcionesComboBox1();
-                    }
-                });
-            }
-            
+        colAcciones.setCellFactory(new Callback<TableColumn<DegreeWork, Void>, TableCell<DegreeWork, Void>>() {
             @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
-                    setGraphic(null);
-                    evaluadoresCargados = false;
-                } else {
-                    DegreeWork anteproyecto = getTableRow().getItem();
+            public TableCell<DegreeWork, Void> call(final TableColumn<DegreeWork, Void> param) {
+                return new TableCell<DegreeWork, Void>() {
+                    private final ComboBox<String> comboEvaluador1 = new ComboBox<>();
+                    private final ComboBox<String> comboEvaluador2 = new ComboBox<>();
+                    private final HBox hbox = new HBox(5);
+                    private final Label lblAsignar = new Label("Asignar:");
+                    private ObservableList<String> todosLosEvaluadores = FXCollections.observableArrayList();
+                    private boolean evaluadoresCargados = false;
                     
-                    // Cargar evaluadores solo la primera vez que se muestra la celda
-                    if (!evaluadoresCargados) {
-                        cargarEvaluadores();
-                        evaluadoresCargados = true;
+                    {
+                        // Configurar ComboBox más compactos
+                        comboEvaluador1.setPromptText("Evaluador 1");
+                        comboEvaluador2.setPromptText("Evaluador 2");
+                        comboEvaluador1.setPrefWidth(130);
+                        comboEvaluador2.setPrefWidth(130);
+                        comboEvaluador1.setMaxWidth(130);
+                        comboEvaluador2.setMaxWidth(130);
+                        
+                        // Estilo más compacto
+                        lblAsignar.setStyle("-fx-font-size: 10px; -fx-padding: 0 5 0 0;");
+                        hbox.setStyle("-fx-alignment: center-left; -fx-padding: 2;");
+                        
+                        hbox.getChildren().addAll(lblAsignar, comboEvaluador1, comboEvaluador2);
+                        
+                        // Listeners para sincronizar los ComboBox y guardar selecciones
+                        comboEvaluador1.valueProperty().addListener((obs, oldVal, newVal) -> {
+                            if (newVal != null) {
+                                actualizarOpcionesComboBox2();
+                            }
+                            guardarSeleccionTemporal();
+                        });
+                        
+                        comboEvaluador2.valueProperty().addListener((obs, oldVal, newVal) -> {
+                            if (newVal != null) {
+                                actualizarOpcionesComboBox1();
+                            }
+                            guardarSeleccionTemporal();
+                        });
                     }
                     
-                    setGraphic(hbox);
-                }
-            }
-            
-            private void cargarEvaluadores() {
-                try {
-                    System.out.println("DEBUG: Intentando cargar evaluadores asignados...");
-                    
-                    ResponseEntity<User[]> response = apiService.get(
-                        "api/admin", 
-                        "/assigned-evaluators", 
-                        User[].class
-                    );
-                    
-                    System.out.println("DEBUG: Status code: " + response.getStatusCode());
-                    System.out.println("DEBUG: ¿Tiene body?: " + (response.getBody() != null));
-                    
-                    if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                        User[] evaluadores = response.getBody();
-                        System.out.println("DEBUG: Evaluadores recibidos: " + evaluadores.length);
-                        
-                        // DEBUG: Mostrar información de cada evaluador
-                        for (User evaluador : evaluadores) {
-                            System.out.println("DEBUG - Evaluador: " + evaluador.getFirstName() + " " + 
-                                            evaluador.getLastName() + " - Email: " + evaluador.getEmail() +
-                                            " - ID: " + evaluador.getId());
+                    @Override
+                    protected void updateItem(Void item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                            setGraphic(null);
+                            evaluadoresCargados = false;
+                        } else {
+                            DegreeWork anteproyecto = getTableRow().getItem();
+                            int index = getIndex();
+                            
+                            // Guardar referencia a esta celda
+                            celdasAcciones.put(index, this);
+                            
+                            // Cargar evaluadores solo la primera vez que se muestra la celda
+                            if (!evaluadoresCargados) {
+                                cargarEvaluadores();
+                                evaluadoresCargados = true;
+                            }
+                            
+                            setGraphic(hbox);
                         }
-                        
-                        // Crear lista de nombres completos para mejor identificación
-                        List<String> nombres = Arrays.stream(evaluadores)
-                            .map(user -> user.getFirstName() + " " + user.getLastName() + " (" + user.getEmail() + ")")
-                            .collect(Collectors.toList());
-                        
-                        todosLosEvaluadores = FXCollections.observableArrayList(nombres);
-                        
-                        // Inicializar ambos ComboBox con todas las opciones
-                        comboEvaluador1.setItems(todosLosEvaluadores);
-                        comboEvaluador2.setItems(todosLosEvaluadores);
-                        
-                        System.out.println("DEBUG: ComboBox actualizados con " + nombres.size() + " evaluadores");
-                    } else {
-                        System.out.println("DEBUG: No se pudieron cargar los evaluadores");
-                        comboEvaluador1.setItems(FXCollections.observableArrayList("No hay evaluadores"));
-                        comboEvaluador2.setItems(FXCollections.observableArrayList("No hay evaluadores"));
                     }
-                } catch (Exception e) {
-                    System.out.println("ERROR cargando evaluadores: " + e.getMessage());
-                    e.printStackTrace();
-                    comboEvaluador1.setItems(FXCollections.observableArrayList("Error: " + e.getMessage()));
-                    comboEvaluador2.setItems(FXCollections.observableArrayList("Error: " + e.getMessage()));
-                }
-            }
-            
-            private void actualizarOpcionesComboBox2() {
-                String seleccionado1 = comboEvaluador1.getValue();
-                if (seleccionado1 != null) {
-                    // Filtrar opciones para combo2: todas excepto la seleccionada en combo1
-                    ObservableList<String> opcionesCombo2 = todosLosEvaluadores.filtered(
-                        evaluador -> !evaluador.equals(seleccionado1)
-                    );
-                    comboEvaluador2.setItems(opcionesCombo2);
                     
-                    // Si combo2 tenía seleccionado el mismo que ahora seleccionó combo1, limpiarlo
-                    if (seleccionado1.equals(comboEvaluador2.getValue())) {
-                        comboEvaluador2.setValue(null);
+                    // Métodos para acceder a los ComboBox
+                    public String getEvaluador1() {
+                        return comboEvaluador1.getValue();
                     }
-                } else {
-                    // Si no hay selección en combo1, mostrar todas las opciones en combo2
-                    comboEvaluador2.setItems(todosLosEvaluadores);
-                }
-            }
-            
-            private void actualizarOpcionesComboBox1() {
-                String seleccionado2 = comboEvaluador2.getValue();
-                if (seleccionado2 != null) {
-                    // Filtrar opciones para combo1: todas excepto la seleccionada en combo2
-                    ObservableList<String> opcionesCombo1 = todosLosEvaluadores.filtered(
-                        evaluador -> !evaluador.equals(seleccionado2)
-                    );
-                    comboEvaluador1.setItems(opcionesCombo1);
                     
-                    // Si combo1 tenía seleccionado el mismo que ahora seleccionó combo2, limpiarlo
-                    if (seleccionado2.equals(comboEvaluador1.getValue())) {
-                        comboEvaluador1.setValue(null);
+                    public String getEvaluador2() {
+                        return comboEvaluador2.getValue();
                     }
-                } else {
-                    // Si no hay selección en combo2, mostrar todas las opciones en combo1
-                    comboEvaluador1.setItems(todosLosEvaluadores);
-                }
+                    
+                    private void guardarSeleccionTemporal() {
+                        if (getTableRow() != null && getTableRow().getItem() != null) {
+                            DegreeWork anteproyecto = getTableRow().getItem();
+                            List<String> evaluadores = new ArrayList<>();
+                            
+                            String eval1 = getEvaluador1();
+                            String eval2 = getEvaluador2();
+                            
+                            if (eval1 != null && !eval1.trim().isEmpty() && 
+                                !eval1.contains("No hay evaluadores") && 
+                                !eval1.startsWith("Error: ")) {
+                                String email = extraerEmailEvaluador(eval1);
+                                if (email != null) {
+                                    evaluadores.add(email);
+                                }
+                            }
+                            
+                            if (eval2 != null && !eval2.trim().isEmpty() && 
+                                !eval2.contains("No hay evaluadores") && 
+                                !eval2.startsWith("Error: ")) {
+                                String email = extraerEmailEvaluador(eval2);
+                                if (email != null) {
+                                    evaluadores.add(email);
+                                }
+                            }
+                            
+                            if (!evaluadores.isEmpty()) {
+                                seleccionesTemporales.put(anteproyecto.getId(), evaluadores);
+                                System.out.println("DEBUG: Guardada selección temporal para anteproyecto ID " + 
+                                                 anteproyecto.getId() + ": " + evaluadores);
+                            } else {
+                                // Si no hay evaluadores seleccionados, remover del mapa
+                                seleccionesTemporales.remove(anteproyecto.getId());
+                            }
+                        }
+                    }
+                    
+                    private void cargarEvaluadores() {
+                        try {
+                            System.out.println("DEBUG: Intentando cargar evaluadores asignados...");
+                            
+                            ResponseEntity<User[]> response = apiService.get(
+                                "api/usuarios", 
+                                "/evaluadores", 
+                                User[].class
+                            );
+                            
+                            System.out.println("DEBUG: Status code: " + response.getStatusCode());
+                            System.out.println("DEBUG: ¿Tiene body?: " + (response.getBody() != null));
+                            
+                            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                                User[] evaluadores = response.getBody();
+                                System.out.println("DEBUG: Evaluadores recibidos: " + evaluadores.length);
+                                
+                                // Crear lista de nombres completos para mejor identificación
+                                List<String> nombres = Arrays.stream(evaluadores)
+                                    .map(user -> user.getFirstName() + " " + user.getLastName() + " (" + user.getEmail() + ")")
+                                    .collect(Collectors.toList());
+                                
+                                todosLosEvaluadores = FXCollections.observableArrayList(nombres);
+                                
+                                // Inicializar ambos ComboBox con todas las opciones
+                                comboEvaluador1.setItems(todosLosEvaluadores);
+                                comboEvaluador2.setItems(todosLosEvaluadores);
+                                
+                                System.out.println("DEBUG: ComboBox actualizados con " + nombres.size() + " evaluadores");
+                            } else {
+                                System.out.println("DEBUG: No se pudieron cargar los evaluadores");
+                                comboEvaluador1.setItems(FXCollections.observableArrayList("No hay evaluadores"));
+                                comboEvaluador2.setItems(FXCollections.observableArrayList("No hay evaluadores"));
+                            }
+                        } catch (Exception e) {
+                            System.out.println("ERROR cargando evaluadores: " + e.getMessage());
+                            e.printStackTrace();
+                            comboEvaluador1.setItems(FXCollections.observableArrayList("Error: " + e.getMessage()));
+                            comboEvaluador2.setItems(FXCollections.observableArrayList("Error: " + e.getMessage()));
+                        }
+                    }
+                    
+                    private void actualizarOpcionesComboBox2() {
+                        String seleccionado1 = comboEvaluador1.getValue();
+                        if (seleccionado1 != null) {
+                            // Filtrar opciones para combo2: todas excepto la seleccionada en combo1
+                            ObservableList<String> opcionesCombo2 = todosLosEvaluadores.filtered(
+                                evaluador -> !evaluador.equals(seleccionado1)
+                            );
+                            comboEvaluador2.setItems(opcionesCombo2);
+                            
+                            // Si combo2 tenía seleccionado el mismo que ahora seleccionó combo1, limpiarlo
+                            if (seleccionado1.equals(comboEvaluador2.getValue())) {
+                                comboEvaluador2.setValue(null);
+                            }
+                        } else {
+                            // Si no hay selección en combo1, mostrar todas las opciones en combo2
+                            comboEvaluador2.setItems(todosLosEvaluadores);
+                        }
+                    }
+                    
+                    private void actualizarOpcionesComboBox1() {
+                        String seleccionado2 = comboEvaluador2.getValue();
+                        if (seleccionado2 != null) {
+                            // Filtrar opciones para combo1: todas excepto la seleccionada en combo2
+                            ObservableList<String> opcionesCombo1 = todosLosEvaluadores.filtered(
+                                evaluador -> !evaluador.equals(seleccionado2)
+                            );
+                            comboEvaluador1.setItems(opcionesCombo1);
+                            
+                            // Si combo1 tenía seleccionado el mismo que ahora seleccionó combo2, limpiarlo
+                            if (seleccionado2.equals(comboEvaluador1.getValue())) {
+                                comboEvaluador1.setValue(null);
+                            }
+                        } else {
+                            // Si no hay selección en combo2, mostrar todas las opciones en combo1
+                            comboEvaluador1.setItems(todosLosEvaluadores);
+                        }
+                    }
+                };
             }
-        };
-    }
-});
-        
+        });
     }
 
     // Método helper para obtener el último anteproyecto
@@ -330,85 +389,48 @@ colAcciones.setCellFactory(new Callback<TableColumn<DegreeWork, Void>, TableCell
         return degreeWork.getFechaActual();
     }
 
-    private boolean esEstadoRevisable(String estado) {
-        return "PRIMERA_REVISION".equals(estado) || 
-               "SEGUNDA_REVISION".equals(estado) || 
-               "TERCERA_REVISION".equals(estado) ||
-               "NO_ACEPTADO".equals(estado);
-    }
-
     private void cargarAnteproyectos() {
-    if (usuarioActual == null) {
-        return;
-    }
-
-    try {
-        System.out.println("DEBUG: Cargando anteproyectos para jefe de departamento: " + usuarioActual.getEmail());
-        
-        ResponseEntity<DegreeWork[]> response = apiService.get(
-            "api/degreeworks", 
-            "/listar/ANTEPROYECTO", 
-            DegreeWork[].class
-        );
-
-        System.out.println("DEBUG: Status: " + response.getStatusCode());
-        
-        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-            DegreeWork[] anteproyectos = response.getBody();
-            System.out.println("DEBUG: Anteproyectos recibidos: " + anteproyectos.length);
-            
-            // DEBUG DETALLADO: Ver TODOS los campos del DegreeWork
-            for (int i = 0; i < anteproyectos.length; i++) {
-                DegreeWork dw = anteproyectos[i];
-                System.out.println("=== DEBUG DegreeWork " + i + " ===");
-                System.out.println("ID: " + dw.getId());
-                System.out.println("TituloProyecto: " + dw.getTituloProyecto());
-                System.out.println("Titulo (sin Proyecto): " + dw.getTitulo()); // Por si acaso
-                System.out.println("Director: " + (dw.getDirectorProyecto() != null ? 
-                    dw.getDirectorProyecto().getEmail() + " (Nombre: " + dw.getDirectorProyecto().getFirstName() + ")" : "null"));
-                System.out.println("Estudiantes size: " + (dw.getEstudiantes() != null ? dw.getEstudiantes().size() : "null"));
-                
-                if (dw.getEstudiantes() != null && !dw.getEstudiantes().isEmpty()) {
-                    for (int j = 0; j < dw.getEstudiantes().size(); j++) {
-                        User estudiante = dw.getEstudiantes().get(j);
-                        System.out.println("  Estudiante " + j + ": " + estudiante.getEmail() + " - " + estudiante.getFirstName());
-                    }
-                }
-                
-                System.out.println("Fecha Actual: " + dw.getFechaActual());
-                System.out.println("Estado DegreeWork: " + dw.getEstado());
-                System.out.println("FormatosA size: " + (dw.getFormatosA() != null ? dw.getFormatosA().size() : "null"));
-                System.out.println("Anteproyectos size: " + (dw.getAnteproyectos() != null ? dw.getAnteproyectos().size() : "null"));
-                
-                if (dw.getAnteproyectos() != null && !dw.getAnteproyectos().isEmpty()) {
-                    for (int k = 0; k < dw.getAnteproyectos().size(); k++) {
-                        Document doc = dw.getAnteproyectos().get(k);
-                        System.out.println("  Anteproyecto " + k + ": Estado=" + doc.getEstado() + ", Fecha=" + doc.getFechaActual());
-                    }
-                }
-                
-                System.out.println("=== FIN DEBUG ===");
-            }
-            
-            todosLosAnteproyectos = FXCollections.observableArrayList(anteproyectos);
-            aplicarFiltro("Todos");
-            
-            System.out.println("DEBUG: Anteproyectos finales en tabla: " + todosLosAnteproyectos.size());
-        } else {
-            System.out.println("DEBUG: Respuesta no exitosa o body vacío");
+        if (usuarioActual == null) {
+            return;
         }
 
-    } catch (Exception e) {
-        e.printStackTrace();
-        mostrarAlerta("Error", "Error cargando anteproyectos: " + e.getMessage(), Alert.AlertType.ERROR);
+        try {
+            System.out.println("DEBUG: Cargando anteproyectos para jefe de departamento: " + usuarioActual.getEmail());
+            
+            ResponseEntity<DegreeWork[]> response = apiService.get(
+                "api/degreeworks", 
+                "/listar/ANTEPROYECTO", 
+                DegreeWork[].class
+            );
+
+            System.out.println("DEBUG: Status: " + response.getStatusCode());
+            
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                DegreeWork[] anteproyectos = response.getBody();
+                System.out.println("DEBUG: Anteproyectos recibidos: " + anteproyectos.length);
+                
+                todosLosAnteproyectos = FXCollections.observableArrayList(anteproyectos);
+                aplicarFiltro("Todos");
+                
+                System.out.println("DEBUG: Anteproyectos finales en tabla: " + todosLosAnteproyectos.size());
+            } else {
+                System.out.println("DEBUG: Respuesta no exitosa o body vacío");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error cargando anteproyectos: " + e.getMessage(), Alert.AlertType.ERROR);
+        }
     }
-}
 
     private void aplicarFiltro(String opcion) {
         if (opcion == null || todosLosAnteproyectos == null) {
             return;
         }
 
+        // Limpiar el mapa de celdas cuando se aplica filtro
+        celdasAcciones.clear();
+        
         List<DegreeWork> base = new ArrayList<>(todosLosAnteproyectos);
 
         switch (opcion) {
@@ -525,18 +547,224 @@ colAcciones.setCellFactory(new Callback<TableColumn<DegreeWork, Void>, TableCell
                 break;
         }
     }
-
-    private void evaluarAnteproyecto(DegreeWork anteproyecto) {
-        if (anteproyecto != null) {
-            // Navegar a la vista de evaluación del anteproyecto
-            mostrarAlerta("Evaluación", 
-                "Evaluando anteproyecto: " + anteproyecto.getTituloProyecto(), 
+    
+    @FXML
+    private void guardarAsignaciones() {
+        System.out.println("DEBUG: Iniciando guardado de asignaciones...");
+        
+        if (tblAnteproyectos.getItems() == null || tblAnteproyectos.getItems().isEmpty()) {
+            mostrarAlerta("Información", "No hay anteproyectos para guardar asignaciones", Alert.AlertType.INFORMATION);
+            return;
+        }
+        
+        // Usar las selecciones temporales que se han estado guardando
+        if (seleccionesTemporales.isEmpty()) {
+            mostrarAlerta("Información", 
+                "No hay evaluadores seleccionados para guardar.\n\n" +
+                "Por favor, seleccione al menos un evaluador en la columna 'Acciones' " +
+                "usando los ComboBox en cada fila de anteproyecto.", 
                 Alert.AlertType.INFORMATION);
-            
-            // TODO: Implementar navegación a vista de evaluación específica
-            // navigation.showEvaluationDraft(usuarioActual, anteproyecto);
+            return;
+        }
+        
+        System.out.println("DEBUG: Total de anteproyectos con asignaciones: " + seleccionesTemporales.size());
+        
+        // Mostrar confirmación con detalles
+        StringBuilder detalles = new StringBuilder();
+        for (Map.Entry<Long, List<String>> entry : seleccionesTemporales.entrySet()) {
+            DegreeWork anteproyecto = encontrarAnteproyectoPorId(entry.getKey());
+            String titulo = anteproyecto != null && anteproyecto.getTituloProyecto() != null ? 
+                           anteproyecto.getTituloProyecto() : "ID: " + entry.getKey();
+            detalles.append("• ").append(titulo).append(": ")
+                   .append(entry.getValue().size()).append(" evaluador(es)\n");
+        }
+        
+        Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmacion.setTitle("Confirmar Guardado");
+        confirmacion.setHeaderText("Guardar asignaciones de evaluadores");
+        confirmacion.setContentText("¿Está seguro de guardar las asignaciones para " + 
+                                  seleccionesTemporales.size() + " anteproyecto(s)?\n\n" +
+                                  "Detalles:\n" + detalles.toString());
+        
+        Optional<ButtonType> resultado = confirmacion.showAndWait();
+        if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
+            guardarAsignacionesEnServidor(new HashMap<>(seleccionesTemporales));
         }
     }
+    
+    private DegreeWork encontrarAnteproyectoPorId(Long id) {
+        if (todosLosAnteproyectos == null) return null;
+        return todosLosAnteproyectos.stream()
+            .filter(dw -> dw.getId().equals(id))
+            .findFirst()
+            .orElse(null);
+    }
+
+    private String extraerEmailEvaluador(String textoCompleto) {
+        // El formato es: "Nombre Apellido (email@dominio.com)"
+        int inicioParentesis = textoCompleto.indexOf('(');
+        int finParentesis = textoCompleto.indexOf(')');
+        
+        if (inicioParentesis != -1 && finParentesis != -1 && inicioParentesis < finParentesis) {
+            String email = textoCompleto.substring(inicioParentesis + 1, finParentesis).trim();
+            return email;
+        }
+        
+        return textoCompleto; // Si no está en el formato esperado, devolver el texto completo
+    }
+
+    private void guardarAsignacionesEnServidor(Map<Long, List<String>> asignacionesPorAnteproyecto) {
+    try {
+        int exitosas = 0;
+        int fallidas = 0;
+        List<String> errores = new ArrayList<>();
+        
+        // Obtener todos los evaluadores con sus datos completos
+        List<User> todosLosEvaluadores = obtenerEvaluadoresCompletos();
+        if (todosLosEvaluadores == null || todosLosEvaluadores.isEmpty()) {
+            mostrarAlerta("Error", "No se pudieron cargar los evaluadores", Alert.AlertType.ERROR);
+            return;
+        }
+        
+        // Crear un mapa de email -> User completo
+        Map<String, User> emailToUserMap = new HashMap<>();
+        for (User evaluador : todosLosEvaluadores) {
+            if (evaluador.getEmail() != null) {
+                emailToUserMap.put(evaluador.getEmail(), evaluador);
+            }
+        }
+        
+        for (Map.Entry<Long, List<String>> entry : asignacionesPorAnteproyecto.entrySet()) {
+            Long degreeWorkId = entry.getKey();
+            List<String> emailsEvaluadores = entry.getValue();
+            
+            System.out.println("DEBUG: Enviando asignación para anteproyecto ID " + degreeWorkId + 
+                             " - Emails: " + emailsEvaluadores);
+            
+            try {
+                // Buscar los objetos User completos basados en los emails
+                List<User> usuariosCompletos = new ArrayList<>();
+                boolean todosEncontrados = true;
+                
+                for (String email : emailsEvaluadores) {
+                    User usuario = emailToUserMap.get(email);
+                    if (usuario != null) {
+                        usuariosCompletos.add(usuario);
+                        System.out.println("DEBUG: Encontrado usuario para email " + email + 
+                                         " - ID: " + usuario.getId() + 
+                                         " - Nombre: " + usuario.getFirstName());
+                    } else {
+                        System.out.println("ERROR: No se encontró usuario para email: " + email);
+                        todosEncontrados = false;
+                        break;
+                    }
+                }
+                
+                if (!todosEncontrados) {
+                    fallidas++;
+                    String errorMsg = "Anteproyecto ID " + degreeWorkId + ": No se encontraron todos los usuarios";
+                    errores.add(errorMsg);
+                    continue;
+                }
+                
+                System.out.println("DEBUG: Usuarios a enviar: " + usuariosCompletos.size());
+                
+                // Llamar al endpoint del microservicio de evaluaciones
+                ResponseEntity<?> response = apiService.post(
+                    "api/evaluaciones", // Microservicio de evaluaciones
+                    "/" + degreeWorkId + "/asignar-evaluadores", // Endpoint específico
+                    usuariosCompletos, // Cuerpo con lista de objetos User completos
+                    Object.class
+                );
+                
+                if (response.getStatusCode().is2xxSuccessful()) {
+                    exitosas++;
+                    System.out.println("DEBUG: Asignación exitosa para anteproyecto ID " + degreeWorkId);
+                } else {
+                    fallidas++;
+                    String errorMsg = "Anteproyecto ID " + degreeWorkId + ": " + response.getStatusCode();
+                    errores.add(errorMsg);
+                    System.out.println("ERROR: " + errorMsg);
+                }
+                
+            } catch (Exception e) {
+                fallidas++;
+                String errorMsg = "Anteproyecto ID " + degreeWorkId + ": " + e.getMessage();
+                errores.add(errorMsg);
+                System.out.println("ERROR: Excepción al asignar evaluadores - " + errorMsg);
+                e.printStackTrace();
+            }
+        }
+        
+        // Mostrar resumen
+        mostrarResumenGuardado(exitosas, fallidas, errores);
+        
+        // Si hubo al menos una asignación exitosa, refrescar la tabla
+        if (exitosas > 0) {
+            seleccionesTemporales.clear();
+            cargarAnteproyectos();
+        }
+        
+    } catch (Exception e) {
+        mostrarAlerta("Error", "Error al guardar las asignaciones: " + e.getMessage(), Alert.AlertType.ERROR);
+        e.printStackTrace();
+    }
+}
+
+private List<User> obtenerEvaluadoresCompletos() {
+    try {
+        System.out.println("DEBUG: Obteniendo evaluadores completos...");
+        
+        ResponseEntity<User[]> response = apiService.get(
+            "api/usuarios", 
+            "/evaluadores", 
+            User[].class
+        );
+        
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            User[] evaluadores = response.getBody();
+            System.out.println("DEBUG: Evaluadores completos recibidos: " + evaluadores.length);
+            
+            // DEBUG: Mostrar información de cada evaluador
+            for (User evaluador : evaluadores) {
+                System.out.println("DEBUG - Evaluador completo: " + 
+                    "ID: " + evaluador.getId() + 
+                    ", Email: " + evaluador.getEmail() + 
+                    ", Nombre: " + evaluador.getFirstName() + " " + evaluador.getLastName() +
+                    ", Rol: " + evaluador.getRole());
+            }
+            
+            return Arrays.asList(evaluadores);
+        }
+    } catch (Exception e) {
+        System.out.println("ERROR obteniendo evaluadores completos: " + e.getMessage());
+        e.printStackTrace();
+    }
+    
+    return null;
+}
+
+private void mostrarResumenGuardado(int exitosas, int fallidas, List<String> errores) {
+    StringBuilder mensaje = new StringBuilder();
+    mensaje.append("Resultado del guardado:\n")
+           .append("• Asignaciones exitosas: ").append(exitosas).append("\n")
+           .append("• Asignaciones fallidas: ").append(fallidas).append("\n")
+           .append("• Total procesados: ").append(exitosas + fallidas).append("\n");
+    
+    if (!errores.isEmpty()) {
+        mensaje.append("\nErrores encontrados:\n");
+        for (String error : errores) {
+            mensaje.append("• ").append(error).append("\n");
+        }
+    }
+    
+    Alert.AlertType tipoAlerta = exitosas > 0 ? Alert.AlertType.INFORMATION : Alert.AlertType.ERROR;
+    Alert resultado = new Alert(tipoAlerta);
+    resultado.setTitle("Resultado del Guardado");
+    resultado.setHeaderText("Proceso de asignación completado");
+    resultado.setContentText(mensaje.toString());
+    resultado.showAndWait();
+}
 
     private void configurarBotonesJefeDepartamento() {
         btnRol.setVisible(true);

@@ -5,6 +5,7 @@ package com.example.users.service;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
@@ -197,6 +198,13 @@ public class UserService implements IUserService {
         return userRepository.findByRoleIgnoreCase(role);
     }
 
+    @Override
+    public List<User> listAssignedEvaluators() {
+        return userRepository.findAll()
+                .stream()
+                .filter(User::isEvaluator) // solo quienes ya son evaluadores
+                .collect(Collectors.toList());
+    }
 
     // ==========================
     // MÉTODOS AUXILIARES
