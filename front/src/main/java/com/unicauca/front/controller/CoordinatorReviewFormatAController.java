@@ -6,6 +6,7 @@ import com.unicauca.front.model.Document;
 import com.unicauca.front.model.EnumEstadoDocument;
 import com.unicauca.front.model.User;
 import com.unicauca.front.service.ApiGatewayService;
+import com.unicauca.front.service.DocumentStorageService; // AÑADIR ESTO
 import com.unicauca.front.util.NavigationController;
 import com.unicauca.front.util.SessionManager;
 import javafx.application.HostServices;
@@ -23,7 +24,7 @@ public class CoordinatorReviewFormatAController {
 
     private HostServices hostServices;
     private DegreeWork formato;
-    private static final String BASE_PATH = "Documents";
+    private final DocumentStorageService documentStorageService; // AÑADIR ESTO
 
     @FXML private Label lblEstudiante;
     @FXML private TextField txtArchivoAdjunto;
@@ -47,14 +48,19 @@ public class CoordinatorReviewFormatAController {
     private final NavigationController navigation;
     private User usuarioActual;
 
-    public CoordinatorReviewFormatAController(ApiGatewayService apiService, NavigationController navigation) {
+    // MODIFICAR CONSTRUCTOR
+    public CoordinatorReviewFormatAController(ApiGatewayService apiService, 
+                                             NavigationController navigation,
+                                             DocumentStorageService documentStorageService) { // AÑADIR ESTO
         this.apiService = apiService;
         this.navigation = navigation;
+        this.documentStorageService = documentStorageService; // AÑADIR ESTO
     }
 
     public void setHostServices(HostServices hostServices) {
         this.hostServices = hostServices;
     }
+
 
     @FXML
     private void initialize() {
@@ -239,45 +245,78 @@ public class CoordinatorReviewFormatAController {
         }
     }
 
+    /**
+     * Método auxiliar para abrir cualquier documento
+     */
+    private void abrirDocumento(String rutaRelativa, String tipoDocumento) {
+        System.out.println("🟢 DEBUG: Abriendo " + tipoDocumento);
+        
+        if (rutaRelativa == null || rutaRelativa.isEmpty()) {
+            mostrarAlerta("Sin archivo", "No hay " + tipoDocumento + " seleccionado.", Alert.AlertType.WARNING);
+            return;
+        }
+        
+        try {
+            File archivo = documentStorageService.obtenerDocumento(rutaRelativa);
+            
+            if (!archivo.exists()) {
+                mostrarAlerta("Archivo no encontrado", 
+                    "El " + tipoDocumento + " no existe en el almacenamiento local.", 
+                    Alert.AlertType.ERROR);
+                return;
+            }
+            
+            // Siempre usar método alternativo (más confiable)
+            abrirArchivoAlternativo(archivo);
+            
+        } catch (Exception e) {
+            mostrarAlerta("Error", "Error al abrir " + tipoDocumento + ": " + e.getMessage(), Alert.AlertType.ERROR);
+        }
+    }
+
+    // Métodos simplificados
     @FXML
     private void onAbrirArchivo() {
-        String ruta = txtArchivoAdjunto.getText();
-        if (ruta == null || ruta.isEmpty()) {
-            mostrarAlerta("Sin archivo", "No hay ningún archivo adjunto para abrir.", Alert.AlertType.WARNING);
-            return;
-        }
-
-        File archivo = new File("Documents", ruta);
-        if (!archivo.exists()) {
-            mostrarAlerta("Archivo no encontrado", "El archivo no existe en: " + archivo.getAbsolutePath(), Alert.AlertType.ERROR);
-            return;
-        }
-
-        if (hostServices != null) {
-            hostServices.showDocument(archivo.toURI().toString());
-        } else {
-            mostrarAlerta("Error", "No se pudo abrir el archivo (HostServices no inicializado).", Alert.AlertType.ERROR);
-        }
+        abrirDocumento(txtArchivoAdjunto.getText(), "Formato A");
     }
 
     @FXML
     private void onAbrirCartaEmpresa() {
-        String ruta = txtCartaEmpresa.getText();
-        if (ruta == null || ruta.isEmpty()) {
-            mostrarAlerta("Sin archivo", "No hay carta de aceptación adjunta.", Alert.AlertType.WARNING);
-            return;
-        }
+        abrirDocumento(txtCartaEmpresa.getText(), "Carta de Aceptación");
+    }
 
-        File archivo = new File("Documents", ruta);
-        if (!archivo.exists()) {
-            mostrarAlerta("Archivo no encontrado", "El archivo no existe en: " + archivo.getAbsolutePath(), Alert.AlertType.ERROR);
-            return;
-        }
-
-        if (hostServices != null) {
-            hostServices.showDocument(archivo.toURI().toString());
-        } else {
-            mostrarAlerta("Error", "No se pudo abrir el archivo (HostServices no inicializado).", Alert.AlertType.ERROR);
+    /**
+     * Método alternativo para abrir archivos si HostServices falla
+     */
+    private void abrirArchivoAlternativo(File archivo) {
+        try {
+            System.out.println("🟢 DEBUG: Intentando abrir archivo de forma alternativa...");
+            
+            // Método 2: Usar comandos del sistema operativo
+            String os = System.getProperty("os.name").toLowerCase();
+            System.out.println("🟢 DEBUG: Sistema operativo detectado: " + os);
+            
+            if (os.contains("win")) {
+                // Windows
+                Runtime.getRuntime().exec(new String[]{"cmd", "/c", "start", "\"\"", archivo.getAbsolutePath()});
+                System.out.println("✅ DEBUG: Comando Windows ejecutado");
+            } else if (os.contains("mac")) {
+                // macOS
+                Runtime.getRuntime().exec(new String[]{"open", archivo.getAbsolutePath()});
+                System.out.println("✅ DEBUG: Comando macOS ejecutado");
+            } else {
+                // Linux/Unix
+                Runtime.getRuntime().exec(new String[]{"xdg-open", archivo.getAbsolutePath()});
+                System.out.println("✅ DEBUG: Comando Linux ejecutado");
+            }
+            
+        } catch (Exception e) {
+            System.out.println("🔴 DEBUG: Error en método alternativo: " + e.getMessage());
+            e.printStackTrace();
+            mostrarAlerta("Error del sistema", 
+                "No se pudo abrir el archivo automáticamente. " +
+                "Por favor, ábralo manualmente desde: " + archivo.getAbsolutePath(), 
+                Alert.AlertType.ERROR);
         }
     }
 
