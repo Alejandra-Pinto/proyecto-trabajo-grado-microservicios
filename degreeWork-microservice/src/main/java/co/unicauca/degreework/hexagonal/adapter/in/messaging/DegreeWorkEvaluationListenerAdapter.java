@@ -6,17 +6,22 @@ import co.unicauca.degreework.hexagonal.application.service.DegreeWorkEvaluation
 import co.unicauca.degreework.hexagonal.port.in.messaging.DegreeWorkEvaluationListenerPort;
 
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.amqp.core.Message;
-import org.springframework.amqp.support.converter.MessageConverter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-// DegreeWorkEvaluationListenerAdapter.java
 @Component
 public class DegreeWorkEvaluationListenerAdapter implements DegreeWorkEvaluationListenerPort {
 
     private final DegreeWorkEvaluationUseCase degreeWorkEvaluationUseCase;
     private final ObjectMapper objectMapper;
+    
+    // Nombres de colas desde properties
+    @Value("${app.rabbitmq.evaluation.queue.status}")
+    private String statusQueue;
+    
+    @Value("${app.rabbitmq.evaluation.queue.evaluators}")
+    private String evaluatorsQueue;
     
     public DegreeWorkEvaluationListenerAdapter(
             DegreeWorkEvaluationUseCase degreeWorkEvaluationUseCase,
@@ -26,94 +31,52 @@ public class DegreeWorkEvaluationListenerAdapter implements DegreeWorkEvaluation
     }
 
     @Override
-    @RabbitListener(queues = "evaluation.queue")
+    @RabbitListener(queues = "${app.rabbitmq.evaluation.queue.status}")
     public void onUpdate(DegreeWorkUpdateDTO dto) {
-        System.out.println("📥 [Estado] Recibido UPDATE DTO: " + dto);
+        System.out.println("📥 [Estado] Recibido mensaje en cola: " + statusQueue);
+        System.out.println("📦 DTO recibido: " + dto.getClass().getSimpleName());
         
-        // Validación temprana y específica
+        // Validación básica
         if (dto == null) {
-            System.err.println("⚠️ [Estado] DTO es null, ignorando mensaje");
+            System.err.println("❌ [Estado] DTO es null, ignorando mensaje");
             return;
         }
         
-        if (dto.getDegreeWorkId() == null) {
-            System.err.println("⚠️ [Estado] DTO inválido: degreeWorkId es null. DTO completo: " + dto);
-            System.err.println("⚠️ Esto podría ser un mensaje de evaluadores mal interpretado");
-            return;
-        }
+        System.out.println("🆔 ID del trabajo de grado: " + dto.getDegreeWorkId());
+        System.out.println("📊 Estado: " + dto.getEstado());
+        System.out.println("📝 Correcciones: " + dto.getCorrecciones());
         
-        // Verificar que sea realmente un mensaje de estado (tiene estado o correcciones)
-        if (dto.getEstado() == null && dto.getCorrecciones() == null) {
-            System.err.println("⚠️ [Estado] DTO sospechoso: No tiene estado ni correcciones");
-            System.err.println("⚠️ Posiblemente es un mensaje de evaluadores");
-            return;
+        try {
+            degreeWorkEvaluationUseCase.actualizarDesdeEvaluacion(dto);
+            System.out.println("✅ [Estado] Procesado exitosamente");
+        } catch (Exception e) {
+            System.err.println("❌ [Estado] Error procesando el mensaje: " + e.getMessage());
+            e.printStackTrace();
         }
-        
-        System.out.println("✅ [Estado] Procesando cambio de estado: " + dto.getEstado());
-        degreeWorkEvaluationUseCase.actualizarDesdeEvaluacion(dto);
     }
 
     @Override
-    @RabbitListener(queues = "evaluation.queue")
+    @RabbitListener(queues = "${app.rabbitmq.evaluation.queue.evaluators}")
     public void onEvaluadores(EvaluacionEventDTO dto) {
-        System.out.println("📥 [Evaluadores] Recibido EVALUADORES DTO: " + dto);
+        System.out.println("📥 [Evaluadores] Recibido mensaje en cola: " + evaluatorsQueue);
+        System.out.println("📦 DTO recibido: " + dto.getClass().getSimpleName());
         
-        // Validación temprana y específica
+        // Validación básica
         if (dto == null) {
-            System.err.println("⚠️ [Evaluadores] DTO es null, ignorando mensaje");
+            System.err.println("❌ [Evaluadores] DTO es null, ignorando mensaje");
             return;
         }
         
-        // Verificar campos requeridos según tu EvaluacionEventDTO
-        // (ajusta según la estructura real de tu EvaluacionEventDTO)
-        if (dto.getDegreeWorkId() == null) {
-            System.err.println("⚠️ [Evaluadores] DTO inválido: degreeWorkId es null. DTO completo: " + dto);
-            System.err.println("⚠️ Esto podría ser un mensaje de estado mal interpretado");
-            return;
-        }
+        System.out.println("🆔 ID del trabajo de grado: " + dto.getDegreeWorkId());
+        System.out.println("👥 Número de evaluadores: " + 
+            (dto.getEvaluadores() != null ? dto.getEvaluadores().size() : 0));
         
-        // Verificar que sea realmente un mensaje de evaluadores
-        if (dto.getEvaluadores() == null || dto.getEvaluadores().isEmpty()) {
-            System.err.println("⚠️ [Evaluadores] DTO sospechoso: No tiene evaluadores asignados");
-            System.err.println("⚠️ Posiblemente es un mensaje de estado");
-            return;
-        }
-        
-        System.out.println("✅ [Evaluadores] Procesando " + dto.getEvaluadores().size() + " evaluadores");
-        degreeWorkEvaluationUseCase.asignarEvaluadores(dto);
-    }
-    
-    /**
-     * Método adicional para debug: ver el mensaje RAW
-     * Puedes comentar los otros dos métodos y usar este temporalmente
-     */
-    // @RabbitListener(queues = "evaluation.queue")
-    public void onRawMessage(Message message) {
         try {
-            String rawMessage = new String(message.getBody());
-            System.out.println("🔍 MENSAJE RAW RECIBIDO:");
-            System.out.println("🔍 Contenido: " + rawMessage);
-            System.out.println("🔍 Headers: " + message.getMessageProperties().getHeaders());
-            System.out.println("🔍 Content Type: " + message.getMessageProperties().getContentType());
-            
-            // Intentar deserializar como DegreeWorkUpdateDTO
-            try {
-                DegreeWorkUpdateDTO statusDto = objectMapper.readValue(rawMessage, DegreeWorkUpdateDTO.class);
-                System.out.println("🔍 Como DegreeWorkUpdateDTO: " + statusDto);
-            } catch (Exception e) {
-                System.out.println("🔍 No es un DegreeWorkUpdateDTO válido");
-            }
-            
-            // Intentar deserializar como EvaluacionEventDTO
-            try {
-                EvaluacionEventDTO evaluadoresDto = objectMapper.readValue(rawMessage, EvaluacionEventDTO.class);
-                System.out.println("🔍 Como EvaluacionEventDTO: " + evaluadoresDto);
-            } catch (Exception e) {
-                System.out.println("🔍 No es un EvaluacionEventDTO válido");
-            }
-            
+            degreeWorkEvaluationUseCase.asignarEvaluadores(dto);
+            System.out.println("✅ [Evaluadores] Procesado exitosamente");
         } catch (Exception e) {
-            System.err.println("❌ Error leyendo mensaje RAW: " + e.getMessage());
+            System.err.println("❌ [Evaluadores] Error procesando el mensaje: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

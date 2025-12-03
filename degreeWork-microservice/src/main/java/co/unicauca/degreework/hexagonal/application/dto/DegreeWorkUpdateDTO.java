@@ -2,19 +2,34 @@ package co.unicauca.degreework.hexagonal.application.dto;
 
 import java.io.Serializable;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@AllArgsConstructor
-@Builder
 public class DegreeWorkUpdateDTO implements Serializable {
-
-    private Integer degreeWorkId; // ID del trabajo de grado
-    private String estado; // Nuevo estado (EnumEstadoDegreeWork en texto)
-    private String correcciones; // Texto con las observaciones o correcciones
+    private Long degreeWorkId;
+    private String estado;
+    private String correcciones;
     
+    // Constructores
     public DegreeWorkUpdateDTO() {}
+    
+    public DegreeWorkUpdateDTO(Long degreeWorkId, String estado, String correcciones) {
+        this.degreeWorkId = degreeWorkId;
+        this.estado = estado;
+        this.correcciones = correcciones;
+    }
+    
+    // Getters y Setters
+    public Long getDegreeWorkId() { return degreeWorkId; }
+    public void setDegreeWorkId(Long degreeWorkId) { this.degreeWorkId = degreeWorkId; }
+    
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
+    
+    public String getCorrecciones() { return correcciones; }
+    public void setCorrecciones(String correcciones) { this.correcciones = correcciones; }
+    
+    @Override
+    public String toString() {
+        return "DegreeWorkUpdateDTO(degreeWorkId=" + degreeWorkId + 
+               ", estado=" + estado + 
+               ", correcciones=" + correcciones + ")";
+    }
 }
