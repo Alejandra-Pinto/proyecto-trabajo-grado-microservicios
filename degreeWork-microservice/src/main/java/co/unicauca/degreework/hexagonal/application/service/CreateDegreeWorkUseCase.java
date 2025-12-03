@@ -54,6 +54,7 @@ public class CreateDegreeWorkUseCase {
     }
 
     public DegreeWorkDTO execute(DegreeWorkDTO dto) {
+        System.out.println("Documento enviado: " + dto.getFormatosA().toString());
         // 1. Validar y obtener usuarios
         User director = userRepositoryPort.findByEmail(dto.getDirectorEmail())
                 .orElseThrow(() -> new IllegalArgumentException("No se encontró el director con correo: " + dto.getDirectorEmail()));

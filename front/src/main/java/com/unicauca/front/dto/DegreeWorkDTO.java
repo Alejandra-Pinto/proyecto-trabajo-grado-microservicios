@@ -16,6 +16,11 @@ public class DegreeWorkDTO {
     private String estado;
     private String correcciones;
 
+    // Documentos asociados
+    private List<DocumentDTO> formatosA;
+    private List<DocumentDTO> anteproyectos;
+    private List<DocumentDTO> cartasAceptacion;
+
     // Getters y Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -49,4 +54,13 @@ public class DegreeWorkDTO {
 
     public String getCorrecciones() { return correcciones; }
     public void setCorrecciones(String correcciones) { this.correcciones = correcciones; }
+
+    public List<DocumentDTO> getFormatosA() { return formatosA; }
+    public void setFormatosA(List<DocumentDTO> formatosA) { this.formatosA = formatosA; }
+
+    public List<DocumentDTO> getAnteproyectos() { return anteproyectos; }
+    public void setAnteproyectos(List<DocumentDTO> anteproyectos) { this.anteproyectos = anteproyectos; }
+
+    public List<DocumentDTO> getCartasAceptacion() { return cartasAceptacion; }
+    public void setCartasAceptacion(List<DocumentDTO> cartasAceptacion) { this.cartasAceptacion = cartasAceptacion; }
 }

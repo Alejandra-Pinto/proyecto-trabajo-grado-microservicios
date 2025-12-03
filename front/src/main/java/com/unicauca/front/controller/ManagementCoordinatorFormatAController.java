@@ -57,192 +57,145 @@ public class ManagementCoordinatorFormatAController {
         cargarFormatos(true);
     }
 
-private void configurarTabla() {
-    // Columna Título
-    colTitulo.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
-        data.getValue().getTituloProyecto() != null ? data.getValue().getTituloProyecto() : "Sin título"
-    ));
+    private void configurarTabla() {
+        // Columna Título
+        colTitulo.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
+            data.getValue().getTituloProyecto() != null ? data.getValue().getTituloProyecto() : "Sin título"
+        ));
 
-    // Columna Estudiante
-    colEstudiante.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
-        obtenerNombreEstudiante(data.getValue())
-    ));
+        // Columna Estudiante
+        colEstudiante.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
+            obtenerNombreEstudiante(data.getValue())
+        ));
 
-    // Columna Modalidad
-    colModalidad.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
-        obtenerModalidadDisplay(data.getValue().getModalidad())
-    ));
+        // Columna Modalidad
+        colModalidad.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
+            obtenerModalidadDisplay(data.getValue().getModalidad())
+        ));
 
-    // Columna Fecha
-    colFecha.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
-        data.getValue().getFechaActual() != null ? 
-        data.getValue().getFechaActual().toString() : "Sin fecha"
-    ));
+        // Columna Fecha
+        colFecha.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
+            data.getValue().getFechaActual() != null ? 
+            data.getValue().getFechaActual().toString() : "Sin fecha"
+        ));
 
-    // Columna Estado con ComboBox - CORREGIDO
-    colEstado.setCellFactory(new Callback<TableColumn<DegreeWork, String>, TableCell<DegreeWork, String>>() {
-        @Override
-        public TableCell<DegreeWork, String> call(TableColumn<DegreeWork, String> param) {
-            return new TableCell<DegreeWork, String>() {
-                private final ComboBox<String> combo = new ComboBox<>();
+        // Columna Estado - SOLO LECTURA (sin ComboBox editable)
+        colEstado.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
+            obtenerEstadoDisplay(data.getValue())
+        ));
 
-                {
-                    combo.getItems().addAll("NO_ACEPTADO", "ACEPTADO", "RECHAZADO", 
-                                           "PRIMERA_REVISION", "SEGUNDA_REVISION", "TERCERA_REVISION");
-                    combo.setOnAction(e -> {
-                        DegreeWork formato = getTableView().getItems().get(getIndex());
-                        if (formato != null) {
-                            // CORRECCIÓN: Convertir String a Enum antes de asignar
-                            String estadoSeleccionado = combo.getValue();
-                            EnumEstadoDocument estadoEnum = convertirStringAEnumEstadoD(estadoSeleccionado);
-                            if (estadoEnum != null) {
-                                Document ultimoFormatoA = formato.getFormatosA().get(formato.getFormatosA().size() - 1);
-                                ultimoFormatoA.setEstado(estadoEnum);
-                                actualizarEstadoFormato(formato, estadoEnum);
+        // Columna de acciones
+        colAcciones.setCellFactory(new Callback<TableColumn<DegreeWork, Void>, TableCell<DegreeWork, Void>>() {
+            @Override
+            public TableCell<DegreeWork, Void> call(TableColumn<DegreeWork, Void> param) {
+                return new TableCell<DegreeWork, Void>() {
+                    private final Button btnRevisar = new Button("Revisar");
+                    private final Button btnDetalles = new Button("Detalles");
+
+                    {
+                        // Botón Revisar - va a la pantalla de evaluación detallada
+                        btnRevisar.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white;");
+                        btnRevisar.setOnAction(event -> {
+                            DegreeWork formato = getTableView().getItems().get(getIndex());
+                            if (formato != null) {
+                                revisarFormato(formato);
                             }
-                        }
-                    });
-                }
+                        });
 
-                @Override
-                protected void updateItem(String estado, boolean empty) {
-                    super.updateItem(estado, empty);
-                    if (empty || getTableRow() == null || getTableRow().getItem() == null) {
-                        setGraphic(null);
-                    } else {
-                        DegreeWork formato = getTableRow().getItem();
-
-                        String estadoActual = "PENDIENTE";
-                        if (formato.getFormatosA() != null && !formato.getFormatosA().isEmpty()) {
-                            Document ultimoFormatoA = formato.getFormatosA().get(formato.getFormatosA().size() - 1);
-                            if (ultimoFormatoA.getEstado() != null) {
-                                estadoActual = ultimoFormatoA.getEstado().toString();
+                        // Botón Detalles
+                        btnDetalles.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white;");
+                        btnDetalles.setOnAction(event -> {
+                            DegreeWork formato = getTableView().getItems().get(getIndex());
+                            if (formato != null) {
+                                verDetallesFormato(formato);
                             }
-                        }
-
-                        combo.setValue(estadoActual);
-                        setGraphic(combo);
+                        });
                     }
-                }
 
-            };
-        }
-    });
-
-    // Columna de acciones (se mantiene igual)
-    colAcciones.setCellFactory(new Callback<TableColumn<DegreeWork, Void>, TableCell<DegreeWork, Void>>() {
-        @Override
-        public TableCell<DegreeWork, Void> call(TableColumn<DegreeWork, Void> param) {
-            return new TableCell<DegreeWork, Void>() {
-                private final Button btnRevisar = new Button("Revisar");
-                private final Button btnDetalles = new Button("Detalles");
-
-                {
-                    // Botón Revisar
-                    btnRevisar.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white;");
-                    btnRevisar.setOnAction(event -> {
-                        DegreeWork formato = getTableView().getItems().get(getIndex());
-                        if (formato != null) {
-                            revisarFormato(formato);
+                    @Override
+                    protected void updateItem(Void item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                            setGraphic(null);
+                        } else {
+                            DegreeWork formato = getTableRow().getItem();
+                            
+                            // Solo mostrar botón Revisar si el formato está pendiente o necesita revisión
+                            boolean mostrarRevisar = esFormatoRevisable(formato);
+                            
+                            // Crear contenedor para los botones
+                            javafx.scene.layout.HBox botones = new javafx.scene.layout.HBox(5);
+                            if (mostrarRevisar) {
+                                botones.getChildren().add(btnRevisar);
+                            }
+                            botones.getChildren().add(btnDetalles);
+                            setGraphic(botones);
                         }
-                    });
-
-                    // Botón Detalles
-                    btnDetalles.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white;");
-                    btnDetalles.setOnAction(event -> {
-                        DegreeWork formato = getTableView().getItems().get(getIndex());
-                        if (formato != null) {
-                            verDetallesFormato(formato);
-                        }
-                    });
-                }
-
-                @Override
-                protected void updateItem(Void item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (empty || getTableRow() == null || getTableRow().getItem() == null) {
-                        setGraphic(null);
-                    } else {
-                        // Crear contenedor para los botones
-                        javafx.scene.layout.HBox botones = new javafx.scene.layout.HBox(5);
-                        botones.getChildren().addAll(btnRevisar, btnDetalles);
-                        setGraphic(botones);
                     }
-                }
-            };
-        }
-    });
-}
-
-// AGREGAR ESTOS MÉTODOS AUXILIARES A LA CLASE:
-
-/**
- * Convierte un String al EnumEstadoDegreeWork correspondiente
- */
-private EnumEstadoDegreeWork convertirStringAEnumEstado(String estadoStr) {
-    if (estadoStr == null) return null;
-    
-    try {
-        return EnumEstadoDegreeWork.valueOf(estadoStr);
-    } catch (IllegalArgumentException e) {
-        System.out.println("Error: Estado no válido - " + estadoStr);
-        mostrarAlerta("Error", "Estado no válido: " + estadoStr, Alert.AlertType.ERROR);
-        return null;
-    }
-}
-private EnumEstadoDocument convertirStringAEnumEstadoD(String estadoStr) {
-    if (estadoStr == null) return null;
-    
-    try {
-        return EnumEstadoDocument.valueOf(estadoStr);
-    } catch (IllegalArgumentException e) {
-        System.out.println("Error: Estado no válido - " + estadoStr);
-        Platform.runLater(() -> {
-            mostrarAlerta("Error", "Estado no válido: " + estadoStr, Alert.AlertType.ERROR);
+                };
+            }
         });
-        return null;
     }
-}
 
-/**
- * Actualiza el estado del último Formato A (Document) dentro del DegreeWork
- * y envía la actualización al microservicio de degreeworks.
- */
-private void actualizarEstadoFormato(DegreeWork formato, EnumEstadoDocument nuevoEstado) {
-    try {
-        if (formato.getId() == null) {
-            mostrarAlerta("Error", "El trabajo de grado no tiene ID.", Alert.AlertType.ERROR);
-            return;
+    // Método para determinar si un formato es revisable
+    private boolean esFormatoRevisable(DegreeWork formato) {
+        if (formato == null || formato.getFormatosA() == null || formato.getFormatosA().isEmpty()) {
+            return false;
         }
-
-        ActualizarEvaluacionDTO dto = new ActualizarEvaluacionDTO();
-        dto.setDegreeWorkId(formato.getId());
-        dto.setEstado(nuevoEstado);
-        dto.setObservaciones(formato.getCorrecciones());
-
-        System.out.println("➡ Enviando DTO a /api/evaluaciones/evaluacion:");
-        System.out.println(dto);
-
-        ResponseEntity<Object> response = apiService.patch(
-            "api/evaluaciones",
-            "/evaluacion",
-            dto,
-            Object.class
-        );
-
-        if (response.getStatusCode().is2xxSuccessful()) {
-            mostrarAlerta("Éxito", "Evaluación actualizada correctamente.", Alert.AlertType.INFORMATION);
-            tblFormatos.refresh();
-        } else {
-            mostrarAlerta("Error", "No se pudo actualizar la evaluación.", Alert.AlertType.ERROR);
+        
+        Document ultimoFormatoA = formato.getFormatosA().get(formato.getFormatosA().size() - 1);
+        if (ultimoFormatoA.getEstado() == null) {
+            return true; // Si no tiene estado, se puede revisar
         }
-
-    } catch (Exception e) {
-        e.printStackTrace();
-        mostrarAlerta("Error", "Error actualizando la evaluación: " + e.getMessage(), Alert.AlertType.ERROR);
+        
+        String estado = ultimoFormatoA.getEstado().toString();
+        // Se puede revisar si está pendiente, en corrección, o no aceptado
+        return "PENDIENTE".equalsIgnoreCase(estado) || 
+           "NO_ACEPTADO".equalsIgnoreCase(estado) ||
+           "EN_CORRECCION".equalsIgnoreCase(estado) ||
+           "PRIMERA_REVISION".equalsIgnoreCase(estado) ||
+           "SEGUNDA_REVISION".equalsIgnoreCase(estado) ||
+           "TERCERA_REVISION".equalsIgnoreCase(estado) ||
+           "EN_REVISION".equalsIgnoreCase(estado);
     }
-}
 
+    // Método para obtener el estado display del formato
+    private String obtenerEstadoDisplay(DegreeWork formato) {
+        if (formato == null || formato.getFormatosA() == null || formato.getFormatosA().isEmpty()) {
+            return "SIN DOCUMENTO";
+        }
+        
+        Document ultimoFormatoA = formato.getFormatosA().get(formato.getFormatosA().size() - 1);
+        if (ultimoFormatoA.getEstado() == null) {
+            return "PENDIENTE";
+        }
+        
+        String estado = ultimoFormatoA.getEstado().toString();
+        
+        // Traducir estados a formato más amigable
+        switch (estado.toUpperCase()) {
+            case "PENDIENTE":
+                return "Pendiente";
+            case "EN_REVISION":
+                return "En revisión";
+            case "ACEPTADO":
+                return "Aceptado";
+            case "NO_ACEPTADO":
+                return "No aceptado";
+            case "EN_CORRECCION":
+                return "En corrección";
+            case "RECHAZADO":
+                return "Rechazado";
+            case "PRIMERA_REVISION":
+                return "Primera revisión";
+            case "SEGUNDA_REVISION":
+                return "Segunda revisión";
+            case "TERCERA_REVISION":
+                return "Tercera revisión";
+            default:
+                return estado;
+        }
+    }
 
     private void configurarFiltros() {
         comboFiltro.getItems().addAll(
@@ -250,9 +203,9 @@ private void actualizarEstadoFormato(DegreeWork formato, EnumEstadoDocument nuev
             "Pendientes",
             "Aceptados", 
             "Rechazados",
-            "En primera evaluación",
-            "En segunda evaluación",
-            "En tercera evaluación"
+            "No aceptados",
+            "En revisión",
+            "En corrección"
         );
         comboFiltro.getSelectionModel().selectFirst();
 
@@ -272,33 +225,49 @@ private void actualizarEstadoFormato(DegreeWork formato, EnumEstadoDocument nuev
                 break;
             case "Pendientes":
                 formatosFiltrados.addAll(formatos.filtered(f -> 
-                    "PENDIENTE".equalsIgnoreCase(f.getEstado().toString())));
+                    tieneEstado(f, "PENDIENTE")));
                 break;
             case "Aceptados":
                 formatosFiltrados.addAll(formatos.filtered(f -> 
-                    "ACEPTADO".equalsIgnoreCase(f.getEstado().toString())));
+                    tieneEstado(f, "ACEPTADO")));
                 break;
             case "Rechazados":
                 formatosFiltrados.addAll(formatos.filtered(f -> 
-                    "RECHAZADO".equalsIgnoreCase(f.getEstado().toString())));
+                    tieneEstado(f, "RECHAZADO")));
                 break;
-            case "En primera evaluación":
+            case "No aceptados":
                 formatosFiltrados.addAll(formatos.filtered(f -> 
-                    "PRIMERA_EVALUACION".equalsIgnoreCase(f.getEstado().toString())));
+                    tieneEstado(f, "NO_ACEPTADO")));
                 break;
-            case "En segunda evaluación":
+            case "En revisión":
                 formatosFiltrados.addAll(formatos.filtered(f -> 
-                    "SEGUNDA_EVALUACION".equalsIgnoreCase(f.getEstado().toString())));
+                    tieneEstado(f, "EN_REVISION") || 
+                    tieneEstado(f, "PRIMERA_REVISION") ||
+                    tieneEstado(f, "SEGUNDA_REVISION") ||
+                    tieneEstado(f, "TERCERA_REVISION")));
                 break;
-            case "En tercera evaluación":
+            case "En corrección":
                 formatosFiltrados.addAll(formatos.filtered(f -> 
-                    "TERCERA_EVALUACION".equalsIgnoreCase(f.getEstado().toString())));
+                    tieneEstado(f, "EN_CORRECCION")));
                 break;
             default:
                 formatosFiltrados.addAll(formatos);
         }
 
         tblFormatos.setItems(formatosFiltrados);
+    }
+
+    private boolean tieneEstado(DegreeWork formato, String estadoBuscado) {
+        if (formato.getFormatosA() == null || formato.getFormatosA().isEmpty()) {
+            return false;
+        }
+        
+        Document ultimoFormatoA = formato.getFormatosA().get(formato.getFormatosA().size() - 1);
+        if (ultimoFormatoA.getEstado() == null) {
+            return "PENDIENTE".equalsIgnoreCase(estadoBuscado);
+        }
+        
+        return ultimoFormatoA.getEstado().toString().equalsIgnoreCase(estadoBuscado);
     }
 
     private String obtenerNombreEstudiante(DegreeWork formato) {
@@ -362,55 +331,12 @@ private void actualizarEstadoFormato(DegreeWork formato, EnumEstadoDocument nuev
         }
     }
 
-
     @FXML
     private void onGuardarCambios() {
-        if (formatos == null || formatos.isEmpty()) {
-            mostrarAlerta("Información", "No hay formatos para actualizar.", Alert.AlertType.INFORMATION);
-            return;
-        }
-
-        try {
-            boolean huboCambios = false;
-            int cambiosExitosos = 0;
-
-            for (DegreeWork formato : formatos) {
-                // Verificar si el estado cambió (necesitarías trackear el estado original)
-                // Por ahora, actualizamos todos los formatos
-                
-                ResponseEntity<DegreeWork> response = apiService.put(
-                    "api/degreeworks", 
-                    "/" + formato.getId(), 
-                    convertirADTO(formato),
-                    DegreeWork.class
-                );
-
-                if (response.getStatusCode().is2xxSuccessful()) {
-                    cambiosExitosos++;
-                    huboCambios = true;
-                    System.out.println("Formato actualizado: " + formato.getId());
-                }
-            }
-
-            if (huboCambios) {
-                mostrarAlerta("Éxito", 
-                    cambiosExitosos + " formato(s) actualizado(s) correctamente.", 
-                    Alert.AlertType.INFORMATION);
-                cargarFormatos(false); // Recargar para ver cambios
-            } else {
-                mostrarAlerta("Aviso", "No se realizaron cambios en los formatos.", Alert.AlertType.WARNING);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            mostrarAlerta("Error", "Error actualizando formatos: " + e.getMessage(), Alert.AlertType.ERROR);
-        }
-    }
-
-    private Object convertirADTO(DegreeWork formato) {
-        // Necesitas crear un DTO similar al que usa el backend
-        // Por ahora, devolvemos el objeto mismo (ajusta según tu API)
-        return formato;
+        // Este botón ya no es necesario porque no se editan estados directamente en la tabla
+        mostrarAlerta("Información", 
+            "Para evaluar formatos, haz clic en 'Revisar' en la columna de acciones.", 
+            Alert.AlertType.INFORMATION);
     }
 
     private void revisarFormato(DegreeWork formato) {
@@ -426,29 +352,35 @@ private void actualizarEstadoFormato(DegreeWork formato, EnumEstadoDocument nuev
         }
     }
 
-private void verDetallesFormato(DegreeWork formato) {
-    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-    alert.setTitle("Detalles del Formato");
-    alert.setHeaderText("Información del Trabajo de Grado");
-    
-    String contenido = String.format(
-        "ID: %s\n" +
-        "Título: %s\n" +
-        "Estudiante: %s\n" +
-        "Modalidad: %s\n" +
-        "Estado: %s\n" +
-        "Fecha: %s",
-        formato.getId() != null ? formato.getId().toString() : "N/A",
-        formato.getTituloProyecto() != null ? formato.getTituloProyecto() : "N/A",
-        obtenerNombreEstudiante(formato),
-        obtenerModalidadDisplay(formato.getModalidad()),
-        formato.getEstado() != null ? formato.getEstado().toString() : "N/A",
-        formato.getFechaActual() != null ? formato.getFechaActual().toString() : "N/A"
-    );
-    
-    alert.setContentText(contenido);
-    alert.showAndWait();
-}
+    private void verDetallesFormato(DegreeWork formato) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Detalles del Formato");
+        alert.setHeaderText("Información del Trabajo de Grado");
+        
+        String estado = obtenerEstadoDisplay(formato);
+        
+        String contenido = String.format(
+            "ID: %s\n" +
+            "Título: %s\n" +
+            "Estudiante: %s\n" +
+            "Modalidad: %s\n" +
+            "Estado: %s\n" +
+            "Fecha: %s\n" +
+            "Director: %s\n" +
+            "Codirector: %s",
+            formato.getId() != null ? formato.getId().toString() : "N/A",
+            formato.getTituloProyecto() != null ? formato.getTituloProyecto() : "N/A",
+            obtenerNombreEstudiante(formato),
+            obtenerModalidadDisplay(formato.getModalidad()),
+            estado,
+            formato.getFechaActual() != null ? formato.getFechaActual().toString() : "N/A",
+            formato.getDirectorProyecto() != null ? formato.getDirectorProyecto().getEmail() : "N/A",
+            formato.getCodirectorProyecto() != null ? formato.getCodirectorProyecto().getEmail() : "N/A"
+        );
+        
+        alert.setContentText(contenido);
+        alert.showAndWait();
+    }
 
     @FXML
     private void onBtnUsuarioClicked() {
@@ -485,7 +417,6 @@ private void verDetallesFormato(DegreeWork formato) {
             alert.showAndWait();
         });
     }
-
 
     public void configurarConUsuario(User usuario) {
         this.usuarioActual = usuario;
