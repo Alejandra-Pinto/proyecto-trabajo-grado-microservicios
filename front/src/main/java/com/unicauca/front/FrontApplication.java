@@ -5,6 +5,7 @@ import com.unicauca.front.util.NavigationController;
 import com.unicauca.front.util.SessionManager;
 
 import javafx.application.Application;
+import javafx.application.HostServices;
 import javafx.stage.Stage;
 
 import org.springframework.boot.CommandLineRunner;
@@ -18,6 +19,7 @@ public class FrontApplication extends Application {
 
     private ConfigurableApplicationContext springContext;
     private NavigationController navigationController;
+    private static HostServices appHostServices;
 
     @Override
     public void init() {
@@ -29,6 +31,12 @@ public class FrontApplication extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        // Guardar HostServices para uso global
+        appHostServices = getHostServices();
+        
+        // Configurar HostServices en NavigationController
+        navigationController.setHostServices(appHostServices);
+        
         navigationController.setPrimaryStage(primaryStage);
         navigationController.showLogin();
     }
@@ -46,6 +54,11 @@ public class FrontApplication extends Application {
             SessionManager.setApiGatewayService(apiGatewayService);
             System.out.println("✅ SessionManager configurado con ApiGatewayService");
         };
+    }
+
+    // Método estático para acceder a HostServices desde cualquier lugar
+    public static HostServices getAppHostServices() {
+        return appHostServices;
     }
 
     public static void main(String[] args) {

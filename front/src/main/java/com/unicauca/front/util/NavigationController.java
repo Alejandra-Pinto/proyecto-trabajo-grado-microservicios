@@ -22,6 +22,7 @@ import com.unicauca.front.controller.TeacherReviewFormatAController;
 import com.unicauca.front.model.DegreeWork;
 import com.unicauca.front.model.User;
 
+import javafx.application.HostServices;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -33,6 +34,7 @@ import javafx.stage.Stage;
 public class NavigationController {
    private final ApplicationContext applicationContext;
    private Stage primaryStage;
+   private HostServices hostServices;
 
    public NavigationController(ApplicationContext applicationContext) {
       this.applicationContext = applicationContext;
@@ -41,6 +43,16 @@ public class NavigationController {
    public void setPrimaryStage(Stage primaryStage) {
       this.primaryStage = primaryStage;
    }
+
+   public void setHostServices(HostServices hostServices) {
+        this.hostServices = hostServices;
+    }
+
+    // Método para obtener HostServices
+    public HostServices getHostServices() {
+        return this.hostServices;
+    }
+
 
    public void showLogin() {
       this.loadFXML("/fxml/Login.fxml", "Iniciar Sesión");
