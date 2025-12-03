@@ -109,7 +109,7 @@
                               <Font name="System Bold" size="16.0" />
                            </font></Label>
                         <TextField fx:id="txtCartaEmpresa" editable="false" layoutX="270.0" layoutY="340.0" prefHeight="25.0" prefWidth="270.0" visible="true" />
-                        <Button fx:id="btnAbrirCartaEmpresa" layoutX="560.0" layoutY="340.0" mnemonicParsing="false" style="-fx-background-color: #111F63;" text="ABRIR" textFill="WHITE" visible="true">
+                        <Button fx:id="btnAbrirCartaEmpresa" layoutX="560.0" layoutY="340.0" mnemonicParsing="false" onAction="#onAbrirCartaEmpresa" style="-fx-background-color: #111F63;" text="ABRIR" textFill="WHITE" visible="true">
                             <font>
                                 <Font name="System Bold" size="12.0" />
                             </font>
