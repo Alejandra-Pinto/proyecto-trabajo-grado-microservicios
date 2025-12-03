@@ -1,6 +1,7 @@
 package com.unicauca.front.controller;
 
 import com.unicauca.front.model.DegreeWork;
+import com.unicauca.front.model.Document;
 import com.unicauca.front.model.User;
 import com.unicauca.front.service.ApiGatewayService;
 import com.unicauca.front.util.NavigationController;
@@ -10,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Controller
 public class ManagementStudentFormatAController {
@@ -127,17 +129,38 @@ public class ManagementStudentFormatAController {
             return;
         }
 
-        //Habilitar y deshabilitar boton de correciones
-        String estado = formatoActual.getEstado() != null ? formatoActual.getEstado().toString() : "";
+        // 1. Obtener la lista de formatosA
+        List<Document> formatosA = formatoActual.getFormatosA();
+        
+        if (formatosA == null || formatosA.isEmpty()) {
+            btnVerCorrecciones.setDisable(true);
+            return;
+        }
+
+        // 2. Obtener el ÚLTIMO Formato A (asumiendo que están ordenados por fecha, el último es el más reciente)
+        // Si no están ordenados, puedes ordenarlos por fecha o ID
+        Document ultimoFormatoA = formatosA.get(formatosA.size() - 1);
+        
+        // 3. Obtener estado y correcciones del ÚLTIMO Formato A
+        String estadoUltimoFormato = ultimoFormatoA.getEstado() != null ? 
+                                    ultimoFormatoA.getEstado().toString() : "";
+        
         boolean tieneCorrecciones = formatoActual.getCorrecciones() != null && 
                                    !formatoActual.getCorrecciones().trim().isEmpty();
         
-        //Habilitar solo si el estado es "CORREGIDO" o "REVISADO" Y hay correcciones
-        boolean habilitar = ("CORREGIDO".equalsIgnoreCase(estado) || 
-                           "REVISADO".equalsIgnoreCase(estado)) && 
-                           tieneCorrecciones;
+        // 4. Habilitar solo si el ÚLTIMO Formato A está "NO_ACEPTADO" o "ACEPTADO" Y tiene correcciones
+        boolean habilitar = ("NO_ACEPTADO".equalsIgnoreCase(estadoUltimoFormato) || 
+                        "ACEPTADO".equalsIgnoreCase(estadoUltimoFormato)) && 
+                        tieneCorrecciones;
         
         btnVerCorrecciones.setDisable(!habilitar);
+        
+        // DEBUG: Verificar qué estamos obteniendo
+        System.out.println("=== DEBUG: Formato A ===");
+        System.out.println("Total formatosA: " + formatosA.size());
+        System.out.println("Último Formato A - Estado: " + estadoUltimoFormato);
+        System.out.println("Último Formato A - Correcciones: " + formatoActual.getCorrecciones());
+        System.out.println("¿Habilitar botón? " + habilitar);
     }
 
     private void mostrarDatosVacios() {
