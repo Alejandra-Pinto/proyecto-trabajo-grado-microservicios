@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/javafx/FXMLController.java to edit this template
- */
 package com.unicauca.front.controller;
 
 import com.unicauca.front.model.DegreeWork;
@@ -28,7 +24,7 @@ public class PublishedTeacherDraftController {
 
     @FXML private AnchorPane mainAnchorPane;
     @FXML private TableView<DegreeWork> tblEstadosFormato;
-    @FXML private TableColumn<DegreeWork, String> colNumeroAnteproyecto;
+    @FXML private TableColumn<DegreeWork, String> colNumeroFormato;
     @FXML private TableColumn<DegreeWork, String> colEmailEstudiante;
     @FXML private TableColumn<DegreeWork, String> colFechaActual;
     @FXML private TableColumn<DegreeWork, String> colEstado;
@@ -37,12 +33,13 @@ public class PublishedTeacherDraftController {
     @FXML private ToggleButton btnRol;
     @FXML private ToggleButton btnFormatoDocente;
     @FXML private ToggleButton btnAnteproyectoDocente;
-    @FXML private Button btnAgregarAnteproyecto;
+    @FXML private Button btnAgregarPropuesta;
 
     private final ApiGatewayService apiService;
     private final NavigationController navigation;
     private User usuarioActual;
-    private ObservableList<DegreeWork> todosLosAnteproyectos;
+    private ObservableList<DegreeWork> todosLosFormatos;
+    private int contadorFormato = 1; // Para numeración consecutiva
 
     public PublishedTeacherDraftController(ApiGatewayService apiService, NavigationController navigation) {
         this.apiService = apiService;
@@ -55,7 +52,7 @@ public class PublishedTeacherDraftController {
         configurarInterfaz();
         
         if (usuarioActual != null && "PROFESSOR".equalsIgnoreCase(usuarioActual.getRole())) {
-            cargarAnteproyectosDelDocente();
+            cargarFormatosDelDocente();
         }
     }
 
@@ -63,12 +60,12 @@ public class PublishedTeacherDraftController {
         this.usuarioActual = usuario;
         if (usuario != null && "PROFESSOR".equalsIgnoreCase(usuario.getRole())) {
             configurarBotonesDocente();
-            cargarAnteproyectosDelDocente();
+            cargarFormatosDelDocente();
         }
     }
 
     private void configurarInterfaz() {
-        // Configurar ComboBox de filtros - EXACTAMENTE IGUAL
+        //Configurar ComboBox de filtros
         comboClasificar.getItems().addAll(
             "Todos",
             "Aceptado",
@@ -84,66 +81,72 @@ public class PublishedTeacherDraftController {
 
         comboClasificar.setOnAction(event -> aplicarFiltro(comboClasificar.getValue()));
 
-        // Configurar columnas de la tabla
+        //Configurar columnas de la tabla
         configurarColumnasTabla();
     }
 
     private void configurarColumnasTabla() {
-        // Nombre del anteproyecto (en lugar de número consecutivo)
-        colNumeroAnteproyecto.setCellValueFactory(data -> 
-            new javafx.beans.property.SimpleStringProperty(
-                data.getValue().getTituloProyecto() != null ? 
-                data.getValue().getTituloProyecto() : "Sin título"
-            )
-        );
+        // Número de formato (consecutivo)
+        colNumeroFormato.setCellValueFactory(data -> {
+            int numero = tblEstadosFormato.getItems().indexOf(data.getValue()) + 1;
+            return new javafx.beans.property.SimpleStringProperty(String.valueOf(numero));
+        });
 
-        // Email del estudiante - EXACTAMENTE IGUAL
-        colEmailEstudiante.setCellValueFactory(data -> 
-            new javafx.beans.property.SimpleStringProperty(
-                data.getValue().getEstudiante() != null && 
-                data.getValue().getEstudiante().getEmail() != null ? 
-                data.getValue().getEstudiante().getEmail() : "Sin estudiante"
-            )
-        );
+        //Email del estudiante
+        colEmailEstudiante.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
+            data.getValue().getEstudiante() != null && data.getValue().getEstudiante().getEmail() != null ? 
+            data.getValue().getEstudiante().getEmail() : "Sin estudiante"
+        ));
 
-        // Fecha - EXACTAMENTE IGUAL (pero usando fecha del DegreeWork directamente)
+        //Fecha - Primero intenta obtener del último Formato A, si no usa la fecha del DegreeWork
         colFechaActual.setCellValueFactory(data -> {
             String fecha = "N/A";
-            if (data.getValue().getFechaActual() != null) {
+            
+            // Primero intentar con el último Formato A
+            Document ultimoFormatoA = obtenerUltimoFormatoA(data.getValue());
+            if (ultimoFormatoA != null && ultimoFormatoA.getFechaActual() != null) {
+                fecha = ultimoFormatoA.getFechaActual().toString();
+            } 
+            // Si no hay Formato A, usar la fecha del DegreeWork
+            else if (data.getValue().getFechaActual() != null) {
                 fecha = data.getValue().getFechaActual().toString();
             }
+            
             return new javafx.beans.property.SimpleStringProperty(fecha);
         });
 
-        // Estado del anteproyecto - EXACTAMENTE IGUAL (pero usando estado del DegreeWork)
+        //Estado del último Formato A
         colEstado.setCellValueFactory(data -> {
-            String estado = "Sin estado";
-            if (data.getValue().getEstado() != null) {
-                estado = data.getValue().getEstado().toString();
+            Document ultimoFormatoA = obtenerUltimoFormatoA(data.getValue());
+            String estado = "Sin formato A";
+            if (ultimoFormatoA != null && ultimoFormatoA.getEstado() != null) {
+                estado = ultimoFormatoA.getEstado().toString();
             }
             return new javafx.beans.property.SimpleStringProperty(estado);
         });
 
-        // Columna de acciones (botón "Ver Correcciones") - EXACTAMENTE IGUAL
+        // COLUMNA DE ACCIONES MODIFICADA: Botón "Agregar Anteproyecto" solo aparece si el último Formato A es "ACEPTADO"
         colAcciones.setCellFactory(new Callback<TableColumn<DegreeWork, Void>, TableCell<DegreeWork, Void>>() {
             @Override
             public TableCell<DegreeWork, Void> call(final TableColumn<DegreeWork, Void> param) {
                 return new TableCell<DegreeWork, Void>() {
-                    private final Button btnCorrections = new Button("Ver Correcciones");
+                    private final Button btnAgregarAnteproyecto = new Button("Agregar Anteproyecto");
 
                     {
-                        btnCorrections.setStyle("-fx-background-color: #111F63; -fx-text-fill: white; -fx-padding: 5;");
-                        btnCorrections.setOnAction(event -> {
-                            DegreeWork anteproyecto = getTableView().getItems().get(getIndex());
-                            if (anteproyecto != null) {
-                                String estado = anteproyecto.getEstado() != null ? anteproyecto.getEstado().toString() : "";
-                                // EXACTAMENTE IGUAL
-                                if ("NO_ACEPTADO".equals(estado) || "RECHAZADO".equals(estado)) {
-                                    abrirVentanaCorrecciones(anteproyecto);
-                                } else {
-                                    mostrarAlerta("Acción no permitida", 
-                                        "Solo se pueden ver correcciones para estados 'No aceptado' o 'Rechazado'.", 
-                                        Alert.AlertType.WARNING);
+                        btnAgregarAnteproyecto.setStyle("-fx-background-color: #111F63; -fx-text-fill: white; -fx-padding: 5;");
+                        btnAgregarAnteproyecto.setOnAction(event -> {
+                            DegreeWork formato = getTableView().getItems().get(getIndex());
+                            if (formato != null) {
+                                Document ultimoFormatoA = obtenerUltimoFormatoA(formato);
+                                if (ultimoFormatoA != null) {
+                                    String estado = ultimoFormatoA.getEstado() != null ? ultimoFormatoA.getEstado().toString() : "";
+                                    if ("ACEPTADO".equals(estado)) {
+                                        abrirVentanaAgregarAnteproyecto(formato);
+                                    } else {
+                                        mostrarAlerta("Acción no permitida", 
+                                            "Solo se puede agregar anteproyecto cuando el Formato A está 'Aceptado'.", 
+                                            Alert.AlertType.WARNING);
+                                    }
                                 }
                             }
                         });
@@ -155,11 +158,16 @@ public class PublishedTeacherDraftController {
                         if (empty || getTableRow() == null || getTableRow().getItem() == null) {
                             setGraphic(null);
                         } else {
-                            DegreeWork anteproyecto = getTableRow().getItem();
-                            String estado = anteproyecto.getEstado() != null ? anteproyecto.getEstado().toString() : "";
-                            // EXACTAMENTE IGUAL
-                            if ("NO_ACEPTADO".equals(estado) || "RECHAZADO".equals(estado)) {
-                                setGraphic(btnCorrections);
+                            DegreeWork formato = getTableRow().getItem();
+                            Document ultimoFormatoA = obtenerUltimoFormatoA(formato);
+                            if (ultimoFormatoA != null) {
+                                String estado = ultimoFormatoA.getEstado() != null ? ultimoFormatoA.getEstado().toString() : "";
+                                // SOLO MOSTRAR BOTÓN SI EL ESTADO ES "ACEPTADO"
+                                if ("ACEPTADO".equals(estado)) {
+                                    setGraphic(btnAgregarAnteproyecto);
+                                } else {
+                                    setGraphic(null);
+                                }
                             } else {
                                 setGraphic(null);
                             }
@@ -170,55 +178,68 @@ public class PublishedTeacherDraftController {
         });
     }
 
-    private void cargarAnteproyectosDelDocente() {
+    // Método helper para obtener el último Formato A
+    private Document obtenerUltimoFormatoA(DegreeWork degreeWork) {
+        if (degreeWork == null || degreeWork.getFormatosA() == null || degreeWork.getFormatosA().isEmpty()) {
+            return null;
+        }
+        List<Document> formatosA = degreeWork.getFormatosA();
+        // Obtener el último Formato A (el más reciente)
+        return formatosA.get(formatosA.size() - 1);
+    }
+
+    private void cargarFormatosDelDocente() {
         if (usuarioActual == null) {
             return;
         }
 
         try {
-            System.out.println("DEBUG: Cargando anteproyectos para docente: " + usuarioActual.getEmail());
+            System.out.println("DEBUG: Cargando formatos para docente: " + usuarioActual.getEmail());
             
-            // Ajusta el endpoint según tu API
             ResponseEntity<DegreeWork[]> response = apiService.get(
                 "api/degreeworks", 
-                "/docente/anteproyectos/" + usuarioActual.getEmail(), 
+                "/docente/" + usuarioActual.getEmail(), 
                 DegreeWork[].class
             );
 
             System.out.println("DEBUG: Status: " + response.getStatusCode());
             
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                DegreeWork[] anteproyectosArray = response.getBody();
-                System.out.println("DEBUG: Anteproyectos recibidos: " + anteproyectosArray.length);
+                DegreeWork[] formatosArray = response.getBody();
+                System.out.println("DEBUG: Formatos recibidos del backend: " + formatosArray.length);
                 
-                // DEBUG: Ver el contenido
-                for (DegreeWork dw : anteproyectosArray) {
-                    System.out.println("DEBUG - Anteproyecto: ID=" + dw.getId() + 
+                // DEBUG: Ver el contenido con información de documentos Y FECHAS
+                for (DegreeWork dw : formatosArray) {
+                    Document ultimoFormatoA = obtenerUltimoFormatoA(dw);
+                    System.out.println("DEBUG - Formato: ID=" + dw.getId() + 
                         ", Titulo=" + dw.getTituloProyecto() + 
-                        ", Estado=" + dw.getEstado() +
-                        ", Fecha=" + dw.getFechaActual());
+                        ", Fecha DegreeWork=" + dw.getFechaActual() +
+                        ", Tiene FormatosA=" + (dw.getFormatosA() != null ? dw.getFormatosA().size() : 0) +
+                        ", Fecha Ultimo FormatoA=" + (ultimoFormatoA != null ? ultimoFormatoA.getFechaActual() : "Ninguno") +
+                        ", Estado FormatoA=" + (ultimoFormatoA != null ? ultimoFormatoA.getEstado() : "Ninguno"));
                 }
                 
-                todosLosAnteproyectos = FXCollections.observableArrayList(anteproyectosArray);
+                // USAR DIRECTAMENTE sin filtrar
+                todosLosFormatos = FXCollections.observableArrayList(formatosArray);
                 aplicarFiltro("Todos");
                 
-                System.out.println("DEBUG: Anteproyectos finales en tabla: " + todosLosAnteproyectos.size());
+                System.out.println("DEBUG: Formatos finales en tabla: " + todosLosFormatos.size());
             } else {
                 System.out.println("DEBUG: Respuesta no exitosa o body vacío");
             }
 
         } catch (Exception e) {
             e.printStackTrace();
-            mostrarAlerta("Error", "Error cargando anteproyectos: " + e.getMessage(), Alert.AlertType.ERROR);
+            mostrarAlerta("Error", "Error cargando formatos: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
     private void aplicarFiltro(String opcion) {
-        if (opcion == null || todosLosAnteproyectos == null) {
+        if (opcion == null || todosLosFormatos == null) {
             return;
         }
 
-        List<DegreeWork> base = new ArrayList<>(todosLosAnteproyectos);
+        List<DegreeWork> base = new ArrayList<>(todosLosFormatos);
 
         switch (opcion) {
             case "Todos":
@@ -229,9 +250,9 @@ public class PublishedTeacherDraftController {
                 tblEstadosFormato.getItems().setAll(
                     base.stream()
                         .filter(f -> {
-                            // EXACTAMENTE IGUAL
-                            return f.getEstado() != null && 
-                                   "ACEPTADO".equalsIgnoreCase(f.getEstado().toString());
+                            Document formatoA = obtenerUltimoFormatoA(f);
+                            return formatoA != null && formatoA.getEstado() != null && 
+                                   "ACEPTADO".equalsIgnoreCase(formatoA.getEstado().toString());
                         })
                         .collect(Collectors.toList())
                 );
@@ -241,9 +262,9 @@ public class PublishedTeacherDraftController {
                 tblEstadosFormato.getItems().setAll(
                     base.stream()
                         .filter(f -> {
-                            // EXACTAMENTE IGUAL
-                            return f.getEstado() != null && 
-                                   "NO_ACEPTADO".equalsIgnoreCase(f.getEstado().toString());
+                            Document formatoA = obtenerUltimoFormatoA(f);
+                            return formatoA != null && formatoA.getEstado() != null && 
+                                   "NO_ACEPTADO".equalsIgnoreCase(formatoA.getEstado().toString());
                         })
                         .collect(Collectors.toList())
                 );
@@ -253,9 +274,9 @@ public class PublishedTeacherDraftController {
                 tblEstadosFormato.getItems().setAll(
                     base.stream()
                         .filter(f -> {
-                            // EXACTAMENTE IGUAL
-                            return f.getEstado() != null && 
-                                   "PRIMERA_REVISION".equalsIgnoreCase(f.getEstado().toString());
+                            Document formatoA = obtenerUltimoFormatoA(f);
+                            return formatoA != null && formatoA.getEstado() != null && 
+                                   "PRIMERA_REVISION".equalsIgnoreCase(formatoA.getEstado().toString());
                         })
                         .collect(Collectors.toList())
                 );
@@ -265,9 +286,9 @@ public class PublishedTeacherDraftController {
                 tblEstadosFormato.getItems().setAll(
                     base.stream()
                         .filter(f -> {
-                            // EXACTAMENTE IGUAL
-                            return f.getEstado() != null && 
-                                   "SEGUNDA_REVISION".equalsIgnoreCase(f.getEstado().toString());
+                            Document formatoA = obtenerUltimoFormatoA(f);
+                            return formatoA != null && formatoA.getEstado() != null && 
+                                   "SEGUNDA_REVISION".equalsIgnoreCase(formatoA.getEstado().toString());
                         })
                         .collect(Collectors.toList())
                 );
@@ -277,9 +298,9 @@ public class PublishedTeacherDraftController {
                 tblEstadosFormato.getItems().setAll(
                     base.stream()
                         .filter(f -> {
-                            // EXACTAMENTE IGUAL
-                            return f.getEstado() != null && 
-                                   "TERCERA_REVISION".equalsIgnoreCase(f.getEstado().toString());
+                            Document formatoA = obtenerUltimoFormatoA(f);
+                            return formatoA != null && formatoA.getEstado() != null && 
+                                   "TERCERA_REVISION".equalsIgnoreCase(formatoA.getEstado().toString());
                         })
                         .collect(Collectors.toList())
                 );
@@ -289,9 +310,9 @@ public class PublishedTeacherDraftController {
                 tblEstadosFormato.getItems().setAll(
                     base.stream()
                         .filter(f -> {
-                            // EXACTAMENTE IGUAL
-                            return f.getEstado() != null && 
-                                   "RECHAZADO".equalsIgnoreCase(f.getEstado().toString());
+                            Document formatoA = obtenerUltimoFormatoA(f);
+                            return formatoA != null && formatoA.getEstado() != null && 
+                                   "RECHAZADO".equalsIgnoreCase(formatoA.getEstado().toString());
                         })
                         .collect(Collectors.toList())
                 );
@@ -301,9 +322,9 @@ public class PublishedTeacherDraftController {
                 tblEstadosFormato.getItems().setAll(
                     base.stream()
                         .sorted((f1, f2) -> {
-                            // EXACTAMENTE IGUAL
-                            LocalDate fecha1 = f1.getFechaActual();
-                            LocalDate fecha2 = f2.getFechaActual();
+                            // Primero intentar con Formato A, luego con DegreeWork
+                            LocalDate fecha1 = obtenerFechaParaOrdenamiento(f1);
+                            LocalDate fecha2 = obtenerFechaParaOrdenamiento(f2);
                             
                             if (fecha1 == null && fecha2 == null) return 0;
                             if (fecha1 == null) return 1;
@@ -318,9 +339,9 @@ public class PublishedTeacherDraftController {
                 tblEstadosFormato.getItems().setAll(
                     base.stream()
                         .sorted((f1, f2) -> {
-                            // EXACTAMENTE IGUAL
-                            LocalDate fecha1 = f1.getFechaActual();
-                            LocalDate fecha2 = f2.getFechaActual();
+                            // Primero intentar con Formato A, luego con DegreeWork
+                            LocalDate fecha1 = obtenerFechaParaOrdenamiento(f1);
+                            LocalDate fecha2 = obtenerFechaParaOrdenamiento(f2);
                             
                             if (fecha1 == null && fecha2 == null) return 0;
                             if (fecha1 == null) return 1;
@@ -337,16 +358,25 @@ public class PublishedTeacherDraftController {
         }
     }
 
-    // Método helper para obtener fecha para ordenamiento - EXACTAMENTE IGUAL (pero simplificado)
+    // Método helper para obtener fecha para ordenamiento (primero Formato A, luego DegreeWork)
     private LocalDate obtenerFechaParaOrdenamiento(DegreeWork degreeWork) {
         if (degreeWork == null) return null;
+        
+        // Primero intentar con el último Formato A
+        Document ultimoFormatoA = obtenerUltimoFormatoA(degreeWork);
+        if (ultimoFormatoA != null && ultimoFormatoA.getFechaActual() != null) {
+            return ultimoFormatoA.getFechaActual();
+        }
+        
+        // Si no hay Formato A, usar la fecha del DegreeWork
         return degreeWork.getFechaActual();
     }
 
-    private void abrirVentanaCorrecciones(DegreeWork anteproyecto) {
-        if (anteproyecto != null) {
-            // Navegar a la vista de correcciones del docente para anteproyectos
-            navigation.showTeacherReviewFormatA(usuarioActual, anteproyecto);
+    // MÉTODO NUEVO: Para abrir ventana de agregar anteproyecto
+    private void abrirVentanaAgregarAnteproyecto(DegreeWork formato) {
+        if (formato != null) {
+            // Navegar a la vista de creación/gestión de anteproyecto
+            navigation.showManagementTeacherDraft(usuarioActual);
         }
     }
 
@@ -366,22 +396,24 @@ public class PublishedTeacherDraftController {
     @FXML
     private void onBtnFormatoDocenteClicked() {
         if (usuarioActual != null && "PROFESSOR".equalsIgnoreCase(usuarioActual.getRole())) {
+            // Navegar a la vista de formatos A del docente
             navigation.showPublishedTeacherFormatA(usuarioActual);
         }
     }
 
     @FXML
     private void onBtnAnteproyectoDocenteClicked() {
-        // Ya estamos en la vista de anteproyectos, no hacer nada o recargar
+        // Ya estamos en la vista de anteproyectos, recargar
         if (usuarioActual != null && "PROFESSOR".equalsIgnoreCase(usuarioActual.getRole())) {
-            cargarAnteproyectosDelDocente();
+            cargarFormatosDelDocente();
         }
     }
 
     @FXML
-    private void onAgregarAnteproyecto() {
+    private void onAgregarPropuesta() {
         if (usuarioActual != null && "PROFESSOR".equalsIgnoreCase(usuarioActual.getRole())) {
-            navigation.showManagementTeacherDraft(usuarioActual);
+            // Navegar a la vista de crear nueva propuesta (formato A)
+            navigation.showManagementTeacherDraftWithFormato(usuarioActual, null);
         }
     }
 
