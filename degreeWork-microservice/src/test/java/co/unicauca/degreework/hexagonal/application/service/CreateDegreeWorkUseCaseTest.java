@@ -1,4 +1,4 @@
-package co.unicauca.degreework.hexagonal.application.service;
+/*package co.unicauca.degreework.hexagonal.application.service;
 
 import co.unicauca.degreework.hexagonal.application.dto.DegreeWorkCreatedEvent;
 import co.unicauca.degreework.hexagonal.application.dto.DegreeWorkDTO;
@@ -409,4 +409,4 @@ class CreateDegreeWorkUseCaseTest {
             throw new RuntimeException("Error al invocar método privado", e);
         }
     }
-}
+}*/

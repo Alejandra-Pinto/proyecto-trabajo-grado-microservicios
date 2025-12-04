@@ -22,4 +22,5 @@ public interface IUserService {
     Optional<User> findByEmail(String email);
     User syncUserFromKeycloak(UserRequest request);
     
+    public List<User> listAssignedEvaluators();
 }

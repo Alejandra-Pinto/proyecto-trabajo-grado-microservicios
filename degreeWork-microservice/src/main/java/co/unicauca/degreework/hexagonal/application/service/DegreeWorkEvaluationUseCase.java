@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -115,10 +116,11 @@ public class DegreeWorkEvaluationUseCase {
                 ));
 
         // Convertir emails → Usuarios reales
+        // USAR Collectors.toList() en lugar de .toList() para lista MUTABLE
         List<User> evaluadores = dto.getEvaluadores().stream()
                 .map(email -> userRepositoryPort.findByEmail(email).orElse(null))
                 .filter(Objects::nonNull)
-                .toList();
+                .collect(Collectors.toList()); // ← CAMBIO AQUÍ
 
         if (evaluadores.size() != 2) {
             throw new IllegalStateException("Debe recibir exactamente 2 evaluadores válidos.");

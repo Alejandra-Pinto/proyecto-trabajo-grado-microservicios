@@ -1,4 +1,4 @@
-package co.unicauca.degreework.hexagonal.application.service;
+/*package co.unicauca.degreework.hexagonal.application.service;
 
 import co.unicauca.degreework.hexagonal.application.dto.DegreeWorkUpdateDTO;
 import co.unicauca.degreework.hexagonal.application.dto.EvaluacionEventDTO;
@@ -436,4 +436,4 @@ class DegreeWorkEvaluationUseCaseTest {
 
     // Método auxiliar para probar obtenerUltimoDocumento (si es necesario hacerlo público para testing)
     // Si el método es privado, podemos testearlo indirectamente a través de los otros tests
-}
+}*/

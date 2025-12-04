@@ -1,8 +1,11 @@
 package com.unicauca.front.controller;
 
 import com.unicauca.front.dto.DegreeWorkDTO;
+import com.unicauca.front.dto.DocumentDTO;
 import com.unicauca.front.model.DegreeWork;
 import com.unicauca.front.model.Document;
+import com.unicauca.front.model.EnumEstadoDocument;
+import com.unicauca.front.model.EnumTipoDocumento;
 import com.unicauca.front.model.User;
 import com.unicauca.front.service.ApiGatewayService;
 import com.unicauca.front.util.NavigationController;
@@ -10,7 +13,6 @@ import com.unicauca.front.util.SessionManager;
 import javafx.application.HostServices;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -163,18 +165,37 @@ public class ManagementTeacherDraftController {
                 return;
             }
 
-            // VERSIÓN ROBUSTA - maneja todos los casos posibles
+            System.out.println("=== DEBUG: INICIANDO ENVÍO DE ANTEPROYECTO ===");
+            System.out.println("ID del DegreeWork: " + formatoActual.getId());
+            System.out.println("Ruta del archivo: " + txtArchivoAdjunto.getText());
+
+            // 1. CREAR DTO DEL DOCUMENTO DE ANTEPROYECTO
+            DocumentDTO anteproyectoDTO = new DocumentDTO();
+            anteproyectoDTO.setRutaArchivo(txtArchivoAdjunto.getText());
+            anteproyectoDTO.setEstado(EnumEstadoDocument.PRIMERA_REVISION); // Estado inicial por defecto
+            anteproyectoDTO.setTipo(EnumTipoDocumento.ANTEPROYECTO);
+            
+            System.out.println("DocumentDTO creado:");
+            System.out.println("  - Ruta: " + anteproyectoDTO.getRutaArchivo());
+            System.out.println("  - Estado: " + anteproyectoDTO.getEstado());
+            System.out.println("  - Tipo: " + anteproyectoDTO.getTipo());
+
+            // 2. CREAR LISTA DE ANTEPROYECTOS
+            List<DocumentDTO> anteproyectosList = new ArrayList<>();
+            anteproyectosList.add(anteproyectoDTO);
+            
+            System.out.println("Lista de anteproyectos creada. Tamaño: " + anteproyectosList.size());
+
+            // 3. CREAR DTO COMPLETO DEL DEGREEWORK
             DegreeWorkDTO dto = new DegreeWorkDTO();
             dto.setId(formatoActual.getId());
-            dto.setEstado("ANTEPROYECTO");
+            dto.setEstado("ANTEPROYECTO"); // Este es el estado del DegreeWork, no del documento
             
-            // Manejar modalidad de forma segura
+            // Manejar modalidad
             String modalidadStr;
             if (formatoActual.getModalidad() != null) {
-                // Si el objeto Modalidad existe, obtener su nombre
                 modalidadStr = formatoActual.getModalidad().name();
             } else {
-                // Si es null, usar valor por defecto
                 modalidadStr = "INVESTIGACION";
             }
             dto.setModalidad(modalidadStr);
@@ -188,10 +209,40 @@ public class ManagementTeacherDraftController {
                 formatoActual.getObjetivoGeneral() : "Desarrollar el proyecto de grado según los lineamientos establecidos");
                 
             // Fecha actual
-            dto.setFechaActual(java.time.LocalDate.now());
+            dto.setFechaActual(LocalDate.now());
+            
+            // ¡¡¡IMPORTANTE!!! AGREGAR EL ANTEPROYECTO AL DTO
+            dto.setAnteproyectos(anteproyectosList);
+            
+            // También podrías necesitar otros campos del DegreeWork existente
+            if (formatoActual.getDirectorProyecto() != null) {
+                dto.setDirectorEmail(formatoActual.getDirectorProyecto().getEmail());
+            }
+            /* 
+            if (formatoActual.getEstudiantes() != null && !formatoActual.getEstudiantes().isEmpty()) {
+                List<String> estudiantesEmails = new ArrayList<>();
+                for (User estudiante : formatoActual.getEstudiantes()) {
+                    estudiantesEmails.add(estudiante.getEmail());
+                }
+                dto.setEstudiantesEmails(estudiantesEmails);
+            }
+*/
+            System.out.println("=== DEBUG: DTO COMPLETO A ENVIAR ===");
+            System.out.println("  - ID: " + dto.getId());
+            System.out.println("  - Estado DegreeWork: " + dto.getEstado());
+            System.out.println("  - Modalidad: " + dto.getModalidad());
+            System.out.println("  - Título: " + dto.getTitulo());
+            System.out.println("  - ¿Tiene anteproyectos?: " + (dto.getAnteproyectos() != null && !dto.getAnteproyectos().isEmpty()));
+            if (dto.getAnteproyectos() != null && !dto.getAnteproyectos().isEmpty()) {
+                System.out.println("  - Número de anteproyectos: " + dto.getAnteproyectos().size());
+                DocumentDTO primerAnteproyecto = dto.getAnteproyectos().get(0);
+                System.out.println("  - Primer anteproyecto - Ruta: " + primerAnteproyecto.getRutaArchivo());
+                System.out.println("  - Primer anteproyecto - Estado: " + primerAnteproyecto.getEstado());
+                System.out.println("  - Primer anteproyecto - Tipo: " + primerAnteproyecto.getTipo());
+            }
 
-            System.out.println("DEBUG: Enviando DTO - Modalidad: " + dto.getModalidad() + ", Título: " + dto.getTitulo());
-
+            // 4. ENVIAR AL BACKEND
+            System.out.println("Enviando PUT a: /api/degreeworks/" + formatoActual.getId());
             ResponseEntity<DegreeWork> response = apiService.put(
                 "api/degreeworks", 
                 "/" + formatoActual.getId(), 
@@ -199,14 +250,45 @@ public class ManagementTeacherDraftController {
                 DegreeWork.class
             );
 
-            if (response.getStatusCode().is2xxSuccessful()) {
+            System.out.println("=== DEBUG: RESPUESTA DEL SERVER ===");
+            System.out.println("  - Código de estado: " + response.getStatusCode());
+            System.out.println("  - ¿Es exitoso?: " + response.getStatusCode().is2xxSuccessful());
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                DegreeWork degreeWorkActualizado = response.getBody();
+                System.out.println("✅ DegreeWork actualizado recibido:");
+                System.out.println("  - ID: " + degreeWorkActualizado.getId());
+                System.out.println("  - Estado: " + degreeWorkActualizado.getEstado());
+                System.out.println("  - ¿Tiene anteproyectos?: " + (degreeWorkActualizado.getAnteproyectos() != null));
+                
+                if (degreeWorkActualizado.getAnteproyectos() != null) {
+                    System.out.println("  - Número de anteproyectos: " + degreeWorkActualizado.getAnteproyectos().size());
+                    if (!degreeWorkActualizado.getAnteproyectos().isEmpty()) {
+                        Document ultimoAnteproyecto = degreeWorkActualizado.getAnteproyectos().get(
+                            degreeWorkActualizado.getAnteproyectos().size() - 1
+                        );
+                        System.out.println("  - Último anteproyecto:");
+                        System.out.println("    - ID: " + ultimoAnteproyecto.getId());
+                        System.out.println("    - Ruta: " + ultimoAnteproyecto.getRutaArchivo());
+                        System.out.println("    - Estado: " + ultimoAnteproyecto.getEstado());
+                        System.out.println("    - Tipo: " + ultimoAnteproyecto.getTipo());
+                    }
+                }
+                
                 mostrarAlerta("Éxito", "Anteproyecto enviado correctamente para revisión", Alert.AlertType.INFORMATION);
                 navigation.showHomeWithUser(usuarioActual);
             } else {
-                mostrarAlerta("Error", "No se pudo enviar el anteproyecto", Alert.AlertType.ERROR);
+                System.out.println("❌ Error en la respuesta del servidor");
+                String mensajeError = "No se pudo enviar el anteproyecto. Código: " + response.getStatusCode();
+                if (response.getBody() != null) {
+                    mensajeError += "\nRespuesta: " + response.getBody().toString();
+                }
+                mostrarAlerta("Error", mensajeError, Alert.AlertType.ERROR);
             }
 
         } catch (Exception e) {
+            System.err.println("=== DEBUG: EXCEPCIÓN DURANTE EL ENVÍO ===");
+            System.err.println("Mensaje: " + e.getMessage());
             e.printStackTrace();
             mostrarAlerta("Error", "Error al guardar: " + e.getMessage(), Alert.AlertType.ERROR);
         }
@@ -217,6 +299,14 @@ public class ManagementTeacherDraftController {
             mostrarAlerta("Campos incompletos", "Debe adjuntar el documento del anteproyecto", Alert.AlertType.WARNING);
             return false;
         }
+        
+        // Verificar que el archivo exista
+        File archivo = new File(txtArchivoAdjunto.getText());
+        if (!archivo.exists() || !archivo.isFile()) {
+            mostrarAlerta("Archivo no válido", "El archivo seleccionado no existe o no es válido", Alert.AlertType.ERROR);
+            return false;
+        }
+        
         return true;
     }
 
