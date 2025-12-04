@@ -17,22 +17,36 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class PersonalInformationController {
 
-    @FXML private Label lblTipo;
-    @FXML private Label lblNombre;
-    @FXML private Label lblEmail;
-    @FXML private Label lblPrograma;
-    @FXML private Label lblRol;
-    @FXML private Label lblTelefono;
-    @FXML private Label lblEstado;
+    @FXML
+    private Label lblTipo;
+    @FXML
+    private Label lblNombre;
+    @FXML
+    private Label lblEmail;
+    @FXML
+    private Label lblPrograma;
+    @FXML
+    private Label lblRol;
+    @FXML
+    private Label lblTelefono;
+    @FXML
+    private Label lblEstado;
 
-    //Botones de navegación
-    @FXML private ToggleButton btnFormatoDocente;
-    @FXML private ToggleButton btnAnteproyectoDocente;
-    @FXML private ToggleButton btnFormatoEstudiante;
-    @FXML private ToggleButton btnAnteproyectoEstudiante;
-    @FXML private ToggleButton btnEvaluarPropuestas;
-    @FXML private ToggleButton btnEvaluarAnteproyectos;
-    @FXML private ToggleButton btnCoordinadores;
+    // Botones de navegación
+    @FXML
+    private ToggleButton btnFormatoDocente;
+    @FXML
+    private ToggleButton btnAnteproyectoDocente;
+    @FXML
+    private ToggleButton btnFormatoEstudiante;
+    @FXML
+    private ToggleButton btnAnteproyectoEstudiante;
+    @FXML
+    private ToggleButton btnEvaluarPropuestas;
+    @FXML
+    private ToggleButton btnEvaluarAnteproyectos;
+    @FXML
+    private ToggleButton btnCoordinadores;
 
     private final ApiGatewayService apiService;
     private final NavigationController navigation;
@@ -43,111 +57,111 @@ public class PersonalInformationController {
         this.navigation = navigation;
     }
 
-@FXML
-private void initialize() {
-    System.out.println("=== INICIALIZANDO PersonalInformationController ===");
-    
-    usuarioActual = SessionManager.getCurrentUser();
-    if (usuarioActual != null) {
-        System.out.println("📋 Usuario en sesión: " + usuarioActual.getEmail());
-        System.out.println("📋 Programa en sesión: " + usuarioActual.getProgram());
-        
-        actualizarInformacionUsuario();
-        cargarInformacionUsuario();
-        configurarBotonesPorRol();
-    } else {
-        System.out.println("❌ ERROR: usuarioActual es null en initialize()");
-    }
-}
+    @FXML
+    private void initialize() {
+        System.out.println("=== INICIALIZANDO PersonalInformationController ===");
 
-private void actualizarInformacionUsuario() {
-    try {
-        String email = usuarioActual.getEmail();
-        if (email != null && !email.isEmpty()) {
-            System.out.println("🔄 Actualizando información para: " + email);
-            
-            ResponseEntity<User> response = apiService.get("api/usuarios", "/email/" + email, User.class);
-            
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                User updatedUser = response.getBody();
-                
-                System.out.println("📥 Programa desde API: " + updatedUser.getProgram());
-                
-                // ✅ CORREGIR caracteres para TODOS los programas
-                if (updatedUser.getProgram() != null) {
-                    String programaCorregido = corregirCaracteresPrograma(updatedUser.getProgram());
-                    updatedUser.setProgram(programaCorregido);
-                    System.out.println("🔧 Programa corregido: " + programaCorregido);
-                }
-                
-                SessionManager.setCurrentUser(updatedUser);
-                this.usuarioActual = updatedUser;
-                
-                System.out.println("✅ Usuario actualizado en sesión");
-            } else {
-                System.out.println("❌ Error en respuesta de API: " + response.getStatusCode());
-            }
-        }
-    } catch (Exception e) {
-        System.out.println("❌ Error actualizando información del usuario: " + e.getMessage());
-        e.printStackTrace();
-    }
-}
+        usuarioActual = SessionManager.getCurrentUser();
+        if (usuarioActual != null) {
+            System.out.println("📋 Usuario en sesión: " + usuarioActual.getEmail());
+            System.out.println("📋 Programa en sesión: " + usuarioActual.getProgram());
 
-
-
-private void cargarInformacionUsuario() {
-    // SIEMPRE sincronizar con SessionManager
-    this.usuarioActual = SessionManager.getCurrentUser();
-    if (usuarioActual == null) return;
-
-    String tipoUsuario = determinarTipoUsuario();
-    String nombreCompleto = (usuarioActual.getFirstName() != null ? usuarioActual.getFirstName() : "") + " " + 
-                           (usuarioActual.getLastName() != null ? usuarioActual.getLastName() : "");
-    
-    lblTipo.setText(tipoUsuario);
-    lblNombre.setText(nombreCompleto.trim());
-    lblEmail.setText(usuarioActual.getEmail() != null ? usuarioActual.getEmail() : "");
-    
-    // ✅ CORRECCIÓN: Mostrar TODOS los programas, no solo "Sistemas"
-    if (usuarioActual.getProgram() != null) {
-        if (usuarioActual.getProgram().contains("Sistemas")) {
-            lblPrograma.setText("Ingeniería de Sistemas");
+            actualizarInformacionUsuario();
+            cargarInformacionUsuario();
+            configurarBotonesPorRol();
         } else {
-            // Para otros programas, corregir caracteres y mostrar
-            String programaCorregido = corregirCaracteresPrograma(usuarioActual.getProgram());
-            lblPrograma.setText(programaCorregido);
+            System.out.println("❌ ERROR: usuarioActual es null en initialize()");
         }
-    } else {
-        lblPrograma.setText("No asignado");
     }
-    
-    lblRol.setText(usuarioActual.getRole() != null ? usuarioActual.getRole() : "");
-    lblTelefono.setText(usuarioActual.getPhone() != null ? usuarioActual.getPhone() : "N/A");
-    lblEstado.setText(usuarioActual.getStatus() != null ? usuarioActual.getStatus() : "ACTIVO");
-    
-    // DEBUG: Verificar qué se está mostrando
-    System.out.println("=== INFORMACIÓN CARGADA EN UI ===");
-    System.out.println("Programa en UI: " + lblPrograma.getText());
-    System.out.println("Email en UI: " + lblEmail.getText());
-}
 
-// Método para corregir caracteres de programas
-private String corregirCaracteresPrograma(String programa) {
-    if (programa == null) return "No asignado";
-    
-    return programa
-        .replace("Ý", "í")
-        .replace("ß", "á")
-        .replace("Ò", "ó")
-        .replace("þ", "ñ")
-        .replace("¨", "é")
-        .replace("³", "ú");
-}
+    private void actualizarInformacionUsuario() {
+        try {
+            String email = usuarioActual.getEmail();
+            if (email != null && !email.isEmpty()) {
+                System.out.println("🔄 Actualizando información para: " + email);
+
+                ResponseEntity<User> response = apiService.get("api/usuarios", "/email/" + email, User.class);
+
+                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                    User updatedUser = response.getBody();
+
+                    System.out.println("📥 Programa desde API: " + updatedUser.getProgram());
+
+                    // ✅ CORREGIR caracteres para TODOS los programas
+                    if (updatedUser.getProgram() != null) {
+                        String programaCorregido = corregirCaracteresPrograma(updatedUser.getProgram());
+                        updatedUser.setProgram(programaCorregido);
+                        System.out.println("🔧 Programa corregido: " + programaCorregido);
+                    }
+
+                    SessionManager.setCurrentUser(updatedUser);
+                    this.usuarioActual = updatedUser;
+
+                    System.out.println("✅ Usuario actualizado en sesión");
+                } else {
+                    System.out.println("❌ Error en respuesta de API: " + response.getStatusCode());
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("❌ Error actualizando información del usuario: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void cargarInformacionUsuario() {
+        // SIEMPRE sincronizar con SessionManager
+        this.usuarioActual = SessionManager.getCurrentUser();
+        if (usuarioActual == null)
+            return;
+
+        String tipoUsuario = determinarTipoUsuario();
+        String nombreCompleto = (usuarioActual.getFirstName() != null ? usuarioActual.getFirstName() : "") + " " +
+                (usuarioActual.getLastName() != null ? usuarioActual.getLastName() : "");
+
+        lblTipo.setText(tipoUsuario);
+        lblNombre.setText(nombreCompleto.trim());
+        lblEmail.setText(usuarioActual.getEmail() != null ? usuarioActual.getEmail() : "");
+
+        if (usuarioActual.getProgram() != null) {
+            if (usuarioActual.getProgram().contains("Sistemas")) {
+                lblPrograma.setText("Ingeniería de Sistemas");
+            } else {
+                // Para otros programas, corregir caracteres y mostrar
+                String programaCorregido = corregirCaracteresPrograma(usuarioActual.getProgram());
+                lblPrograma.setText(programaCorregido);
+            }
+        } else {
+            lblPrograma.setText("No asignado");
+        }
+
+        lblRol.setText(usuarioActual.getRole() != null ? usuarioActual.getRole() : "");
+        lblTelefono.setText(usuarioActual.getPhone() != null ? usuarioActual.getPhone() : "N/A");
+        lblEstado.setText(usuarioActual.getStatus() != null ? usuarioActual.getStatus() : "ACTIVO");
+
+        // DEBUG: Verificar qué se está mostrando
+        System.out.println("=== INFORMACIÓN CARGADA EN UI ===");
+        System.out.println("Programa en UI: " + lblPrograma.getText());
+        System.out.println("Email en UI: " + lblEmail.getText());
+    }
+
+    // Método para corregir caracteres de programas
+    private String corregirCaracteresPrograma(String programa) {
+        if (programa == null)
+            return "No asignado";
+
+        return programa
+                .replace("Ý", "í")
+                .replace("ß", "á")
+                .replace("Ò", "ó")
+                .replace("þ", "ñ")
+                .replace("¨", "é")
+                .replace("³", "ú");
+    }
 
     private String determinarTipoUsuario() {
-        if (usuarioActual.getRole() == null) return "Usuario";
-        
+        if (usuarioActual.getRole() == null)
+            return "Usuario";
+
         switch (usuarioActual.getRole().toUpperCase()) {
             case "STUDENT":
                 return "Estudiante";
@@ -155,7 +169,7 @@ private String corregirCaracteresPrograma(String programa) {
                 return "Docente";
             case "COORDINATOR":
                 return "Coordinador";
-            case "DEPARTMENT_HEAD": // NUEVO CASO
+            case "DEPARTMENT_HEAD":
                 return "Jefe de Departamento";
             case "ADMIN":
                 return "Administrador";
@@ -165,7 +179,7 @@ private String corregirCaracteresPrograma(String programa) {
     }
 
     private void configurarBotonesPorRol() {
-        //Ocultar todos los botones inicialmente
+        // Ocultar todos los botones inicialmente
         btnFormatoDocente.setVisible(false);
         btnAnteproyectoDocente.setVisible(false);
         btnFormatoEstudiante.setVisible(false);
@@ -174,9 +188,10 @@ private String corregirCaracteresPrograma(String programa) {
         btnEvaluarAnteproyectos.setVisible(false);
         btnCoordinadores.setVisible(false);
 
-        if (usuarioActual == null || usuarioActual.getRole() == null) return;
+        if (usuarioActual == null || usuarioActual.getRole() == null)
+            return;
 
-        //Mostrar botones según el rol
+        // Mostrar botones según el rol
         String rol = usuarioActual.getRole().toUpperCase();
         switch (rol) {
             case "PROFESSOR":
@@ -201,7 +216,7 @@ private String corregirCaracteresPrograma(String programa) {
         }
     }
 
-    //Métodos de navegación
+    // Métodos de navegación
     @FXML
     private void handleVolver() {
         if (usuarioActual != null) {
@@ -227,12 +242,14 @@ private String corregirCaracteresPrograma(String programa) {
             navigation.showHomeWithUser(usuarioActual);
         }
     }
+
     @FXML
     private void onBtnFormatoDocenteClicked() {
         if (usuarioActual != null && "PROFESSOR".equalsIgnoreCase(usuarioActual.getRole())) {
             navigation.showPublishedTeacherFormatA();
         } else {
-            mostrarAlerta("Acceso denegado", "Solo los docentes pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
+            mostrarAlerta("Acceso denegado", "Solo los docentes pueden acceder a esta funcionalidad.",
+                    Alert.AlertType.WARNING);
         }
     }
 
@@ -241,7 +258,8 @@ private String corregirCaracteresPrograma(String programa) {
         if (usuarioActual != null && "PROFESSOR".equalsIgnoreCase(usuarioActual.getRole())) {
             navigation.showManagementTeacherFormatA();
         } else {
-            mostrarAlerta("Acceso denegado", "Solo los docentes pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
+            mostrarAlerta("Acceso denegado", "Solo los docentes pueden acceder a esta funcionalidad.",
+                    Alert.AlertType.WARNING);
         }
     }
 
@@ -250,28 +268,32 @@ private String corregirCaracteresPrograma(String programa) {
         if (usuarioActual != null && "STUDENT".equalsIgnoreCase(usuarioActual.getRole())) {
             navigation.showManagementStudentFormatA();
         } else {
-            mostrarAlerta("Acceso denegado", "Solo los estudiantes pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
+            mostrarAlerta("Acceso denegado", "Solo los estudiantes pueden acceder a esta funcionalidad.",
+                    Alert.AlertType.WARNING);
         }
     }
 
     @FXML
     private void onBtnAnteproyectoEstudianteClicked() {
         if (usuarioActual != null && "STUDENT".equalsIgnoreCase(usuarioActual.getRole())) {
-            //Controlador específico para anteproyectos de estudiantes
+            // Controlador específico para anteproyectos de estudiantes
             navigation.showManagementStudentFormatA();
         } else {
-            mostrarAlerta("Acceso denegado", "Solo los estudiantes pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
+            mostrarAlerta("Acceso denegado", "Solo los estudiantes pueden acceder a esta funcionalidad.",
+                    Alert.AlertType.WARNING);
         }
     }
 
     @FXML
     private void onBtnEvaluarPropuestasClicked() {
-        if (usuarioActual != null && 
-            ("COORDINATOR".equalsIgnoreCase(usuarioActual.getRole()) || 
-            "DEPARTMENT_HEAD".equalsIgnoreCase(usuarioActual.getRole()))) {
+        if (usuarioActual != null &&
+                ("COORDINATOR".equalsIgnoreCase(usuarioActual.getRole()) ||
+                        "DEPARTMENT_HEAD".equalsIgnoreCase(usuarioActual.getRole()))) {
             navigation.showManagementCoordinatorFormatA();
         } else {
-            mostrarAlerta("Acceso denegado", "Solo coordinadores y jefes de departamento pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
+            mostrarAlerta("Acceso denegado",
+                    "Solo coordinadores y jefes de departamento pueden acceder a esta funcionalidad.",
+                    Alert.AlertType.WARNING);
         }
     }
 
@@ -280,7 +302,8 @@ private String corregirCaracteresPrograma(String programa) {
         if (usuarioActual != null && "DEPARTMENT_HEAD".equalsIgnoreCase(usuarioActual.getRole())) {
             navigation.showManagementCoordinatorFormatA();
         } else {
-            mostrarAlerta("Acceso denegado", "Solo los coordinadores pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
+            mostrarAlerta("Acceso denegado", "Solo los coordinadores pueden acceder a esta funcionalidad.",
+                    Alert.AlertType.WARNING);
         }
     }
 
@@ -289,17 +312,18 @@ private String corregirCaracteresPrograma(String programa) {
         if (usuarioActual != null && "ADMIN".equalsIgnoreCase(usuarioActual.getRole())) {
             navigation.showManagementAdmin();
         } else {
-            mostrarAlerta("Acceso denegado", "Solo los administradores pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
+            mostrarAlerta("Acceso denegado", "Solo los administradores pueden acceder a esta funcionalidad.",
+                    Alert.AlertType.WARNING);
         }
     }
 
     @FXML
     private void onBtnEditarInformacion() {
         if (usuarioActual != null) {
-            //Vista de edición de perfil (por si alcanza el tiempo jaja)
-            mostrarAlerta("Funcionalidad en desarrollo", 
-                         "La edición de información personal estará disponible próximamente.", 
-                         Alert.AlertType.INFORMATION);
+            // Vista de edición de perfil (por si alcanza el tiempo jaja)
+            mostrarAlerta("Funcionalidad en desarrollo",
+                    "La edición de información personal estará disponible próximamente.",
+                    Alert.AlertType.INFORMATION);
         }
     }
 
