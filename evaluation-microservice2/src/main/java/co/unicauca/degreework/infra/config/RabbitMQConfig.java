@@ -28,6 +28,16 @@ public class RabbitMQConfig {
     @Value("${app.rabbitmq.users.exchange-type:fanout}")
     private String usersExchangeType;
 
+    
+    // ============================
+    // ==  NOTIFICACIONES  ==
+    // ============================
+    @Value("${app.rabbitmq.notification.exchange}")
+    private String notificationExchangeName;
+
+    @Value("${app.rabbitmq.notification.routingkey}")
+    private String notificationRoutingKey;
+
     @Bean
     public Exchange usersExchange() {
         System.out.println("🔧 Creando exchange de usuarios: " + usersExchangeName + " tipo: " + usersExchangeType);
@@ -116,6 +126,13 @@ public class RabbitMQConfig {
                 .bind(evaluationQueue())
                 .to(evaluationExchange())
                 .with(evaluationRoutingKey);
+    }
+
+    // === Exchange de NOTIFICACIONES ===
+    @Bean
+    public DirectExchange notificationExchange() {
+        System.out.println("🔧 [EVALUATION] Creando exchange de notificaciones: " + notificationExchangeName);
+        return new DirectExchange(notificationExchangeName);
     }
 
     // === Conversor JSON ===

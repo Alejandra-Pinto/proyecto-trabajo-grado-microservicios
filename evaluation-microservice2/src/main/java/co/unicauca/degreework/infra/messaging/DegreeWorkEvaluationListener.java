@@ -1,6 +1,5 @@
 package co.unicauca.degreework.infra.messaging;
 
-import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -9,6 +8,7 @@ import org.springframework.stereotype.Component;
 import co.unicauca.degreework.access.DegreeWorkRepository;
 import co.unicauca.degreework.domain.entities.DegreeWork;
 import co.unicauca.degreework.domain.entities.Document;
+import co.unicauca.degreework.domain.entities.User;
 import co.unicauca.degreework.domain.entities.enums.EnumEstadoDegreeWork;
 import co.unicauca.degreework.domain.entities.enums.EnumEstadoDocument;
 import co.unicauca.degreework.domain.entities.enums.EnumModalidad;
@@ -17,6 +17,7 @@ import co.unicauca.degreework.infra.dto.DegreeWorkCreatedEvent;
 import co.unicauca.degreework.infra.dto.DegreeWorkUpdateDTO;
 import co.unicauca.degreework.infra.dto.DocumentDTO;
 import co.unicauca.degreework.service.DegreeWorkService;
+import co.unicauca.degreework.service.UserService;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 
@@ -27,10 +28,12 @@ public class DegreeWorkEvaluationListener {
     
     private final DegreeWorkRepository degreeWorkRepository;
     private final EntityManager entityManager;
+    private final UserService userService;
 
-    public DegreeWorkEvaluationListener(DegreeWorkRepository degreeWorkRepository, EntityManager entityManager) {
+    public DegreeWorkEvaluationListener(DegreeWorkRepository degreeWorkRepository, EntityManager entityManager, UserService userService) {
         this.degreeWorkRepository = degreeWorkRepository;
         this.entityManager = entityManager;
+        this.userService = userService;
     }
 
     @RabbitListener(queues = "degreework.queue")
@@ -196,11 +199,55 @@ public class DegreeWorkEvaluationListener {
         DegreeWork degreeWork = new DegreeWork();
         
         // Información básica
-        degreeWork.setId(event.getId()); // ✅ Mantener el mismo ID
+        degreeWork.setId(event.getId());
         degreeWork.setTitulo(event.getTitulo());
         
         if (event.getModalidad() != null) {
             degreeWork.setModalidad(EnumModalidad.valueOf(event.getModalidad()));
+        }
+        
+        if (event.getDirectorEmail() != null && !event.getDirectorEmail().trim().isEmpty()) {
+            User director = userService.obtenerPorEmail(event.getDirectorEmail());
+            if (director != null) {
+                degreeWork.setDirectorProyecto(director);
+                System.out.println("Director asignado: " + director.getEmail());
+            } else {
+                System.out.println("No se encontró usuario con email: " + event.getDirectorEmail());
+            }
+        }
+        
+        // Estudiantes
+        if (event.getEstudiantesEmails() != null && !event.getEstudiantesEmails().isEmpty()) {
+            List<User> estudiantes = new ArrayList<>();
+            for (String email : event.getEstudiantesEmails()) {
+                if (email != null && !email.trim().isEmpty()) {
+                    User estudiante = userService.obtenerPorEmail(email.trim());
+                    if (estudiante != null) {
+                        estudiantes.add(estudiante);
+                        System.out.println("Estudiante asignado: " + estudiante.getEmail());
+                    } else {
+                        System.out.println("No se encontró estudiante con email: " + email);
+                    }
+                }
+            }
+            degreeWork.setEstudiantes(estudiantes);
+        }
+        
+        // Codirectores
+        if (event.getCodirectoresEmails() != null && !event.getCodirectoresEmails().isEmpty()) {
+            List<User> codirectores = new ArrayList<>();
+            for (String email : event.getCodirectoresEmails()) {
+                if (email != null && !email.trim().isEmpty()) {
+                    User codirector = userService.obtenerPorEmail(email.trim());
+                    if (codirector != null) {
+                        codirectores.add(codirector);
+                        System.out.println("✅ Codirector asignado: " + codirector.getEmail());
+                    } else {
+                        System.out.println("⚠️ No se encontró codirector con email: " + email);
+                    }
+                }
+            }
+            degreeWork.setCodirectoresProyecto(codirectores);
         }
         
         degreeWork.setFechaActual(event.getFechaActual());
@@ -217,7 +264,7 @@ public class DegreeWorkEvaluationListener {
         if (degreeWork.getObjetivosEspecificos() == null || degreeWork.getObjetivosEspecificos().isEmpty()) {
             degreeWork.setObjetivosEspecificos(List.of("Objetivo 1", "Objetivo 2"));
         }
-         
+        
         // Inicializar listas de documentos
         degreeWork.setFormatosA(new ArrayList<>());
         degreeWork.setAnteproyectos(new ArrayList<>());
@@ -247,6 +294,9 @@ public class DegreeWorkEvaluationListener {
                     .collect(Collectors.toList())
             );
         }
+        
+        // Inicializar evaluadores (lista vacía por defecto)
+        degreeWork.setEvaluadores(new ArrayList<>());
         
         return degreeWork;
     }

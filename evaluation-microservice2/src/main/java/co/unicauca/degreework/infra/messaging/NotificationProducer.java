@@ -21,8 +21,20 @@ public class NotificationProducer {
     }
 
     public void sendNotification(NotificationEventDTO event) {
-        System.out.println("📢 Enviando evento de notificación a RabbitMQ...");
-        rabbitTemplate.convertAndSend(exchange, routingKey, event);
-        System.out.println("✅ Notificación enviada correctamente: " + event.getEventType());
+        try {
+            System.out.println("=== ENVIANDO NOTIFICACIÓN DESDE EVALUATION ===");
+            System.out.println("Exchange: " + exchange);
+            System.out.println("Routing Key: " + routingKey);
+            System.out.println("Event Type: " + event.getEventType());
+            System.out.println("Title: " + event.getTitle());
+            
+            rabbitTemplate.convertAndSend(exchange, routingKey, event);
+            
+            System.out.println("✅ Notificación enviada correctamente a RabbitMQ");
+            System.out.println("================================================");
+        } catch (Exception e) {
+            System.err.println("❌ Error enviando notificación: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }
