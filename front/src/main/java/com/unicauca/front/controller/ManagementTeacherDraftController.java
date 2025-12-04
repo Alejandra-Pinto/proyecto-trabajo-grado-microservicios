@@ -8,6 +8,7 @@ import com.unicauca.front.model.EnumEstadoDocument;
 import com.unicauca.front.model.EnumTipoDocumento;
 import com.unicauca.front.model.User;
 import com.unicauca.front.service.ApiGatewayService;
+import com.unicauca.front.service.DocumentStorageService; // AÑADIR
 import com.unicauca.front.util.NavigationController;
 import com.unicauca.front.util.SessionManager;
 import javafx.application.HostServices;
@@ -39,14 +40,19 @@ public class ManagementTeacherDraftController {
 
     private final ApiGatewayService apiService;
     private final NavigationController navigation;
+    private final DocumentStorageService documentStorageService; // AÑADIR
     private User usuarioActual;
     private File archivoAdjunto;
     private DegreeWork formatoActual;
     private HostServices hostServices;
 
-    public ManagementTeacherDraftController(ApiGatewayService apiService, NavigationController navigation) {
+    // MODIFICAR CONSTRUCTOR
+    public ManagementTeacherDraftController(ApiGatewayService apiService, 
+                                           NavigationController navigation,
+                                           DocumentStorageService documentStorageService) { // AÑADIR
         this.apiService = apiService;
         this.navigation = navigation;
+        this.documentStorageService = documentStorageService; // AÑADIR
     }
 
     public void setHostServices(HostServices hostServices) {
@@ -102,6 +108,13 @@ public class ManagementTeacherDraftController {
             // Cargar archivo de anteproyecto
             String archivoAnteproyecto = obtenerArchivoAnteproyecto(formato);
             txtArchivoAdjunto.setText(archivoAnteproyecto);
+            
+            // Verificar que el archivo existe localmente
+            if (archivoAnteproyecto != null && !archivoAnteproyecto.isEmpty()) {
+                if (!documentStorageService.existeDocumento(archivoAnteproyecto)) {
+                    System.out.println("⚠️ Advertencia: Anteproyecto no encontrado localmente: " + archivoAnteproyecto);
+                }
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -123,36 +136,129 @@ public class ManagementTeacherDraftController {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Seleccionar anteproyecto");
         fileChooser.getExtensionFilters().addAll(
-            new FileChooser.ExtensionFilter("PDF Files", "*.pdf"),
-            new FileChooser.ExtensionFilter("Word Files", "*.docx"),
-            new FileChooser.ExtensionFilter("Todos los archivos", "*.*")
+            new FileChooser.ExtensionFilter("PDF Files", "*.pdf")
         );
 
         File archivoSeleccionado = fileChooser.showOpenDialog(null);
         if (archivoSeleccionado != null) {
-            txtArchivoAdjunto.setText(archivoSeleccionado.getAbsolutePath());
-            archivoAdjunto = archivoSeleccionado;
-            mostrarAlerta("Documento cargado", "Anteproyecto seleccionado: " + archivoSeleccionado.getName(), Alert.AlertType.INFORMATION);
+            try {
+                // Guardar en el almacenamiento local del frontend
+                String rutaRelativa = documentStorageService.guardarDocumento(
+                    archivoSeleccionado, 
+                    usuarioActual != null ? usuarioActual.getId() : null,
+                    "ANTEPROYECTO"
+                );
+                
+                // Mostrar solo la ruta relativa en el campo de texto
+                txtArchivoAdjunto.setText(rutaRelativa);
+                archivoAdjunto = archivoSeleccionado;
+                
+                mostrarAlerta("Éxito", 
+                    "Anteproyecto guardado: " + archivoSeleccionado.getName(), 
+                    Alert.AlertType.INFORMATION);
+                
+            } catch (Exception e) {
+                e.printStackTrace();
+                mostrarAlerta("Error", 
+                    "Error al guardar anteproyecto: " + e.getMessage(), 
+                    Alert.AlertType.ERROR);
+            }
         }
     }
-
     @FXML
     private void onAbrirArchivo() {
-        String ruta = txtArchivoAdjunto.getText();
-        if (ruta == null || ruta.isEmpty()) {
+        System.out.println("🟢 DEBUG: Docente Anteproyecto - Abriendo archivo");
+        
+        String rutaRelativa = txtArchivoAdjunto.getText();
+        System.out.println("🟢 DEBUG: Ruta relativa obtenida: " + rutaRelativa);
+        
+        if (rutaRelativa == null || rutaRelativa.isEmpty()) {
             mostrarAlerta("Sin archivo", "No hay ningún archivo seleccionado.", Alert.AlertType.WARNING);
             return;
         }
-        File archivo = new File(ruta);
-        if (!archivo.exists()) {
-            mostrarAlerta("Archivo no encontrado", "El archivo no existe en la ruta especificada.", Alert.AlertType.ERROR);
-            return;
-        }
-        if (hostServices != null) {
-            hostServices.showDocument(archivo.toURI().toString());
+        
+        try {
+            // Obtener el archivo del almacenamiento local
+            System.out.println("🟢 DEBUG: Obteniendo archivo desde DocumentStorageService...");
+            File archivo = documentStorageService.obtenerDocumento(rutaRelativa);
+            
+            System.out.println("🟢 DEBUG: Ruta absoluta del archivo: " + archivo.getAbsolutePath());
+            System.out.println("🟢 DEBUG: Archivo existe? " + archivo.exists());
+            System.out.println("🟢 DEBUG: Tamaño del archivo: " + archivo.length() + " bytes");
+            
+            if (!archivo.exists()) {
+                System.out.println("🔴 DEBUG: Archivo NO existe en el sistema de archivos");
+                mostrarAlerta("Archivo no encontrado", 
+                    "El archivo no existe en el almacenamiento local. Ruta: " + rutaRelativa, 
+                    Alert.AlertType.ERROR);
+                return;
+            }
+            
+            System.out.println("🟢 DEBUG: HostServices es null? " + (hostServices == null));
+            
+            if (hostServices != null) {
+                System.out.println("🟢 DEBUG: Intentando abrir archivo con HostServices...");
+                String uri = archivo.toURI().toString();
+                System.out.println("🟢 DEBUG: URI del archivo: " + uri);
+                
+                try {
+                    hostServices.showDocument(uri);
+                    System.out.println("✅ DEBUG: Archivo abierto exitosamente");
+                } catch (Exception e) {
+                    System.out.println("🔴 DEBUG: Error al abrir con HostServices: " + e.getMessage());
+                    e.printStackTrace();
+                    
+                    // Intentar abrir de forma alternativa
+                    abrirArchivoAlternativo(archivo);
+                }
+            } else {
+                System.out.println("🔴 DEBUG: HostServices es null - Intentando método alternativo");
+                abrirArchivoAlternativo(archivo);
+            }
+            
+        } catch (Exception e) {
+            System.out.println("🔴 DEBUG: Error general: " + e.getMessage());
+            e.printStackTrace();
+            mostrarAlerta("Error", 
+                "Error al abrir archivo: " + e.getMessage(), 
+                Alert.AlertType.ERROR);
         }
     }
 
+    /**
+     * Método alternativo para abrir archivos si HostServices falla
+     */
+    private void abrirArchivoAlternativo(File archivo) {
+        try {
+            System.out.println("🟢 DEBUG: Intentando abrir archivo de forma alternativa...");
+            
+            // Método 2: Usar comandos del sistema operativo
+            String os = System.getProperty("os.name").toLowerCase();
+            System.out.println("🟢 DEBUG: Sistema operativo detectado: " + os);
+            
+            if (os.contains("win")) {
+                // Windows
+                Runtime.getRuntime().exec(new String[]{"cmd", "/c", "start", "\"\"", archivo.getAbsolutePath()});
+                System.out.println("✅ DEBUG: Comando Windows ejecutado");
+            } else if (os.contains("mac")) {
+                // macOS
+                Runtime.getRuntime().exec(new String[]{"open", archivo.getAbsolutePath()});
+                System.out.println("✅ DEBUG: Comando macOS ejecutado");
+            } else {
+                // Linux/Unix
+                Runtime.getRuntime().exec(new String[]{"xdg-open", archivo.getAbsolutePath()});
+                System.out.println("✅ DEBUG: Comando Linux ejecutado");
+            }
+            
+        } catch (Exception e) {
+            System.out.println("🔴 DEBUG: Error en método alternativo: " + e.getMessage());
+            e.printStackTrace();
+            mostrarAlerta("Error del sistema", 
+                "No se pudo abrir el archivo automáticamente. " +
+                "Por favor, ábralo manualmente desde: " + archivo.getAbsolutePath(), 
+                Alert.AlertType.ERROR);
+        }
+    }
     @FXML
     private void onGuardarFormato() {
         if (!validarCamposObligatorios()) {
@@ -295,15 +401,22 @@ public class ManagementTeacherDraftController {
     }
 
     private boolean validarCamposObligatorios() {
-        if (txtArchivoAdjunto.getText().isEmpty()) {
+        String rutaRelativa = txtArchivoAdjunto.getText();
+        
+        if (rutaRelativa == null || rutaRelativa.isEmpty()) {
             mostrarAlerta("Campos incompletos", "Debe adjuntar el documento del anteproyecto", Alert.AlertType.WARNING);
             return false;
         }
         
-        // Verificar que el archivo exista
-        File archivo = new File(txtArchivoAdjunto.getText());
-        if (!archivo.exists() || !archivo.isFile()) {
-            mostrarAlerta("Archivo no válido", "El archivo seleccionado no existe o no es válido", Alert.AlertType.ERROR);
+        // Verificar que el archivo exista localmente
+        try {
+            File archivo = documentStorageService.obtenerDocumento(rutaRelativa);
+            if (!archivo.exists() || !archivo.isFile()) {
+                mostrarAlerta("Archivo no válido", "El archivo seleccionado no existe o no es válido", Alert.AlertType.ERROR);
+                return false;
+            }
+        } catch (Exception e) {
+            mostrarAlerta("Error", "Error al verificar el archivo: " + e.getMessage(), Alert.AlertType.ERROR);
             return false;
         }
         
