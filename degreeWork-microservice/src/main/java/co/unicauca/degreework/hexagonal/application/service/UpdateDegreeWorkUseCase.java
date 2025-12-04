@@ -175,7 +175,7 @@ public class UpdateDegreeWorkUseCase {
         
         // Contar todos los formatos A, no solo los no rechazados
         // Porque cada intento cuenta, incluso si fue rechazado
-        return formatosA.size() + 1; // +1 porque se está agregando uno nuevo
+        return formatosA.size(); // Ya no +1 porque el nuevo ya está agregado
     }
     
     private void enviarEventoFormatoASubido(DegreeWork degreeWork, int numeroIntento) {
@@ -253,37 +253,66 @@ public class UpdateDegreeWorkUseCase {
 
     private void actualizarDocumentos(DegreeWorkDTO dto, DegreeWork existente) {
         // ============================
-        // FORMATO A - SIEMPRE CREAR NUEVO DOCUMENTO PARA CADA REVISIÓN
+        // FORMATO A
         // ============================
         if (dto.getFormatosA() != null && !dto.getFormatosA().isEmpty()) {
             DocumentDTO formatoADto = dto.getFormatosA().get(0);
             
-            // Obtener el último documento Formato A para verificar su estado
+            // Obtener el último Formato A para verificar estado y contador
             Document ultimoFormatoA = existente.getUltimoDocumentoPorTipo(EnumTipoDocumento.FORMATO_A);
             
-            // Verificar si podemos crear un nuevo documento
+            // Verificar si podemos crear un nuevo Formato A
             if (ultimoFormatoA != null) {
-                // Verificar restricciones basadas en el estado del último documento
+                // Si hay un Formato A anterior, verificar su estado
                 if (ultimoFormatoA.getEstado() == EnumEstadoDocument.ACEPTADO) {
                     System.out.println("⚠️ El Formato A ya está ACEPTADO. No se puede crear una nueva versión.");
-                    return; // No crear nuevo documento si ya está aceptado
+                    return;
                 }
                 
                 if (ultimoFormatoA.getEstado() == EnumEstadoDocument.RECHAZADO) {
                     System.out.println("❌ El Formato A está RECHAZADO definitivamente. No se pueden crear más versiones.");
-                    return; // No crear nuevo documento si está rechazado definitivamente
+                    return;
                 }
+                
+                System.out.println("📝 Creando nueva versión de Formato A. " +
+                    "Estado anterior: " + ultimoFormatoA.getEstado() +
+                    ", Contador actual: " + existente.getNoAprobadoCount());
+            } else {
+                System.out.println("📝 Creando PRIMER Formato A");
             }
             
-            // SIEMPRE crear un nuevo documento Formato A (nueva versión)
+            // Crear nuevo Formato A
             Document nuevoFormatoA = new Document();
-            nuevoFormatoA.setTipo(EnumTipoDocumento.FORMATO_A);
             nuevoFormatoA.setRutaArchivo(formatoADto.getRutaArchivo());
-            nuevoFormatoA.setEstado(formatoADto.getEstado());
             nuevoFormatoA.setFechaActual(LocalDate.now());
+            nuevoFormatoA.setTipo(EnumTipoDocumento.FORMATO_A);
             
-            // Aplicar lógica de manejo de revisiones
-            existente.manejarRevision(nuevoFormatoA);
+            // Lógica CRÍTICA para mantener el estado y contador correcto
+            if (ultimoFormatoA != null) {
+                // Si hay un Formato A anterior, NO resetear el contador
+                // Mantener el estado del último Formato A para la nueva versión
+                
+                // Determinar el estado inicial del nuevo documento
+                if (formatoADto.getEstado() != null) {
+                    // Si el DTO viene con estado explícito, usarlo
+                    nuevoFormatoA.setEstado(formatoADto.getEstado());
+                } else {
+                    // Si no viene con estado, mantener el estado del último documento
+                    nuevoFormatoA.setEstado(ultimoFormatoA.getEstado());
+                }
+                
+                System.out.println("🔄 Manteniendo contador Formato A en: " + existente.getNoAprobadoCount());
+            } else {
+                // Es el primer Formato A
+                if (formatoADto.getEstado() != null) {
+                    nuevoFormatoA.setEstado(formatoADto.getEstado());
+                } else {
+                    nuevoFormatoA.setEstado(EnumEstadoDocument.PRIMERA_REVISION);
+                }
+                // Solo resetear contador si es el PRIMER Formato A
+                existente.resetNoAprobadoCountFormatoA();
+                System.out.println("🔄 Contador Formato A reseteado a 0 (primer documento)");
+            }
             
             // Asegurar que la lista exista
             if (existente.getFormatosA() == null) {
@@ -293,9 +322,19 @@ public class UpdateDegreeWorkUseCase {
             // Agregar el nuevo documento a la lista
             existente.getFormatosA().add(nuevoFormatoA);
             
-            System.out.println("✅ Nuevo Formato A creado. Estado: " + nuevoFormatoA.getEstado() + 
-                             ", Ruta: " + nuevoFormatoA.getRutaArchivo() +
-                             ", Total Formatos A: " + existente.getFormatosA().size());
+            // Si el documento viene como NO_ACEPTADO o se marcó como tal, manejar revisión
+            if (nuevoFormatoA.getEstado() == EnumEstadoDocument.NO_ACEPTADO) {
+                existente.manejarRevision(nuevoFormatoA);
+            }
+            
+            // DEBUG: Mostrar información completa
+            System.out.println("✅ Formato A creado: " +
+                "\n  - ID: " + nuevoFormatoA.getId() +
+                "\n  - Estado: " + nuevoFormatoA.getEstado() +
+                "\n  - Ruta: " + nuevoFormatoA.getRutaArchivo() +
+                "\n  - Contador después: " + existente.getNoAprobadoCount() +
+                "\n  - Total Formatos A: " + existente.getFormatosA().size() +
+                "\n  - Último estado anterior: " + (ultimoFormatoA != null ? ultimoFormatoA.getEstado() : "N/A"));
         }
 
         // ============================
@@ -303,14 +342,14 @@ public class UpdateDegreeWorkUseCase {
         // ============================
         if (dto.getAnteproyectos() != null && !dto.getAnteproyectos().isEmpty()) {
             // Verificar que el Formato A esté aceptado
-            Document formatoA = existente.getUltimoDocumentoPorTipo(EnumTipoDocumento.FORMATO_A);
-            if (formatoA == null || formatoA.getEstado() != EnumEstadoDocument.ACEPTADO) {
+            Document ultimoFormatoA = existente.getUltimoDocumentoPorTipo(EnumTipoDocumento.FORMATO_A);
+            if (ultimoFormatoA == null || ultimoFormatoA.getEstado() != EnumEstadoDocument.ACEPTADO) {
                 throw new IllegalStateException("No se puede subir un anteproyecto hasta que el Formato A haya sido ACEPTADO.");
             }
 
             DocumentDTO anteDto = dto.getAnteproyectos().get(0);
             
-            // Obtener el último anteproyecto para verificar su estado
+            // Obtener el último anteproyecto
             Document ultimoAnteproyecto = existente.getUltimoDocumentoPorTipo(EnumTipoDocumento.ANTEPROYECTO);
             
             // Verificar si podemos crear un nuevo anteproyecto
@@ -324,17 +363,39 @@ public class UpdateDegreeWorkUseCase {
                     System.out.println("❌ El Anteproyecto está RECHAZADO definitivamente. No se pueden crear más versiones.");
                     return;
                 }
+                
+                System.out.println("📝 Creando nueva versión de Anteproyecto. " +
+                    "Estado anterior: " + ultimoAnteproyecto.getEstado() +
+                    ", Contador actual: " + existente.getNoAprobadoCountAnteproyecto());
+            } else {
+                System.out.println("📝 Creando PRIMER Anteproyecto");
             }
             
             // Crear nuevo anteproyecto
             Document nuevoAnteproyecto = new Document();
             nuevoAnteproyecto.setTipo(EnumTipoDocumento.ANTEPROYECTO);
             nuevoAnteproyecto.setRutaArchivo(anteDto.getRutaArchivo());
-            nuevoAnteproyecto.setEstado(anteDto.getEstado());
             nuevoAnteproyecto.setFechaActual(LocalDate.now());
             
-            // Aplicar lógica de manejo de revisiones
-            existente.manejarRevision(nuevoAnteproyecto);
+            // Lógica similar para anteproyectos
+            if (ultimoAnteproyecto != null) {
+                // Si hay anteproyecto anterior, mantener estado y NO resetear contador
+                if (anteDto.getEstado() != null) {
+                    nuevoAnteproyecto.setEstado(anteDto.getEstado());
+                } else {
+                    nuevoAnteproyecto.setEstado(ultimoAnteproyecto.getEstado());
+                }
+            } else {
+                // Primer anteproyecto
+                if (anteDto.getEstado() != null) {
+                    nuevoAnteproyecto.setEstado(anteDto.getEstado());
+                } else {
+                    nuevoAnteproyecto.setEstado(EnumEstadoDocument.PRIMERA_REVISION);
+                }
+                // Solo resetear contador si es el PRIMER anteproyecto
+                existente.resetNoAprobadoCountAnteproyecto();
+                System.out.println("🔄 Contador Anteproyecto reseteado a 0 (primer documento)");
+            }
             
             // Asegurar que la lista exista
             if (existente.getAnteproyectos() == null) {
@@ -344,7 +405,18 @@ public class UpdateDegreeWorkUseCase {
             // Agregar el nuevo documento a la lista
             existente.getAnteproyectos().add(nuevoAnteproyecto);
             
-            System.out.println("✅ Nuevo Anteproyecto creado. Estado: " + nuevoAnteproyecto.getEstado());
+            // Si viene con estado NO_ACEPTADO, manejar revisión
+            if (nuevoAnteproyecto.getEstado() == EnumEstadoDocument.NO_ACEPTADO) {
+                existente.manejarRevision(nuevoAnteproyecto);
+            }
+            
+            // Actualizar estado del DegreeWork a ANTEPROYECTO
+            existente.setEstado(co.unicauca.degreework.hexagonal.domain.model.enums.EnumEstadoDegreeWork.ANTEPROYECTO);
+            
+            System.out.println("✅ Anteproyecto creado: " +
+                "\n  - Estado: " + nuevoAnteproyecto.getEstado() +
+                "\n  - Contador: " + existente.getNoAprobadoCountAnteproyecto() +
+                "\n  - Total Anteproyectos: " + existente.getAnteproyectos().size());
         }
 
         // ============================
@@ -353,10 +425,14 @@ public class UpdateDegreeWorkUseCase {
         if (dto.getCartasAceptacion() != null && !dto.getCartasAceptacion().isEmpty()) {
             DocumentDTO cartaDto = dto.getCartasAceptacion().get(0);
             
-            // Obtener la última carta para verificar su estado
+            // Verificar que el Anteproyecto esté aceptado
+            Document ultimoAnteproyecto = existente.getUltimoDocumentoPorTipo(EnumTipoDocumento.ANTEPROYECTO);
+            if (ultimoAnteproyecto == null || ultimoAnteproyecto.getEstado() != EnumEstadoDocument.ACEPTADO) {
+                throw new IllegalStateException("No se puede subir una Carta de Aceptación hasta que el Anteproyecto haya sido ACEPTADO.");
+            }
+            
             Document ultimaCarta = existente.getUltimoDocumentoPorTipo(EnumTipoDocumento.CARTA_ACEPTACION);
             
-            // Verificar si podemos crear una nueva carta
             if (ultimaCarta != null) {
                 if (ultimaCarta.getEstado() == EnumEstadoDocument.ACEPTADO) {
                     System.out.println("⚠️ La Carta de Aceptación ya está ACEPTADA. No se puede crear una nueva versión.");
@@ -367,27 +443,46 @@ public class UpdateDegreeWorkUseCase {
                     System.out.println("❌ La Carta de Aceptación está RECHAZADA definitivamente. No se pueden crear más versiones.");
                     return;
                 }
+                
+                System.out.println("📝 Creando nueva versión de Carta de Aceptación. Estado anterior: " + ultimaCarta.getEstado());
             }
             
             // Crear nueva carta de aceptación
             Document nuevaCarta = new Document();
             nuevaCarta.setTipo(EnumTipoDocumento.CARTA_ACEPTACION);
             nuevaCarta.setRutaArchivo(cartaDto.getRutaArchivo());
-            nuevaCarta.setEstado(cartaDto.getEstado());
             nuevaCarta.setFechaActual(LocalDate.now());
             
-            // Aplicar lógica de manejo de revisiones
-            existente.manejarRevision(nuevaCarta);
+            if (ultimaCarta != null) {
+                // Mantener estado de carta anterior
+                if (cartaDto.getEstado() != null) {
+                    nuevaCarta.setEstado(cartaDto.getEstado());
+                } else {
+                    nuevaCarta.setEstado(ultimaCarta.getEstado());
+                }
+            } else {
+                // Primera carta
+                if (cartaDto.getEstado() != null) {
+                    nuevaCarta.setEstado(cartaDto.getEstado());
+                } else {
+                    nuevaCarta.setEstado(EnumEstadoDocument.PRIMERA_REVISION);
+                }
+            }
             
-            // Asegurar que la lista exista
+            // Manejar revisión si viene como NO_ACEPTADO
+            if (nuevaCarta.getEstado() == EnumEstadoDocument.NO_ACEPTADO) {
+                existente.manejarRevision(nuevaCarta);
+            }
+            
             if (existente.getCartasAceptacion() == null) {
                 existente.setCartasAceptacion(new ArrayList<>());
             }
-            
-            // Agregar el nuevo documento a la lista
             existente.getCartasAceptacion().add(nuevaCarta);
             
-            System.out.println("✅ Nueva Carta de Aceptación creada. Estado: " + nuevaCarta.getEstado());
+            System.out.println("✅ Carta de Aceptación creada: " +
+                "\n  - Estado: " + nuevaCarta.getEstado() +
+                "\n  - Total Cartas: " + existente.getCartasAceptacion().size());
         }
     }
+    
 }
