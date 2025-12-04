@@ -367,6 +367,28 @@ public void showManagementTeacherDraft(User usuario) {
    }
 }
 
+public void showManagementTeacherDraftWithFormato(User usuario, DegreeWork formato) {
+    try {
+        FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/ManagementTeacherDraft.fxml"));
+        loader.setControllerFactory(applicationContext::getBean);
+        Parent root = loader.load();
+        
+        ManagementTeacherDraftController controller = loader.getController();
+        // Suponiendo que el método se llama igual que en ManagementTeacherFormatAController
+        controller.configurarConUsuario(usuario);
+        controller.configurarConFormato(formato);
+        // Si hay un método para deshabilitar campos, también deberías llamarlo
+        // controller.deshabilitarCamposFijos(); // Si aplica
+        
+        Scene scene = new Scene(root);
+        this.primaryStage.setScene(scene);
+        this.primaryStage.setTitle("Crear/Editar Anteproyecto - Docente");
+        this.primaryStage.show();
+    } catch (IOException e) {
+        throw new RuntimeException("Error cargando ManagementTeacherDraft con formato", e);
+    }
+}
+
 public void showManagementDepartmentHeadDraft() {
    this.loadFXML("/fxml/ManagementDepartmentHeadDraft.fxml", "Gestión Anteproyectos - Jefe Departamento");
 }

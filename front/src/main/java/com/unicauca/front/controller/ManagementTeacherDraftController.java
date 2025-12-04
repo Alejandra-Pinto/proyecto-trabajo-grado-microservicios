@@ -453,6 +453,60 @@ public class ManagementTeacherDraftController {
             cargarAnteproyectoExistente();
         }
     }
+    
+    public void configurarConFormato(DegreeWork formato) {
+        this.formatoActual = formato;
+        if (formato != null) {
+            // ***** MODO EDICIÓN o CREACIÓN DESDE FORMATO A ACEPTADO *****
+            System.out.println("✏️ Modo GESTIÓN DE ANTEPROYECTO para trabajo ID: " + formato.getId());
+
+            cargarDatosAnteproyecto(formato);
+
+            // Puedes deshabilitar algunos campos si es necesario
+            // Por ejemplo, el título podría venir del formato A y no ser editable
+            if (formato.getTituloProyecto() != null && !formato.getTituloProyecto().isEmpty()) {
+                // Si el formato A ya tiene título, cargarlo y tal vez deshabilitarlo
+                lblTituloTrabajo.setText(formato.getTituloProyecto());
+                lblTituloTrabajo.setDisable(true);
+            }
+
+        } else {
+            // ***** MODO CREACIÓN DESDE CERO *****
+            System.out.println("🆕 Modo CREACIÓN de anteproyecto desde cero");
+
+            // Limpiar campos para nuevo formulario
+            limpiarCamposCreacion();
+        }
+    }
+    
+    private void limpiarCamposCreacion() {
+        // Limpiar completamente (para cuando se crea nuevo anteproyecto desde cero)
+
+        // 1. Limpiar campos de título
+        if (lblTituloTrabajo != null) {
+            lblTituloTrabajo.setText("Nuevo Anteproyecto");
+        }
+
+        // 2. Limpiar campo de archivo adjunto
+        txtArchivoAdjunto.clear();
+        archivoAdjunto = null;
+
+        // 3. Restablecer el formatoActual a null (modo creación nueva)
+        formatoActual = null;
+
+        // 4. Restablecer botón de usuario si es necesario
+        if (usuarioActual != null) {
+            btnUsuario.setText("Docente: " + usuarioActual.getFirstName());
+        }
+
+        // 5. Asegurar que el botón de anteproyecto esté deshabilitado (ya estamos en esta vista)
+        if (btnAnteproyecto != null) {
+            btnAnteproyecto.setDisable(true);
+            btnAnteproyecto.setStyle("-fx-background-color: #2c3e50; -fx-text-fill: white;");
+        }
+
+        System.out.println("Campos limpiados para nuevo anteproyecto (modo creación desde cero)");
+    }
 
     private void mostrarAlerta(String titulo, String mensaje, Alert.AlertType tipo) {
         Alert alerta = new Alert(tipo);

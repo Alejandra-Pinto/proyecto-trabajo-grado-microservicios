@@ -129,7 +129,7 @@
                               <Image url="@images/antorcha.png" />
                            </image>
                         </ImageView>
-                        <Label layoutX="97.0" layoutY="34.0" prefHeight="72.0" prefWidth="653.0" text="ANTEPROYECTOS PUBLICADOS" textAlignment="CENTER">
+                        <Label layoutX="97.0" layoutY="34.0" prefHeight="72.0" prefWidth="653.0" text="FORMATOS A PUBLICADOS" textAlignment="CENTER">
                            <font>
                               <Font name="System Bold" size="44.0" />
                            </font>
@@ -154,10 +154,6 @@
                                 <TableColumn fx:id="colAcciones" prefWidth="222.4000244140625" text="Acciones" />
                             </columns>
                         </TableView>
-                        <Button fx:id="btnAgregarAnteproyecto" layoutX="876.0" layoutY="643.0" mnemonicParsing="false" onAction="#onAgregarAnteproyecto" style="-fx-background-color: #111F63;" text="AGREGAR ANTEPROYECTO" textFill="WHITE">
-                           <font>
-                              <Font name="System Bold" size="12.0" />
-                           </font></Button>
                      </children>
                   </AnchorPane>
               </items>
