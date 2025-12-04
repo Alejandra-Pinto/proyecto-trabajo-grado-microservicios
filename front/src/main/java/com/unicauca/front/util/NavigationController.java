@@ -16,6 +16,7 @@ import com.unicauca.front.controller.ManagementTeacherFormatAController;
 import com.unicauca.front.controller.NotificationController;
 import com.unicauca.front.controller.PersonalInformationController;
 import com.unicauca.front.controller.PublishedDepartmentHeadDraftController;
+import com.unicauca.front.controller.PublishedTeacherDraftController;
 import com.unicauca.front.controller.PublishedTeacherFormatAController;
 import com.unicauca.front.controller.StudentReviewFormatAController;
 import com.unicauca.front.controller.TeacherReviewFormatAController;
@@ -248,6 +249,28 @@ public class NavigationController {
          throw new RuntimeException("Error cargando PublishedTeacherFormatA", e);
       }
    }
+   
+    public void showPublishedTeacherDraft() {
+        this.loadFXML("/fxml/PublishedTeacherDraft.fxml", "Anteproyectos Publicados");
+    }
+
+    public void showPublishedTeacherDraft(User usuario) {
+       try {
+          FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/fxml/PublishedTeacherDraft.fxml"));
+          loader.setControllerFactory(applicationContext::getBean);
+          Parent root = loader.load();
+
+          PublishedTeacherDraftController controller = loader.getController();
+          controller.configurarConUsuario(usuario);
+
+          Scene scene = new Scene(root);
+          this.primaryStage.setScene(scene);
+          this.primaryStage.setTitle("Anteproyectos Publicados - Docente");
+          this.primaryStage.show();
+       } catch (IOException e) {
+          throw new RuntimeException("Error cargando PublishedTeacherDraft", e);
+       }
+    }
 
    public void showPersonalInformation() {
       User usuarioActual = SessionManager.getCurrentUser();

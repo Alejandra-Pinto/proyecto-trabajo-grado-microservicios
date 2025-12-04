@@ -123,7 +123,7 @@ public class HomeController {
             mostrarAlerta("Acceso denegado", "Solo los docentes pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
             return;
         }
-        navigation.showManagementTeacherDraft(usuario);
+        navigation.showPublishedTeacherDraft(usuario);
     }
 
     //ESTUDIANTE
