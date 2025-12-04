@@ -82,6 +82,7 @@ public class DegreeWork {
     private EnumEstadoDegreeWork estado;
 
     private int noAprobadoCount = 0;
+    private int noAprobadoCountAnteproyecto = 0;
 
     @Column(length = 2000)
     private String correcciones = "";
@@ -98,6 +99,17 @@ public class DegreeWork {
     public void incrementNoAprobadoCount() {
         this.noAprobadoCount++;
     }
+    public void incrementNoAprobadoCountAnteproyecto() {
+        this.noAprobadoCountAnteproyecto++;
+    }
+
+    public void resetNoAprobadoCountAnteproyecto() {
+        this.noAprobadoCountAnteproyecto = 0;
+    }
+    public void resetNoAprobadoCountFormatoA() {
+        this.noAprobadoCount = 0;
+    }
+
     public Long getId() {
         return id;
     }
@@ -235,6 +247,67 @@ public class DegreeWork {
         return evaluadores;
     }
 
+    public int getNoAprobadoCountPorTipo(EnumTipoDocumento tipo) {
+        return switch (tipo) {
+            case FORMATO_A -> this.noAprobadoCount;
+            case ANTEPROYECTO -> this.noAprobadoCountAnteproyecto;
+            default -> 0;
+        };
+    }
+
+    public void manejarRevision(Document documento) {
+        if (documento == null) {
+            throw new IllegalArgumentException("El documento no puede ser nulo.");
+        }
+        
+        // Solo manejar si está en NO_ACEPTADO
+        if (documento.getEstado() != EnumEstadoDocument.NO_ACEPTADO) {
+            return;
+        }
+
+        // Incrementar el contador correspondiente
+        switch (documento.getTipo()) {
+            case FORMATO_A -> incrementNoAprobadoCount();
+            case ANTEPROYECTO -> incrementNoAprobadoCountAnteproyecto();
+        }
+        
+        // Obtener el contador actual para este tipo
+        int contador = getNoAprobadoCountPorTipo(documento.getTipo());
+        
+        System.out.println("📊 Contador actual para " + documento.getTipo() + ": " + contador);
+        
+        // Determinar el nuevo estado basado en el contador
+        switch (contador) {
+            case 1 -> {
+                documento.setEstado(EnumEstadoDocument.SEGUNDA_REVISION);
+                System.out.println("🔄 Estado cambiado a SEGUNDA_REVISION");
+            }
+            case 2 -> {
+                documento.setEstado(EnumEstadoDocument.TERCERA_REVISION);
+                System.out.println("🔄 Estado cambiado a TERCERA_REVISION");
+            }
+            case 3 -> {
+                documento.setEstado(EnumEstadoDocument.RECHAZADO);
+                System.out.println("❌ Estado cambiado a RECHAZADO definitivo");
+            }
+            default -> {
+                documento.setEstado(EnumEstadoDocument.RECHAZADO);
+                System.out.println("❌ Estado cambiado a RECHAZADO (máximo de intentos)");
+            }
+        }
+    }
+
+    public Document getUltimoDocumentoPorTipo(EnumTipoDocumento tipo) {
+        List<Document> lista = switch (tipo) {
+            case FORMATO_A -> this.getFormatosA();
+            case ANTEPROYECTO -> this.getAnteproyectos();
+            case CARTA_ACEPTACION -> this.getCartasAceptacion();
+            default -> throw new IllegalArgumentException("Tipo de documento no reconocido: " + tipo);
+        };
+        if (lista == null || lista.isEmpty()) return null;
+        return lista.get(lista.size() - 1);
+    }
+
     public void agregarAnteproyecto(Document anteproyecto) {
         if (formatosA == null || formatosA.isEmpty()) {
             throw new IllegalStateException("No se puede agregar un anteproyecto sin haber registrado un Formato A.");
@@ -254,51 +327,68 @@ public class DegreeWork {
         anteproyecto.setTipo(EnumTipoDocumento.ANTEPROYECTO);
         anteproyecto.setEstado(EnumEstadoDocument.PRIMERA_REVISION);
         anteproyecto.setFechaActual(LocalDate.now());
+        
+        // Resetear contador de anteproyecto al empezar nuevo tipo
+        resetNoAprobadoCountAnteproyecto();
+        
+        if (this.anteproyectos == null) {
+            this.anteproyectos = new ArrayList<>();
+        }
         this.anteproyectos.add(anteproyecto);
 
         // Actualizar estado del trabajo de grado
         this.estado = EnumEstadoDegreeWork.ANTEPROYECTO;
     }
 
-    public void manejarRevision(Document documento) {
-        if (documento == null) {
-            throw new IllegalArgumentException("El documento no puede ser nulo.");
+    public void agregarFormatoA(Document formatoA) {
+        if (formatoA.getRutaArchivo() == null || formatoA.getRutaArchivo().isBlank()) {
+            throw new IllegalArgumentException("El Formato A debe tener una ruta de archivo válida.");
         }
 
-        // Si es un documento nuevo (sin ID o sin estado previo), se asume en primera revisión
-        if (documento.getId() == null || documento.getEstado() == null) {
-            documento.setEstado(EnumEstadoDocument.PRIMERA_REVISION);
-            return;
-        }
-
-        // Bloquear solo si ya está en estado final
-        if (documento.getEstado() == EnumEstadoDocument.ACEPTADO ||
-            documento.getEstado() == EnumEstadoDocument.RECHAZADO) {
-            return;
-        }
-
-        // Manejo de revisiones no aceptadas
-        if (documento.getEstado() == EnumEstadoDocument.NO_ACEPTADO) {
-            incrementNoAprobadoCount();
-
-            switch (noAprobadoCount) {
-                case 1 -> documento.setEstado(EnumEstadoDocument.SEGUNDA_REVISION);
-                case 2 -> documento.setEstado(EnumEstadoDocument.TERCERA_REVISION);
-                case 3 -> documento.setEstado(EnumEstadoDocument.RECHAZADO);
-                default -> documento.setEstado(EnumEstadoDocument.RECHAZADO);
+        formatoA.setTipo(EnumTipoDocumento.FORMATO_A);
+        formatoA.setFechaActual(LocalDate.now());
+        
+        // VERIFICAR SI ES PRIMER FORMATO A
+        boolean esPrimerFormatoA = this.formatosA == null || this.formatosA.isEmpty();
+        
+        if (esPrimerFormatoA) {
+            // Primer Formato A: estado inicial PRIMERA_REVISION
+            formatoA.setEstado(EnumEstadoDocument.PRIMERA_REVISION);
+            // Resetear contador solo si es el PRIMERO
+            resetNoAprobadoCountFormatoA();
+        } else {
+            // NO ES EL PRIMERO: Obtener estado del último formato
+            Document ultimoFormatoA = getUltimoDocumentoPorTipo(EnumTipoDocumento.FORMATO_A);
+            
+            if (ultimoFormatoA != null) {
+                // Si el último está ACEPTADO o RECHAZADO, no se puede crear nuevo
+                if (ultimoFormatoA.getEstado() == EnumEstadoDocument.ACEPTADO ||
+                    ultimoFormatoA.getEstado() == EnumEstadoDocument.RECHAZADO) {
+                    throw new IllegalStateException(
+                        "No se puede crear nueva versión de Formato A. Estado actual: " + 
+                        ultimoFormatoA.getEstado()
+                    );
+                }
+                
+                // Mantener el estado actual del último formato para la nueva versión
+                formatoA.setEstado(ultimoFormatoA.getEstado());
+            } else {
+                formatoA.setEstado(EnumEstadoDocument.PRIMERA_REVISION);
             }
         }
+        
+        if (this.formatosA == null) {
+            this.formatosA = new ArrayList<>();
+        }
+        this.formatosA.add(formatoA);
     }
 
-    public Document getUltimoDocumentoPorTipo(EnumTipoDocumento tipo) {
-        List<Document> lista = switch (tipo) {
-            case FORMATO_A -> this.getFormatosA();
-            case ANTEPROYECTO -> this.getAnteproyectos();
-            case CARTA_ACEPTACION -> this.getCartasAceptacion();
-            default -> throw new IllegalArgumentException("Tipo de documento no reconocido: " + tipo);
-        };
-        if (lista == null || lista.isEmpty()) return null;
-        return lista.get(lista.size() - 1);
+    public void documentoAceptado(EnumTipoDocumento tipo) {
+        switch (tipo) {
+            case FORMATO_A -> resetNoAprobadoCountFormatoA();
+            case ANTEPROYECTO -> resetNoAprobadoCountAnteproyecto();
+            default -> {}
+        }
+        System.out.println("✅ Contador reseteado para " + tipo + " al ser aceptado");
     }
-
 }
