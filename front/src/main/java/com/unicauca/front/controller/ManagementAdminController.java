@@ -18,14 +18,26 @@ import java.util.List;
 @Controller
 public class ManagementAdminController {
 
-    @FXML private TableView<User> tblUsuarios;
-    @FXML private TableColumn<User, String> colCorreo;
-    @FXML private TableColumn<User, String> colNombre;
-    @FXML private TableColumn<User, String> colRol;
-    @FXML private TableColumn<User, String> colEstado;
-    @FXML private TableColumn<User, Void> colAcciones;
-    @FXML private Button btnGuardarCambios;
-    @FXML private ToggleButton btnUsuario;
+    @FXML
+    private TableView<User> tblUsuarios;
+    @FXML
+    private TableColumn<User, String> colCorreo;
+    @FXML
+    private TableColumn<User, String> colNombre;
+    @FXML
+    private TableColumn<User, String> colRol;
+    @FXML
+    private TableColumn<User, String> colEstado;
+    @FXML
+    private TableColumn<User, Void> colAcciones;
+    @FXML
+    private Button btnGuardarCambios;
+    @FXML
+    private ToggleButton btnUsuario;
+    @FXML
+    private ToggleButton btnEvaluadores;
+    @FXML
+    private ToggleButton btnFormatoPropuesta;
 
     private final ApiGatewayService apiService;
     private final NavigationController navigation;
@@ -42,24 +54,25 @@ public class ManagementAdminController {
         usuarioActual = SessionManager.getCurrentUser();
         configurarTabla();
         cargarUsuarios();
+        if (usuarioActual != null && "ADMIN".equalsIgnoreCase(usuarioActual.getRole())) {
+            System.out.println("Abriendo ManagementEvaluadores...");
+            configurarBotonesAdmin();
+        }
     }
 
     private void configurarTabla() {
         // Columna Correo
         colCorreo.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
-            data.getValue().getEmail() != null ? data.getValue().getEmail() : ""
-        ));
+                data.getValue().getEmail() != null ? data.getValue().getEmail() : ""));
 
         // Columna Nombre
         colNombre.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
-            (data.getValue().getFirstName() != null ? data.getValue().getFirstName() : "") + " " +
-            (data.getValue().getLastName() != null ? data.getValue().getLastName() : "")
-        ));
+                (data.getValue().getFirstName() != null ? data.getValue().getFirstName() : "") + " " +
+                        (data.getValue().getLastName() != null ? data.getValue().getLastName() : "")));
 
         // NUEVA Columna Rol
         colRol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
-            obtenerRolDisplay(data.getValue().getRole())
-        ));
+                obtenerRolDisplay(data.getValue().getRole())));
 
         // Columna Estado con ComboBox
         colEstado.setCellFactory(new Callback<TableColumn<User, String>, TableCell<User, String>>() {
@@ -126,7 +139,8 @@ public class ManagementAdminController {
 
     // Método para obtener el nombre display del rol
     private String obtenerRolDisplay(String rol) {
-        if (rol == null) return "Sin rol";
+        if (rol == null)
+            return "Sin rol";
         switch (rol.toUpperCase()) {
             case "COORDINATOR":
                 return "Coordinador";
@@ -147,17 +161,15 @@ public class ManagementAdminController {
         try {
             // Cargar coordinadores
             ResponseEntity<User[]> responseCoordinadores = apiService.get(
-                "api/usuarios", 
-                "/rol/COORDINATOR", 
-                User[].class
-            );
+                    "api/usuarios",
+                    "/rol/COORDINATOR",
+                    User[].class);
 
             // Cargar jefes de departamento
             ResponseEntity<User[]> responseJefesDepartamento = apiService.get(
-                "api/usuarios", 
-                "/rol/DEPARTMENT_HEAD", 
-                User[].class
-            );
+                    "api/usuarios",
+                    "/rol/DEPARTMENT_HEAD",
+                    User[].class);
 
             usuarios = FXCollections.observableArrayList();
 
@@ -168,7 +180,8 @@ public class ManagementAdminController {
             }
 
             // Agregar jefes de departamento a la lista
-            if (responseJefesDepartamento.getStatusCode().is2xxSuccessful() && responseJefesDepartamento.getBody() != null) {
+            if (responseJefesDepartamento.getStatusCode().is2xxSuccessful()
+                    && responseJefesDepartamento.getBody() != null) {
                 usuarios.addAll(Arrays.asList(responseJefesDepartamento.getBody()));
                 System.out.println("Jefes de Departamento cargados: " + responseJefesDepartamento.getBody().length);
             }
@@ -196,30 +209,28 @@ public class ManagementAdminController {
             for (User usuario : usuarios) {
                 // Solo procesar usuarios cuyo estado haya cambiado
                 String estadoActual = usuario.getStatus();
-                
+
                 if ("ACEPTADO".equals(estadoActual)) {
                     // Usar el endpoint correcto para aprobar
                     ResponseEntity<String> response = apiService.put(
-                        "api/admin", 
-                        "/approve/" + usuario.getEmail(), 
-                        null,
-                        String.class
-                    );
+                            "api/admin",
+                            "/approve/" + usuario.getEmail(),
+                            null,
+                            String.class);
 
                     if (response.getStatusCode().is2xxSuccessful()) {
                         cambiosExitosos++;
                         huboCambios = true;
                         System.out.println("Usuario aprobado: " + usuario.getEmail() + " - Rol: " + usuario.getRole());
                     }
-                    
+
                 } else if ("RECHAZADO".equals(estadoActual)) {
                     // Usar el endpoint correcto para rechazar
                     ResponseEntity<String> response = apiService.put(
-                        "api/admin", 
-                        "/reject/" + usuario.getEmail(), 
-                        null,
-                        String.class
-                    );
+                            "api/admin",
+                            "/reject/" + usuario.getEmail(),
+                            null,
+                            String.class);
 
                     if (response.getStatusCode().is2xxSuccessful()) {
                         cambiosExitosos++;
@@ -231,9 +242,9 @@ public class ManagementAdminController {
             }
 
             if (huboCambios) {
-                mostrarAlerta("Éxito", 
-                    cambiosExitosos + " usuario(s) actualizado(s) correctamente.", 
-                    Alert.AlertType.INFORMATION);
+                mostrarAlerta("Éxito",
+                        cambiosExitosos + " usuario(s) actualizado(s) correctamente.",
+                        Alert.AlertType.INFORMATION);
                 // Recargar datos para verificar cambios
                 cargarUsuarios();
             } else {
@@ -250,21 +261,22 @@ public class ManagementAdminController {
         Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
         confirmacion.setTitle("Confirmar eliminación");
         confirmacion.setHeaderText("¿Está seguro de eliminar al usuario?");
-        confirmacion.setContentText("Usuario: " + usuario.getEmail() + "\nRol: " + obtenerRolDisplay(usuario.getRole()));
+        confirmacion
+                .setContentText("Usuario: " + usuario.getEmail() + "\nRol: " + obtenerRolDisplay(usuario.getRole()));
 
         confirmacion.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 try {
                     // Cambiar el estado a RECHAZADO
                     ResponseEntity<String> deleteResponse = apiService.put(
-                        "api/admin", 
-                        "/reject/" + usuario.getEmail(), 
-                        null, 
-                        String.class
-                    );
+                            "api/admin",
+                            "/reject/" + usuario.getEmail(),
+                            null,
+                            String.class);
 
                     if (deleteResponse.getStatusCode().is2xxSuccessful()) {
-                        mostrarAlerta("Éxito", "Usuario rechazado/eliminado correctamente.", Alert.AlertType.INFORMATION);
+                        mostrarAlerta("Éxito", "Usuario rechazado/eliminado correctamente.",
+                                Alert.AlertType.INFORMATION);
                         cargarUsuarios(); // Recargar tabla
                     } else {
                         mostrarAlerta("Error", "No se pudo rechazar el usuario.", Alert.AlertType.ERROR);
@@ -278,10 +290,30 @@ public class ManagementAdminController {
         });
     }
 
+    private void configurarBotonesAdmin() {
+        btnUsuario.setVisible(true);
+        btnFormatoPropuesta.setVisible(true);
+        btnEvaluadores.setVisible(true);
+    }
+
     @FXML
     private void onBtnUsuarioClicked() {
         if (usuarioActual != null) {
             navigation.showPersonalInformation(usuarioActual);
+        }
+    }
+
+    @FXML
+    private void onBtnFormatoPropuestaClicked() {
+        if (usuarioActual != null) {
+            navigation.showManagementAdmin();
+        }
+    }
+
+    @FXML
+    private void onBtnEvaluadoresClicked() {
+        if (usuarioActual != null) {
+            navigation.showManagementEvaluadores();
         }
     }
 

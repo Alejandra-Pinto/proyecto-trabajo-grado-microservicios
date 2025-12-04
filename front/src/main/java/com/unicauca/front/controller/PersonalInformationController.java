@@ -47,6 +47,8 @@ public class PersonalInformationController {
     private ToggleButton btnEvaluarAnteproyectos;
     @FXML
     private ToggleButton btnCoordinadores;
+    @FXML
+    private ToggleButton btnEvaluadores;
 
     private final ApiGatewayService apiService;
     private final NavigationController navigation;
@@ -212,6 +214,7 @@ public class PersonalInformationController {
                 break;
             case "ADMIN":
                 btnCoordinadores.setVisible(true);
+                btnEvaluadores.setVisible(true);
                 break;
         }
     }
@@ -311,6 +314,16 @@ public class PersonalInformationController {
     private void onBtnCoordinadoresClicked() {
         if (usuarioActual != null && "ADMIN".equalsIgnoreCase(usuarioActual.getRole())) {
             navigation.showManagementAdmin();
+        } else {
+            mostrarAlerta("Acceso denegado", "Solo los administradores pueden acceder a esta funcionalidad.",
+                    Alert.AlertType.WARNING);
+        }
+    }
+
+    @FXML
+    private void onBtnEvaluadoresClicked() {
+        if (usuarioActual != null && "ADMIN".equalsIgnoreCase(usuarioActual.getRole())) {
+            navigation.showManagementEvaluadores();
         } else {
             mostrarAlerta("Acceso denegado", "Solo los administradores pueden acceder a esta funcionalidad.",
                     Alert.AlertType.WARNING);

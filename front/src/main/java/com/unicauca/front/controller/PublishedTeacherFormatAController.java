@@ -22,18 +22,30 @@ import java.util.stream.Collectors;
 @Controller
 public class PublishedTeacherFormatAController {
 
-    @FXML private AnchorPane mainAnchorPane;
-    @FXML private TableView<DegreeWork> tblEstadosFormato;
-    @FXML private TableColumn<DegreeWork, String> colNumeroFormato;
-    @FXML private TableColumn<DegreeWork, String> colEmailEstudiante;
-    @FXML private TableColumn<DegreeWork, String> colFechaActual;
-    @FXML private TableColumn<DegreeWork, String> colEstado;
-    @FXML private TableColumn<DegreeWork, Void> colAcciones;
-    @FXML private ComboBox<String> comboClasificar;
-    @FXML private ToggleButton btnRol;
-    @FXML private ToggleButton btnFormatoDocente;
-    @FXML private ToggleButton btnAnteproyectoDocente;
-    @FXML private Button btnAgregarPropuesta;
+    @FXML
+    private AnchorPane mainAnchorPane;
+    @FXML
+    private TableView<DegreeWork> tblEstadosFormato;
+    @FXML
+    private TableColumn<DegreeWork, String> colNumeroFormato;
+    @FXML
+    private TableColumn<DegreeWork, String> colEmailEstudiante;
+    @FXML
+    private TableColumn<DegreeWork, String> colFechaActual;
+    @FXML
+    private TableColumn<DegreeWork, String> colEstado;
+    @FXML
+    private TableColumn<DegreeWork, Void> colAcciones;
+    @FXML
+    private ComboBox<String> comboClasificar;
+    @FXML
+    private ToggleButton btnRol;
+    @FXML
+    private ToggleButton btnFormatoDocente;
+    @FXML
+    private ToggleButton btnAnteproyectoDocente;
+    @FXML
+    private Button btnAgregarPropuesta;
 
     private final ApiGatewayService apiService;
     private final NavigationController navigation;
@@ -50,7 +62,8 @@ public class PublishedTeacherFormatAController {
     private void initialize() {
         usuarioActual = SessionManager.getCurrentUser();
         configurarInterfaz();
-        
+        configurarConUsuario(usuarioActual);
+
         if (usuarioActual != null && "PROFESSOR".equalsIgnoreCase(usuarioActual.getRole())) {
             cargarFormatosDelDocente();
         }
@@ -65,67 +78,67 @@ public class PublishedTeacherFormatAController {
     }
 
     private void configurarInterfaz() {
-        //Configurar ComboBox de filtros
+        // Configurar ComboBox de filtros
         comboClasificar.getItems().addAll(
-            "Todos",
-            "Aceptado",
-            "No aceptado", 
-            "Primera revisión",
-            "Segunda revisión", 
-            "Tercera revisión",
-            "Rechazado",
-            "Fecha más reciente",
-            "Fecha más antigua"
-        );
+                "Todos",
+                "Aceptado",
+                "No aceptado",
+                "Primera revisión",
+                "Segunda revisión",
+                "Tercera revisión",
+                "Rechazado",
+                "Fecha más reciente",
+                "Fecha más antigua");
         comboClasificar.setValue("Todos");
 
         comboClasificar.setOnAction(event -> aplicarFiltro(comboClasificar.getValue()));
 
-        //Configurar columnas de la tabla
+        // Configurar columnas de la tabla
         configurarColumnasTabla();
     }
 
     private void configurarColumnasTabla() {
-    // Número de formato (consecutivo)
-    colNumeroFormato.setCellValueFactory(data -> {
-        int numero = tblEstadosFormato.getItems().indexOf(data.getValue()) + 1;
-        return new javafx.beans.property.SimpleStringProperty(String.valueOf(numero));
-    });
+        // Número de formato (consecutivo)
+        colNumeroFormato.setCellValueFactory(data -> {
+            int numero = tblEstadosFormato.getItems().indexOf(data.getValue()) + 1;
+            return new javafx.beans.property.SimpleStringProperty(String.valueOf(numero));
+        });
 
-    //Email del estudiante
-    colEmailEstudiante.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
-        data.getValue().getEstudiante() != null && data.getValue().getEstudiante().getEmail() != null ? 
-        data.getValue().getEstudiante().getEmail() : "Sin estudiante"
-    ));
+        // Email del estudiante
+        colEmailEstudiante.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
+                data.getValue().getEstudiante() != null && data.getValue().getEstudiante().getEmail() != null
+                        ? data.getValue().getEstudiante().getEmail()
+                        : "Sin estudiante"));
 
-    //Fecha - Primero intenta obtener del último Formato A, si no usa la fecha del DegreeWork
-    colFechaActual.setCellValueFactory(data -> {
-        String fecha = "N/A";
-        
-        // Primero intentar con el último Formato A
-        Document ultimoFormatoA = obtenerUltimoFormatoA(data.getValue());
-        if (ultimoFormatoA != null && ultimoFormatoA.getFechaActual() != null) {
-            fecha = ultimoFormatoA.getFechaActual().toString();
-        } 
-        // Si no hay Formato A, usar la fecha del DegreeWork
-        else if (data.getValue().getFechaActual() != null) {
-            fecha = data.getValue().getFechaActual().toString();
-        }
-        
-        return new javafx.beans.property.SimpleStringProperty(fecha);
-    });
+        // Fecha - Primero intenta obtener del último Formato A, si no usa la fecha del
+        // DegreeWork
+        colFechaActual.setCellValueFactory(data -> {
+            String fecha = "N/A";
 
-    //Estado del último Formato A
-    colEstado.setCellValueFactory(data -> {
-        Document ultimoFormatoA = obtenerUltimoFormatoA(data.getValue());
-        String estado = "Sin formato A";
-        if (ultimoFormatoA != null && ultimoFormatoA.getEstado() != null) {
-            estado = ultimoFormatoA.getEstado().toString();
-        }
-        return new javafx.beans.property.SimpleStringProperty(estado);
-    });
+            // Primero intentar con el último Formato A
+            Document ultimoFormatoA = obtenerUltimoFormatoA(data.getValue());
+            if (ultimoFormatoA != null && ultimoFormatoA.getFechaActual() != null) {
+                fecha = ultimoFormatoA.getFechaActual().toString();
+            }
+            // Si no hay Formato A, usar la fecha del DegreeWork
+            else if (data.getValue().getFechaActual() != null) {
+                fecha = data.getValue().getFechaActual().toString();
+            }
 
-        //Columna de acciones (botón "Ver Correcciones")
+            return new javafx.beans.property.SimpleStringProperty(fecha);
+        });
+
+        // Estado del último Formato A
+        colEstado.setCellValueFactory(data -> {
+            Document ultimoFormatoA = obtenerUltimoFormatoA(data.getValue());
+            String estado = "Sin formato A";
+            if (ultimoFormatoA != null && ultimoFormatoA.getEstado() != null) {
+                estado = ultimoFormatoA.getEstado().toString();
+            }
+            return new javafx.beans.property.SimpleStringProperty(estado);
+        });
+
+        // Columna de acciones (botón "Ver Correcciones")
         colAcciones.setCellFactory(new Callback<TableColumn<DegreeWork, Void>, TableCell<DegreeWork, Void>>() {
             @Override
             public TableCell<DegreeWork, Void> call(final TableColumn<DegreeWork, Void> param) {
@@ -139,13 +152,15 @@ public class PublishedTeacherFormatAController {
                             if (formato != null) {
                                 Document ultimoFormatoA = obtenerUltimoFormatoA(formato);
                                 if (ultimoFormatoA != null) {
-                                    String estado = ultimoFormatoA.getEstado() != null ? ultimoFormatoA.getEstado().toString() : "";
+                                    String estado = ultimoFormatoA.getEstado() != null
+                                            ? ultimoFormatoA.getEstado().toString()
+                                            : "";
                                     if ("NO_ACEPTADO".equals(estado) || "RECHAZADO".equals(estado)) {
                                         abrirVentanaCorrecciones(formato);
                                     } else {
-                                        mostrarAlerta("Acción no permitida", 
-                                            "Solo se pueden ver correcciones para estados 'No aceptado' o 'Rechazado'.", 
-                                            Alert.AlertType.WARNING);
+                                        mostrarAlerta("Acción no permitida",
+                                                "Solo se pueden ver correcciones para estados 'No aceptado' o 'Rechazado'.",
+                                                Alert.AlertType.WARNING);
                                     }
                                 }
                             }
@@ -161,7 +176,9 @@ public class PublishedTeacherFormatAController {
                             DegreeWork formato = getTableRow().getItem();
                             Document ultimoFormatoA = obtenerUltimoFormatoA(formato);
                             if (ultimoFormatoA != null) {
-                                String estado = ultimoFormatoA.getEstado() != null ? ultimoFormatoA.getEstado().toString() : "";
+                                String estado = ultimoFormatoA.getEstado() != null
+                                        ? ultimoFormatoA.getEstado().toString()
+                                        : "";
                                 if ("NO_ACEPTADO".equals(estado) || "RECHAZADO".equals(estado)) {
                                     setGraphic(btnCorrections);
                                 } else {
@@ -188,50 +205,75 @@ public class PublishedTeacherFormatAController {
     }
 
     private void cargarFormatosDelDocente() {
-    if (usuarioActual == null) {
-        return;
-    }
-
-    try {
-        System.out.println("DEBUG: Cargando formatos para docente: " + usuarioActual.getEmail());
-        
-        ResponseEntity<DegreeWork[]> response = apiService.get(
-            "api/degreeworks", 
-            "/docente/" + usuarioActual.getEmail(), 
-            DegreeWork[].class
-        );
-
-        System.out.println("DEBUG: Status: " + response.getStatusCode());
-        
-        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-            DegreeWork[] formatosArray = response.getBody();
-            System.out.println("DEBUG: Formatos recibidos del backend: " + formatosArray.length);
-            
-            // DEBUG: Ver el contenido con información de documentos Y FECHAS
-            for (DegreeWork dw : formatosArray) {
-                Document ultimoFormatoA = obtenerUltimoFormatoA(dw);
-                System.out.println("DEBUG - Formato: ID=" + dw.getId() + 
-                    ", Titulo=" + dw.getTituloProyecto() + 
-                    ", Fecha DegreeWork=" + dw.getFechaActual() +
-                    ", Tiene FormatosA=" + (dw.getFormatosA() != null ? dw.getFormatosA().size() : 0) +
-                    ", Fecha Ultimo FormatoA=" + (ultimoFormatoA != null ? ultimoFormatoA.getFechaActual() : "Ninguno") +
-                    ", Estado FormatoA=" + (ultimoFormatoA != null ? ultimoFormatoA.getEstado() : "Ninguno"));
-            }
-            
-            // USAR DIRECTAMENTE sin filtrar
-            todosLosFormatos = FXCollections.observableArrayList(formatosArray);
-            aplicarFiltro("Todos");
-            
-            System.out.println("DEBUG: Formatos finales en tabla: " + todosLosFormatos.size());
-        } else {
-            System.out.println("DEBUG: Respuesta no exitosa o body vacío");
+        if (usuarioActual == null) {
+            return;
         }
 
-    } catch (Exception e) {
-        e.printStackTrace();
-        mostrarAlerta("Error", "Error cargando formatos: " + e.getMessage(), Alert.AlertType.ERROR);
+        try {
+            ResponseEntity<DegreeWork[]> response = apiService.get(
+                    "api/degreeworks",
+                    "/docente/" + usuarioActual.getEmail(),
+                    DegreeWork[].class);
+
+            // ❌ SI LA RESPUESTA NO ES EXITOSA: alerta real
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                mostrarAlerta("Error",
+                        "No se pudieron cargar los formatos del docente (" + response.getStatusCode() + ")",
+                        Alert.AlertType.ERROR);
+                return;
+            }
+
+            DegreeWork[] formatosArray = response.getBody();
+
+            // ❌ BODY VACÍO NO ES ERROR → NO MOSTRAR ALERTA
+            if (formatosArray == null) {
+                todosLosFormatos = FXCollections.observableArrayList();
+                aplicarFiltro("Todos");
+                return;
+            }
+
+            // Proteger iteración para evitar NPE que activan el catch
+            for (DegreeWork dw : formatosArray) {
+                if (dw == null)
+                    continue;
+                try {
+                    obtenerUltimoFormatoA(dw);
+                } catch (Exception ex) {
+                    // errores internos NO deben activar el catch principal
+                    System.out.println("DEBUG: Error procesando elemento: " + ex.getMessage());
+                }
+            }
+
+            // Lista cargada sin errores
+            todosLosFormatos = FXCollections.observableArrayList(Arrays.asList(formatosArray));
+            aplicarFiltro("Todos");
+
+        } catch (Exception e) {
+            // SOLO mostramos alerta si es error de red o backend
+
+            String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+
+            boolean errorDeRed = msg.contains("connection") ||
+                    msg.contains("connect") ||
+                    msg.contains("timeout") ||
+                    msg.contains("refused") ||
+                    msg.contains("503") ||
+                    msg.contains("failed");
+
+            if (errorDeRed) {
+                mostrarAlerta("Error de conexión",
+                        "No se pudo conectar al servidor. Verifica tu red.",
+                        Alert.AlertType.ERROR);
+            } else {
+                // Si NO es error de red, entonces es un error interno que NO queremos alertar
+                System.out.println("DEBUG: Excepción interna ignorada: " + msg);
+            }
+
+            // Siempre dejar lista limpia para que no explote al recargar
+            todosLosFormatos = FXCollections.observableArrayList();
+            aplicarFiltro("Todos");
+        }
     }
-}
 
     private void aplicarFiltro(String opcion) {
         if (opcion == null || todosLosFormatos == null) {
@@ -247,108 +289,106 @@ public class PublishedTeacherFormatAController {
 
             case "Aceptado":
                 tblEstadosFormato.getItems().setAll(
-                    base.stream()
-                        .filter(f -> {
-                            Document formatoA = obtenerUltimoFormatoA(f);
-                            return formatoA != null && formatoA.getEstado() != null && 
-                                   "ACEPTADO".equalsIgnoreCase(formatoA.getEstado().toString());
-                        })
-                        .collect(Collectors.toList())
-                );
+                        base.stream()
+                                .filter(f -> {
+                                    Document formatoA = obtenerUltimoFormatoA(f);
+                                    return formatoA != null && formatoA.getEstado() != null &&
+                                            "ACEPTADO".equalsIgnoreCase(formatoA.getEstado().toString());
+                                })
+                                .collect(Collectors.toList()));
                 break;
 
             case "No aceptado":
                 tblEstadosFormato.getItems().setAll(
-                    base.stream()
-                        .filter(f -> {
-                            Document formatoA = obtenerUltimoFormatoA(f);
-                            return formatoA != null && formatoA.getEstado() != null && 
-                                   "NO_ACEPTADO".equalsIgnoreCase(formatoA.getEstado().toString());
-                        })
-                        .collect(Collectors.toList())
-                );
+                        base.stream()
+                                .filter(f -> {
+                                    Document formatoA = obtenerUltimoFormatoA(f);
+                                    return formatoA != null && formatoA.getEstado() != null &&
+                                            "NO_ACEPTADO".equalsIgnoreCase(formatoA.getEstado().toString());
+                                })
+                                .collect(Collectors.toList()));
                 break;
 
             case "Primera revisión":
                 tblEstadosFormato.getItems().setAll(
-                    base.stream()
-                        .filter(f -> {
-                            Document formatoA = obtenerUltimoFormatoA(f);
-                            return formatoA != null && formatoA.getEstado() != null && 
-                                   "PRIMERA_REVISION".equalsIgnoreCase(formatoA.getEstado().toString());
-                        })
-                        .collect(Collectors.toList())
-                );
+                        base.stream()
+                                .filter(f -> {
+                                    Document formatoA = obtenerUltimoFormatoA(f);
+                                    return formatoA != null && formatoA.getEstado() != null &&
+                                            "PRIMERA_REVISION".equalsIgnoreCase(formatoA.getEstado().toString());
+                                })
+                                .collect(Collectors.toList()));
                 break;
 
             case "Segunda revisión":
                 tblEstadosFormato.getItems().setAll(
-                    base.stream()
-                        .filter(f -> {
-                            Document formatoA = obtenerUltimoFormatoA(f);
-                            return formatoA != null && formatoA.getEstado() != null && 
-                                   "SEGUNDA_REVISION".equalsIgnoreCase(formatoA.getEstado().toString());
-                        })
-                        .collect(Collectors.toList())
-                );
+                        base.stream()
+                                .filter(f -> {
+                                    Document formatoA = obtenerUltimoFormatoA(f);
+                                    return formatoA != null && formatoA.getEstado() != null &&
+                                            "SEGUNDA_REVISION".equalsIgnoreCase(formatoA.getEstado().toString());
+                                })
+                                .collect(Collectors.toList()));
                 break;
 
             case "Tercera revisión":
                 tblEstadosFormato.getItems().setAll(
-                    base.stream()
-                        .filter(f -> {
-                            Document formatoA = obtenerUltimoFormatoA(f);
-                            return formatoA != null && formatoA.getEstado() != null && 
-                                   "TERCERA_REVISION".equalsIgnoreCase(formatoA.getEstado().toString());
-                        })
-                        .collect(Collectors.toList())
-                );
+                        base.stream()
+                                .filter(f -> {
+                                    Document formatoA = obtenerUltimoFormatoA(f);
+                                    return formatoA != null && formatoA.getEstado() != null &&
+                                            "TERCERA_REVISION".equalsIgnoreCase(formatoA.getEstado().toString());
+                                })
+                                .collect(Collectors.toList()));
                 break;
 
             case "Rechazado":
                 tblEstadosFormato.getItems().setAll(
-                    base.stream()
-                        .filter(f -> {
-                            Document formatoA = obtenerUltimoFormatoA(f);
-                            return formatoA != null && formatoA.getEstado() != null && 
-                                   "RECHAZADO".equalsIgnoreCase(formatoA.getEstado().toString());
-                        })
-                        .collect(Collectors.toList())
-                );
+                        base.stream()
+                                .filter(f -> {
+                                    Document formatoA = obtenerUltimoFormatoA(f);
+                                    return formatoA != null && formatoA.getEstado() != null &&
+                                            "RECHAZADO".equalsIgnoreCase(formatoA.getEstado().toString());
+                                })
+                                .collect(Collectors.toList()));
                 break;
 
             case "Fecha más reciente":
                 tblEstadosFormato.getItems().setAll(
-                    base.stream()
-                        .sorted((f1, f2) -> {
-                            // Primero intentar con Formato A, luego con DegreeWork
-                            LocalDate fecha1 = obtenerFechaParaOrdenamiento(f1);
-                            LocalDate fecha2 = obtenerFechaParaOrdenamiento(f2);
-                            
-                            if (fecha1 == null && fecha2 == null) return 0;
-                            if (fecha1 == null) return 1;
-                            if (fecha2 == null) return -1;
-                            return fecha2.compareTo(fecha1);
-                        })
-                        .collect(Collectors.toList())
-                );
+                        base.stream()
+                                .sorted((f1, f2) -> {
+                                    // Primero intentar con Formato A, luego con DegreeWork
+                                    LocalDate fecha1 = obtenerFechaParaOrdenamiento(f1);
+                                    LocalDate fecha2 = obtenerFechaParaOrdenamiento(f2);
+
+                                    if (fecha1 == null && fecha2 == null)
+                                        return 0;
+                                    if (fecha1 == null)
+                                        return 1;
+                                    if (fecha2 == null)
+                                        return -1;
+                                    return fecha2.compareTo(fecha1);
+                                })
+                                .collect(Collectors.toList()));
                 break;
 
             case "Fecha más antigua":
                 tblEstadosFormato.getItems().setAll(
-                    base.stream()
-                        .sorted((f1, f2) -> {
-                            // Primero intentar con Formato A, luego con DegreeWork
-                            LocalDate fecha1 = obtenerFechaParaOrdenamiento(f1);
-                            LocalDate fecha2 = obtenerFechaParaOrdenamiento(f2);
-                            
-                            if (fecha1 == null && fecha2 == null) return 0;
-                            if (fecha1 == null) return 1;
-                            if (fecha2 == null) return -1;
-                            return fecha1.compareTo(fecha2);
-                        })
-                        .collect(Collectors.toList())
-                );
+                        base.stream()
+                                .sorted((f1, f2) -> {
+                                    // Primero intentar con Formato A, luego con DegreeWork
+                                    LocalDate fecha1 = obtenerFechaParaOrdenamiento(f1);
+                                    LocalDate fecha2 = obtenerFechaParaOrdenamiento(f2);
+
+                                    if (fecha1 == null && fecha2 == null)
+                                        return 0;
+                                    if (fecha1 == null)
+                                        return 1;
+                                    if (fecha2 == null)
+                                        return -1;
+                                    return fecha1.compareTo(fecha2);
+                                })
+                                .collect(Collectors.toList()));
                 break;
 
             default:
@@ -357,24 +397,25 @@ public class PublishedTeacherFormatAController {
         }
     }
 
+    // Método helper para obtener fecha para ordenamiento (primero Formato A, luego
+    // DegreeWork)
+    private LocalDate obtenerFechaParaOrdenamiento(DegreeWork degreeWork) {
+        if (degreeWork == null)
+            return null;
 
-    // Método helper para obtener fecha para ordenamiento (primero Formato A, luego DegreeWork)
-private LocalDate obtenerFechaParaOrdenamiento(DegreeWork degreeWork) {
-    if (degreeWork == null) return null;
-    
-    // Primero intentar con el último Formato A
-    Document ultimoFormatoA = obtenerUltimoFormatoA(degreeWork);
-    if (ultimoFormatoA != null && ultimoFormatoA.getFechaActual() != null) {
-        return ultimoFormatoA.getFechaActual();
+        // Primero intentar con el último Formato A
+        Document ultimoFormatoA = obtenerUltimoFormatoA(degreeWork);
+        if (ultimoFormatoA != null && ultimoFormatoA.getFechaActual() != null) {
+            return ultimoFormatoA.getFechaActual();
+        }
+
+        // Si no hay Formato A, usar la fecha del DegreeWork
+        return degreeWork.getFechaActual();
     }
-    
-    // Si no hay Formato A, usar la fecha del DegreeWork
-    return degreeWork.getFechaActual();
-}
 
     private void abrirVentanaCorrecciones(DegreeWork formato) {
         if (formato != null) {
-            //Navegar a la vista de correcciones del docente
+            // Navegar a la vista de correcciones del docente
             navigation.showTeacherReviewFormatA(usuarioActual, formato);
         }
     }

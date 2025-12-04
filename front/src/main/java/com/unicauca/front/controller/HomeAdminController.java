@@ -12,9 +12,12 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class HomeAdminController {
 
-    @FXML private ToggleButton btnUsuario;
-    @FXML private ToggleButton btnCoordinadores;
-    @FXML private ToggleButton btnEvaluadores;
+    @FXML
+    private ToggleButton btnUsuario;
+    @FXML
+    private ToggleButton btnCoordinadores;
+    @FXML
+    private ToggleButton btnEvaluadores;
 
     private final ApiGatewayService apiService;
     private final NavigationController navigation;
@@ -23,6 +26,16 @@ public class HomeAdminController {
     public HomeAdminController(ApiGatewayService apiService, NavigationController navigation) {
         this.apiService = apiService;
         this.navigation = navigation;
+        if (usuarioActual != null && "ADMIN".equalsIgnoreCase(usuarioActual.getRole())) {
+            System.out.println("Abriendo ManagementEvaluadores...");
+            configurarBotonesAdmin();
+        }
+    }
+
+    private void configurarBotonesAdmin() {
+        btnUsuario.setVisible(true);
+        btnCoordinadores.setVisible(true);
+        btnEvaluadores.setVisible(true);
     }
 
     @FXML
@@ -59,7 +72,8 @@ public class HomeAdminController {
             System.out.println("Abriendo ManagementAdmin...");
             navigation.showManagementAdmin();
         } else {
-            mostrarAlerta("Acceso denegado", "Solo los administradores pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
+            mostrarAlerta("Acceso denegado", "Solo los administradores pueden acceder a esta funcionalidad.",
+                    Alert.AlertType.WARNING);
         }
     }
 
@@ -70,7 +84,8 @@ public class HomeAdminController {
             System.out.println("Abriendo ManagementEvaluadores...");
             navigation.showManagementEvaluadores();
         } else {
-            mostrarAlerta("Acceso denegado", "Solo los administradores pueden acceder a esta funcionalidad.", Alert.AlertType.WARNING);
+            mostrarAlerta("Acceso denegado", "Solo los administradores pueden acceder a esta funcionalidad.",
+                    Alert.AlertType.WARNING);
         }
     }
 

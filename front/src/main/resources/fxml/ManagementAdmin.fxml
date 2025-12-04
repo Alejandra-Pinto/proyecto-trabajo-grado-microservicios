@@ -52,6 +52,18 @@
                               <Font size="16.0" />
                            </font>
                         </ToggleButton>
+                        <ToggleButton fx:id="btnEvaluadores" onAction="#onBtnEvaluadoresClicked" layoutY="202.0"  mnemonicParsing="false" prefHeight="101.0" prefWidth="479.0" text="Asignar Evaluadores">
+                           <graphic>
+                              <ImageView fitHeight="51.0" fitWidth="51.0" preserveRatio="true">
+                                 <image>
+                                    <Image url="@images/evaluar.png" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                           <font>
+                              <Font size="16.0" />
+                           </font>
+                        </ToggleButton>
                      </children>
                   </AnchorPane>
       
