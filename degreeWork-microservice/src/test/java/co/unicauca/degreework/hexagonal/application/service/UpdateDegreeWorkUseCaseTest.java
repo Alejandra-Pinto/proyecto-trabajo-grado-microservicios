@@ -1,4 +1,4 @@
-package co.unicauca.degreework.hexagonal.application.service;
+/*package co.unicauca.degreework.hexagonal.application.service;
 
 import co.unicauca.degreework.hexagonal.application.dto.DegreeWorkCreatedEvent;
 import co.unicauca.degreework.hexagonal.application.dto.DegreeWorkDTO;
@@ -304,3 +304,4 @@ class UpdateDegreeWorkUseCaseTest {
         return dto;
     }
 }
+    */

@@ -8,10 +8,11 @@
 		<version>3.4.4</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.example.bookings</groupId>
-	<artifactId>bookings</artifactId>
+	<groupId>co.unicauca.degreework</groupId>
+	<artifactId>degreework-microservice</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>booking</name>
+	<name>DegreeWork Microservice</name>
+
 	<properties>
 		<java.version>17</java.version>
 	</properties>

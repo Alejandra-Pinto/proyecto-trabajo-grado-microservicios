@@ -1,0 +1,144 @@
+# Puedes quitar esta línea si quieres:
+# version: '3.8'
+
+services:
+  # --- INFRAESTRUCTURA ---
+  
+  # Keycloak para autenticación OAuth2
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.4.4
+    container_name: keycloak
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin123
+      KC_DB: dev-file
+    command: start-dev
+    ports:
+      - "9090:8080"  # 👈 Mapea 8080 interno → 9090 externo
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/realms/master"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  postgres-notification:
+    image: postgres:14-alpine
+    container_name: postgres-notification
+    environment:
+      POSTGRES_DB: notificationdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    command:
+      - "postgres"
+      - "-c"
+      - "password_encryption=md5"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-notification-data:/var/lib/postgresql/data
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  # --- MICROSERVICIOS ---
+  api-gateway:
+    build: ./apiGateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      rabbitmq:
+        condition: service_started
+      keycloak:
+        condition: service_healthy  # 👈 Espera que Keycloak esté saludable
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_PROFILES_ACTIVE: docker  # 👈 Activa perfil docker
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  # Los otros servicios permanecen igual...
+  users-service:
+    build: ./users-microservice
+    container_name: users-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - rabbitmq
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  notification-service:
+    build: ./notification-microservice
+    container_name: notification-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      - postgres-notification
+      - rabbitmq
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-notification:5432/notificationdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  evaluation-service2:
+    build: ./evaluation-microservice2
+    container_name: evaluation-service2
+    ports:
+      - "8083:8083"
+    depends_on:
+      - rabbitmq
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  degreework-service:
+    build: ./degreeWork-microservice
+    container_name: degreework-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - rabbitmq
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+networks:
+  microservices-network:
+    driver: bridge
+
+volumes:
+  postgres-notification-data:
+  rabbitmq-data:
