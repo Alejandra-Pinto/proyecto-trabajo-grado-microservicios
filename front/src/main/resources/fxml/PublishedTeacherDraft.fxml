@@ -147,7 +147,7 @@
                         <ComboBox fx:id="comboClasificar" layoutX="198.0" layoutY="153.0" prefWidth="150.0" />
                         <TableView fx:id="tblEstadosFormato" layoutX="97.0" layoutY="211.0" prefHeight="421.0" prefWidth="947.0">
                             <columns>
-                                <TableColumn fx:id="colNumeroAnteproyecto" prefWidth="209.59996795654297" text="Nombre del Anteproyecto" />
+                                <TableColumn fx:id="colNumeroFormato" prefWidth="209.59996795654297" text="Nombre del Anteproyecto" />
                                 <TableColumn fx:id="colEmailEstudiante" prefWidth="244.00003051757812" text="Email Estudiante" />
                                 <TableColumn fx:id="colFechaActual" text="Fecha" />
                                 <TableColumn fx:id="colEstado" prefWidth="222.4000244140625" text="Estado" />
