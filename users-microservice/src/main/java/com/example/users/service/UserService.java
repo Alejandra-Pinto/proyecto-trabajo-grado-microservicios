@@ -210,12 +210,13 @@ public class UserService implements IUserService {
     // MÉTODOS AUXILIARES
     // ==========================
 
-    
-
     private boolean isValidEmail(String email) {
-        // Para sync desde Keycloak, aceptar cualquier email válido
-        // Para registro normal, mantener validación estricta
-        return email != null && email.contains("@") && email.contains(".");
+        if (email == null) return false;
+        // Validar formato básico
+        if (!email.contains("@") || !email.contains(".")) return false;
+        
+        // Para registro normal, debe ser email institucional
+        return email.toLowerCase().endsWith("@unicauca.edu.co");
     }
 
     // O crear un método separado para sync
