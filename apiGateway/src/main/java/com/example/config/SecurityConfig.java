@@ -23,7 +23,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http) {
-        System.out.println("!!! SECURITY CONFIG LOADED - CONFIGURING RULES !!!");
+        System.out.println("---- SECURITY CONFIG LOADED - CONFIGURING RULES ----");
         
         // Convertidor JWT para Keycloak
         JwtAuthenticationConverter jwtConverter = new JwtAuthenticationConverter();
@@ -52,9 +52,9 @@ public class SecurityConfig {
         
         return http
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
-            .cors(cors -> cors.disable()) // Temporal - ya tienes CorsConfig
+            .cors(cors -> cors.disable())
             .authorizeExchange(exchanges -> {
-                System.out.println("!!! SETTING UP AUTHORIZATION RULES !!!");
+                
                 
                 exchanges
                     // Endpoints públicos
@@ -68,7 +68,7 @@ public class SecurityConfig {
                     // Admin routes
                     .pathMatchers("/api/admin/**").hasRole("ADMIN")
                     
-                    // Evaluaciones - solo PROFESSOR (agrega COORDINATOR si es necesario)
+                    // Evaluaciones routes
                     .pathMatchers("/api/evaluaciones/**").hasAnyRole("COORDINATOR", "DEPARTMENT_HEAD")
                     
                     

@@ -14,12 +14,10 @@ public class CorsConfig {
     @Bean
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration corsConfig = new CorsConfiguration();
-        //Permitir peticiones desde cualquier origen (puedes restringirlo después)
+        //Permitir peticiones desde cualquier origen
         corsConfig.setAllowedOrigins(List.of("*"));
 
-        //corsConfig.setAllowedOrigins(List.of("http://localhost:8086"));
-
-        //Permitir métodos HTTP comunes
+        //Permitir métodos HTTP 
         corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         //Permitir encabezados (headers)
         corsConfig.setAllowedHeaders(List.of("*"));

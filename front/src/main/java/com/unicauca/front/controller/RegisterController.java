@@ -130,7 +130,7 @@ public class RegisterController {
                 return;
             }
 
-            System.out.println("✅ Usuario creado en Keycloak - procediendo a crear perfil extendido");
+            System.out.println("Usuario creado en Keycloak - procediendo a crear perfil extendido");
 
             // PASO 2: Crear perfil extendido en el microservicio de usuarios
             User userProfile = new User();
@@ -164,7 +164,7 @@ public class RegisterController {
                 navigation.showLogin();
                 
             } else {
-                System.out.println("⚠️ Usuario creado en Keycloak pero error sincronizando perfil: " + response.getStatusCode());
+                System.out.println("Usuario creado en Keycloak pero error sincronizando perfil: " + response.getStatusCode());
                 mostrarAlerta("Registro parcial", 
                     "Usuario creado pero hubo un error sincronizando el perfil. Puede iniciar sesión.", 
                     Alert.AlertType.WARNING);
@@ -173,7 +173,7 @@ public class RegisterController {
             }
 
         } catch (Exception e) {
-            System.out.println("❌ Error durante el registro: " + e.getMessage());
+            System.out.println("Error durante el registro: " + e.getMessage());
             e.printStackTrace();
             
             mostrarAlerta("Error de conexión", 

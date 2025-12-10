@@ -39,7 +39,7 @@ public class UserController {
             // Verificar si el usuario ya existe
             Optional<User> existingUser = service.findByEmail(userRequest.getEmail());
             if (existingUser.isPresent()) {
-                System.out.println("✅ Usuario ya existe, retornando existente");
+                System.out.println("Usuario ya existe, retornando existente");
                 return ResponseEntity.ok(existingUser.get());
             }
 
@@ -57,11 +57,11 @@ public class UserController {
             // Usar el método register existente pero sin validaciones de password/email estrictas
             User createdUser = service.syncUserFromKeycloak(request);
             
-            System.out.println("✅ Usuario sincronizado exitosamente: " + createdUser.getEmail());
+            System.out.println("Usuario sincronizado exitosamente: " + createdUser.getEmail());
             return ResponseEntity.ok(createdUser);
 
         } catch (Exception e) {
-            System.out.println("❌ Error sincronizando usuario: " + e.getMessage());
+            System.out.println("Error sincronizando usuario: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.badRequest().body(null);
         }
@@ -85,7 +85,7 @@ public ResponseEntity<User> getUserByEmail(@PathVariable String email) {
     if (user.isPresent()) {
         User userEntity = user.get();
         
-        // DEBUG: Crear un JSON manualmente para ver la codificación
+        // Probando: Crear un JSON manualmente para ver la codificación
         String manualJson = String.format(
             "{\"program\":\"%s\", \"email\":\"%s\", \"role\":\"%s\"}", 
             userEntity.getProgram(), userEntity.getEmail(), userEntity.getRole()

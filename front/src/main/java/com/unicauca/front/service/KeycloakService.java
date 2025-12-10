@@ -24,9 +24,8 @@ public class KeycloakService {
         this.restTemplate = restTemplate;
     }
 
-    /**
-     * Login con Keycloak
-     */
+    // Login con Keycloak
+
     public String login(String username, String password) {
         String url = KEYCLOAK_URL + "/realms/" + REALM + "/protocol/openid-connect/token";
         
@@ -56,9 +55,8 @@ public class KeycloakService {
         return null;
     }
 
-   /**
-     * Obtener información completa del usuario incluyendo roles (FILTRADOS)
-     */
+   // Obtener información completa del usuario incluyendo roles (FILTRADOS)
+     
     public Map<String, Object> getUserInfoWithRoles(String token) {
         try {
             // Decodificar el token JWT
@@ -110,9 +108,8 @@ public class KeycloakService {
         }
     }
 
-    /**
-     * Método para identificar roles técnicos de Keycloak que deben ser ignorados
-     */
+    // Método para identificar roles técnicos de Keycloak que deben ser ignorados
+    
     private boolean isTechnicalRole(String role) {
         // Lista de roles técnicos de Keycloak que deben ser ignorados
         List<String> technicalRoles = Arrays.asList(
@@ -125,9 +122,8 @@ public class KeycloakService {
             .anyMatch(technical -> role.toLowerCase().contains(technical.toLowerCase()));
     }
 
-    /**
-     * Obtener información del usuario desde el endpoint userinfo
-     */
+    // Obtener información del usuario desde el endpoint userinfo
+     
     public Map<String, Object> getUserInfo(String token) {
         String url = KEYCLOAK_URL + "/realms/" + REALM + "/protocol/openid-connect/userinfo";
         
@@ -152,9 +148,8 @@ public class KeycloakService {
         }
     }
 
-    /**
-     * Registrar usuario en Keycloak (con mejor logging)
-     */
+    // Registrar usuario en Keycloak
+    
     public boolean registerUser(String username, String password, String firstName, String lastName, String role) {
         try {
             System.out.println("=== REGISTERING USER IN KEYCLOAK ===");
@@ -166,12 +161,12 @@ public class KeycloakService {
             System.out.println("Step 1: Obtaining admin token...");
             String adminToken = getAdminToken();
             if (adminToken == null) {
-                System.out.println("❌ No se pudo obtener token de administrador");
-                System.out.println("⚠️ Verifica que el usuario admin exista en Keycloak");
+                System.out.println("No se pudo obtener token de administrador");
+                System.out.println("Verifica que el usuario admin exista en Keycloak");
                 return false;
             }
             
-            System.out.println("✅ Admin token obtained, length: " + adminToken.length());
+            System.out.println("Admin token obtained, tamano: " + adminToken.length());
 
             // 2. Crear usuario en Keycloak
             System.out.println("Step 2: Creating user in Keycloak...");
@@ -207,48 +202,47 @@ public class KeycloakService {
             System.out.println("Create user response: " + createResponse.getStatusCode());
             
             if (!createResponse.getStatusCode().is2xxSuccessful()) {
-                System.out.println("❌ Error creando usuario en Keycloak: " + createResponse.getStatusCode());
+                System.out.println("Error creando usuario en Keycloak: " + createResponse.getStatusCode());
                 if (createResponse.getStatusCode() == HttpStatus.CONFLICT) {
-                    System.out.println("⚠️ El usuario ya existe en Keycloak");
+                    System.out.println("El usuario ya existe en Keycloak");
                 }
                 return false;
             }
             
-            System.out.println("✅ Usuario creado en Keycloak");
+            System.out.println("Usuario creado en Keycloak");
             
             // 3. Obtener ID del usuario recién creado
             System.out.println("Step 3: Getting user ID...");
             String userId = getUserIdByUsername(adminToken, username);
             if (userId == null) {
-                System.out.println("❌ No se pudo obtener ID del usuario creado");
+                System.out.println("No se pudo obtener ID del usuario creado");
                 return false;
             }
             
-            System.out.println("✅ User ID obtenido: " + userId);
+            System.out.println("User ID obtenido: " + userId);
             
             // 4. Asignar rol al usuario
             System.out.println("Step 4: Assigning role '" + role + "' to user...");
             boolean roleAssigned = assignRoleToUser(adminToken, userId, role);
             if (!roleAssigned) {
-                System.out.println("❌ No se pudo asignar rol al usuario");
-                System.out.println("⚠️ Verifica que el rol '" + role + "' exista en Keycloak");
+                System.out.println("No se pudo asignar rol al usuario");
+                System.out.println("Verificar que el rol '" + role + "' exista en Keycloak");
                 return false;
             }
             
-            System.out.println("✅ Rol asignado correctamente");
-            System.out.println("🎉 Usuario registrado exitosamente en Keycloak");
+            System.out.println("Rol asignado correctamente");
+            System.out.println("Usuario registrado exitosamente en Keycloak");
             return true;
             
         } catch (Exception e) {
-            System.out.println("❌ Error registrando usuario en Keycloak: " + e.getMessage());
+            System.out.println("Error registrando usuario en Keycloak: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
 
-    /**
-     * Obtener ID de usuario por username
-     */
+    // Obtener ID de usuario por username
+     
     private String getUserIdByUsername(String adminToken, String username) {
         try {
             String searchUrl = KEYCLOAK_URL + "/admin/realms/" + REALM + "/users?username=" + username;
@@ -271,9 +265,8 @@ public class KeycloakService {
         return null;
     }
 
-    /**
-     * Asignar rol a usuario
-     */
+    // Asignar rol a usuario
+     
     private boolean assignRoleToUser(String adminToken, String userId, String roleName) {
         try {
             // Primero obtener el rol
@@ -286,7 +279,7 @@ public class KeycloakService {
             ResponseEntity<Map> roleResponse = restTemplate.exchange(getRoleUrl, HttpMethod.GET, entity, Map.class);
             
             if (!roleResponse.getStatusCode().is2xxSuccessful()) {
-                System.out.println("❌ Rol no encontrado: " + roleName);
+                System.out.println("Rol no encontrado: " + roleName);
                 return false;
             }
             
@@ -313,9 +306,7 @@ public class KeycloakService {
         }
     }
 
-    /**
-     * Obtener token de administrador mejorado
-     */
+    // Obtener token de administrador
     public String getAdminToken() {
         try {
             System.out.println("=== OBTAINING ADMIN TOKEN ===");
@@ -327,10 +318,10 @@ public class KeycloakService {
             String token = login(adminUsername, adminPassword);
             
             if (token != null) {
-                System.out.println("✅ Admin token obtained successfully");
+                System.out.println("Admin token obtained successfully");
                 return token;
             } else {
-                System.out.println("❌ Failed to obtain admin token");
+                System.out.println("Failed to obtain admin token");
                 return null;
             }
             
@@ -340,9 +331,7 @@ public class KeycloakService {
         }
     }
 
-    /**
-     * Método de diagnóstico para verificar conexión con Keycloak
-     */
+    // Método usado para verificar conexión con Keycloak
     public void testConnection() {
         try {
             System.out.println("=== KEYCLOAK CONNECTION DIAGNOSTIC ===");
@@ -354,13 +343,13 @@ public class KeycloakService {
             String realmUrl = KEYCLOAK_URL + "/realms/" + REALM;
             try {
                 ResponseEntity<String> realmResponse = restTemplate.getForEntity(realmUrl, String.class);
-                System.out.println("✅ Realm accessible: " + realmResponse.getStatusCode());
+                System.out.println("Realm accessible: " + realmResponse.getStatusCode());
             } catch (Exception e) {
-                System.out.println("❌ Realm NOT accessible: " + e.getMessage());
+                System.out.println("Realm NOT accessible: " + e.getMessage());
             }
             
         } catch (Exception e) {
-            System.out.println("❌ Diagnostic failed: " + e.getMessage());
+            System.out.println("Diagnostic failed: " + e.getMessage());
         }
     }
 }

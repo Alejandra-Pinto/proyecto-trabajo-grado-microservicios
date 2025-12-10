@@ -31,7 +31,6 @@ public class UserService implements IUserService {
     @Value("${app.rabbitmq.users.exchange}")
     private String exchange;
 
-    // 🔥 CAMBIO: Hacer el routingKey opcional con valor por defecto
     @Value("${app.rabbitmq.users.routingkey:}")
     private String routingKey;
 
@@ -40,7 +39,6 @@ public class UserService implements IUserService {
         this.rabbitTemplate = rabbitTemplate;
     }
 
-    // 🔥 CAMBIO: Método auxiliar para enviar eventos (mantiene la lógica existente)
     private void sendUserEvent(User savedUser, boolean isEvaluator) {
         UserCreatedEvent event = new UserCreatedEvent(
             savedUser.getId(),
@@ -53,7 +51,6 @@ public class UserService implements IUserService {
             isEvaluator
         );
 
-        // 🔥 CAMBIO: Lógica adaptada para Fanout Exchange
         if (routingKey != null && !routingKey.trim().isEmpty()) {
             // Si hay routing key (compatibilidad con Direct Exchange)
             rabbitTemplate.convertAndSend(exchange, routingKey, event);
@@ -62,7 +59,7 @@ public class UserService implements IUserService {
             rabbitTemplate.convertAndSend(exchange, "", event);
         }
 
-        System.out.println("✅ Evento enviado al exchange: " + exchange);
+        System.out.println("Evento enviado al exchange: " + exchange);
     }
 
     private User createUserByRole(String role) {
@@ -93,10 +90,10 @@ public class UserService implements IUserService {
             user.setRole(request.getRole());
             user.setStatus(request.getStatus());
 
-            // ⚠️ IMPORTANTE: No validar email ni password para sync desde Keycloak
+            // No validar email ni password para sync desde Keycloak
             // Keycloak ya validó el email y maneja la autenticación
             
-            // ⚠️ NO cifrar la password - usar un valor dummy ya que la auth es con Keycloak
+            // NO cifrar la password - usar un valor dummy ya que la auth es con Keycloak
             user.setPassword("keycloak-managed-password");
 
             // Guardar en la base de datos
@@ -104,11 +101,11 @@ public class UserService implements IUserService {
 
             sendUserEvent(savedUser, false);
 
-            System.out.println("✅ User sync completed: " + savedUser.getEmail());
+            System.out.println("User sync completed: " + savedUser.getEmail());
             return savedUser;
 
         } catch (Exception e) {
-            System.out.println("❌ Error in user sync: " + e.getMessage());
+            System.out.println("Error in user sync: " + e.getMessage());
             throw new RuntimeException("Error sincronizando usuario desde Keycloak: " + e.getMessage());
         }
     }
@@ -206,9 +203,7 @@ public class UserService implements IUserService {
                 .collect(Collectors.toList());
     }
 
-    // ==========================
-    // MÉTODOS AUXILIARES
-    // ==========================
+
 
     private boolean isValidEmail(String email) {
         if (email == null) return false;

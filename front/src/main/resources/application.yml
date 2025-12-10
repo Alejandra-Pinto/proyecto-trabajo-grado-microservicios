@@ -5,7 +5,7 @@ spring:
   application:
     name: frontend-app
   main:
-    web-application-type: none  #IMPORTANTE: No es app web
+    web-application-type: none  #No es app web
 
 logging:
   level:
